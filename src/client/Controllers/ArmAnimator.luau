@@ -79,14 +79,15 @@ local function rigFor(character: Model): Rig?
 	if not (joints.RShoulder and joints.Waist) then
 		return nil
 	end
-	rig = { character = character, joints = joints, base = {}, written = {}, clip = nil, weight = 0 }
-	rigs[character] = rig
+	local created: Rig = { character = character, joints = joints :: any, base = {}, written = {}, clip = nil, weight = 0 }
+	rig = created
+	rigs[character] = created
 	character.AncestryChanged:Connect(function(_, parent)
 		if parent == nil then
 			rigs[character] = nil
 		end
 	end)
-	return rig
+	return created
 end
 
 local function euler(v: Vector3): CFrame
@@ -174,7 +175,40 @@ local function apply(rig: Rig, joint: Joint?, offset: CFrame, weight: number)
 	rig.base[joint] = base
 end
 
+-- STUDIO-ONLY tooling: holds the local character at one instant of a move (workspace attributes AF_PoseMove and
+-- AF_PoseT in 0..1) so key poses can be screenshotted exactly. Inert in live servers.
+local function debugPose()
+	if not RunService:IsStudio() then
+		return
+	end
+	local moveName = workspace:GetAttribute("AF_PoseMove")
+	local char = Players.LocalPlayer.Character
+	if type(moveName) ~= "string" or not char then
+		return
+	end
+	local rig = rigFor(char)
+	local move = PoseMath.moves()[moveName]
+	if not (rig and move) then
+		return
+	end
+	local t = (workspace:GetAttribute("AF_PoseT") :: number?) or 0
+	local pose = PoseMath.sample(move, t)
+	for key, v in pose do
+		if key ~= "RootPos" then
+			local offset = euler(v)
+			if key == "Root" then
+				offset = CFrame.new(pose.RootPos or Vector3.zero) * offset
+			end
+			apply(rig, rig.joints[key], offset, 1)
+		end
+	end
+	if pose.RootPos and not pose.Root then
+		apply(rig, rig.joints.Root, CFrame.new(pose.RootPos), 1)
+	end
+end
+
 local function step()
+	debugPose()
 	local now = os.clock()
 	for character, rig in rigs do
 		if not character.Parent then

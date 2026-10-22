@@ -70,6 +70,38 @@ local datatypes = {
 	Instance = roblox.Instance,
 }
 
+-- Minimal stand-ins so modules that call game:GetService / task.* at load time can be required in tests.
+-- (Anything that actually USES a service at call time is runtime glue and is exercised in Studio, not here.)
+local stubs = {
+	game = {
+		GetService = function(_, name)
+			return {
+				Name = name,
+				IsServer = function()
+					return true
+				end,
+				IsStudio = function()
+					return false
+				end,
+			}
+		end,
+	},
+	task = {
+		spawn = function(fn, ...)
+			fn(...)
+		end,
+		defer = function(fn, ...)
+			fn(...)
+		end,
+		delay = function(_, fn, ...)
+			fn(...)
+		end,
+		wait = function()
+			return 0
+		end,
+	},
+}
+
 local function requireNode(node)
 	local d = data[node]
 	if d == nil or d.path == nil then
@@ -84,6 +116,9 @@ local function requireNode(node)
 	d.loading = true
 	local env = { script = node, require = requireNode }
 	for k, v in datatypes do
+		env[k] = v
+	end
+	for k, v in stubs do
 		env[k] = v
 	end
 	setmetatable(env, { __index = _G })

@@ -28,7 +28,7 @@ function Widgets.new(class: string, props: Props?, children: { Instance }?): any
 		end
 	end
 	if props and props.Parent then
-		inst.Parent = props.Parent
+		inst.Parent = (props :: any).Parent
 	end
 	return inst
 end
@@ -116,7 +116,7 @@ end
 local painters: { [Instance]: (boolean) -> () } = setmetatable({}, { __mode = "k" }) :: any
 
 function Widgets.setEnabled(btn: Instance, value: boolean)
-	local paint = painters[btn]
+	local paint: ((boolean) -> ())? = painters[btn]
 	if paint then
 		paint(value)
 	end
@@ -170,8 +170,9 @@ function Widgets.button(props: Props): any
 		paint()
 	end)
 	btn.Activated:Connect(function()
-		if enabled and props.onClick then
-			props.onClick()
+		local onClick: (() -> ())? = props.onClick
+		if enabled and onClick then
+			onClick()
 		end
 	end)
 	painters[btn] = function(value: boolean)

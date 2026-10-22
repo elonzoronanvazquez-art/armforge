@@ -74,7 +74,7 @@ function TrainingLogic.gradeBeat(delta: number): Grade
 end
 
 function TrainingLogic.pointsFor(grade: Grade): number
-	return Training.GradePoints[grade]
+	return (Training.GradePoints :: any)[grade]
 end
 
 -- Adds points to a stat and levels it up (respecting the cap for the player's level).

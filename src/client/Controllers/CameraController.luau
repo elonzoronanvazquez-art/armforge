@@ -62,8 +62,9 @@ function CameraController.start()
 		end
 		if fovKick > 0.01 then
 			fovKick = fovKick * math.exp(-dt * 14)
-			lastFov = baseFov - fovKick
-			cam.FieldOfView = lastFov
+			local target = baseFov - fovKick
+			lastFov = target
+			cam.FieldOfView = target
 		elseif lastFov ~= nil then
 			fovKick = 0
 			cam.FieldOfView = baseFov

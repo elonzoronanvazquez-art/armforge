@@ -79,6 +79,71 @@ function TargetController.start()
 	holder.Parent = workspace
 	highlight.Parent = holder
 
+	-- first-minute guidance: a bobbing marker over the nearest rock until the player has broken their first one
+	local beacon = Instance.new("BillboardGui")
+	beacon.Name = "ArmforgeBeacon"
+	beacon.Size = UDim2.fromOffset(120, 64)
+	beacon.AlwaysOnTop = true
+	beacon.LightInfluence = 0
+	beacon.MaxDistance = 400
+	beacon.Enabled = false
+	local beaconText = Instance.new("TextLabel")
+	beaconText.Size = UDim2.fromScale(1, 1)
+	beaconText.BackgroundTransparency = 1
+	beaconText.Font = Enum.Font.GothamBlack
+	beaconText.TextScaled = true
+	beaconText.TextColor3 = Color3.fromRGB(255, 214, 140)
+	beaconText.Text = "PUNCH ME\nv"
+	beaconText.Parent = beacon
+	local beaconStroke = Instance.new("UIStroke")
+	beaconStroke.Thickness = 2
+	beaconStroke.Color = Color3.fromRGB(20, 14, 10)
+	beaconStroke.Parent = beaconText
+	beacon.Parent = holder
+
+	local function nearestRock(): Model?
+		local hrp = localHrp()
+		if not hrp then
+			return nil
+		end
+		local best: Model? = nil
+		local bestDist = 260
+		for _, inst in CollectionService:GetTagged(TAG) do
+			local model = inst :: Model
+			if model:GetAttribute("Alive") == true and model.PrimaryPart then
+				local island = model:GetAttribute("Island")
+				if island == nil or Store.data.islands.unlocked[island] then
+					local d = (model.PrimaryPart.Position - hrp.Position).Magnitude
+					if d < bestDist then
+						best, bestDist = model, d
+					end
+				end
+			end
+		end
+		return best
+	end
+
+	task.spawn(function()
+		while true do
+			task.wait(0.15)
+			local d = Store.data
+			local wanted = d ~= nil and not d.tutorial.flags.destroyed
+			if wanted then
+				local rock = nearestRock()
+				if rock and rock.PrimaryPart then
+					beacon.Adornee = rock.PrimaryPart
+					local height: number = (rock:GetAttribute("Height") :: number?) or 5
+					beacon.StudsOffsetWorldSpace = Vector3.new(0, height * 0.55 + 3.5 + math.sin(os.clock() * 4) * 0.5, 0)
+					beacon.Enabled = true
+				else
+					beacon.Enabled = false
+				end
+			else
+				beacon.Enabled = false
+			end
+		end
+	end)
+
 	task.spawn(function()
 		while true do
 			task.wait(0.08)

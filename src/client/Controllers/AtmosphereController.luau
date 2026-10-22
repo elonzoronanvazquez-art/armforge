@@ -15,7 +15,7 @@ local AtmosphereController = {}
 
 local THEMES = {
 	Forgeheart = { clock = 16.2, ambient = Color3.fromRGB(70, 64, 78), outdoor = Color3.fromRGB(104, 96, 110), atmoColor = Color3.fromRGB(255, 196, 150), decay = Color3.fromRGB(150, 110, 120), density = 0.32, tint = Color3.fromRGB(255, 244, 232), brightness = 2.6 },
-	Crystalfall = { clock = 11.4, ambient = Color3.fromRGB(80, 90, 130), outdoor = Color3.fromRGB(120, 138, 186), atmoColor = Color3.fromRGB(190, 210, 255), decay = Color3.fromRGB(120, 130, 190), density = 0.3, tint = Color3.fromRGB(235, 240, 255), brightness = 2.9 },
+	Crystalfall = { clock = 14.8, ambient = Color3.fromRGB(70, 84, 124), outdoor = Color3.fromRGB(104, 122, 170), atmoColor = Color3.fromRGB(170, 196, 255), decay = Color3.fromRGB(110, 120, 190), density = 0.34, tint = Color3.fromRGB(230, 236, 255), brightness = 2.0 },
 	Emberfang = { clock = 19.2, ambient = Color3.fromRGB(96, 56, 50), outdoor = Color3.fromRGB(132, 80, 70), atmoColor = Color3.fromRGB(255, 120, 80), decay = Color3.fromRGB(150, 60, 50), density = 0.42, tint = Color3.fromRGB(255, 226, 210), brightness = 2.0 },
 	Voidreach = { clock = 22.5, ambient = Color3.fromRGB(60, 44, 90), outdoor = Color3.fromRGB(80, 60, 120), atmoColor = Color3.fromRGB(140, 100, 220), decay = Color3.fromRGB(60, 40, 110), density = 0.4, tint = Color3.fromRGB(230, 220, 255), brightness = 1.6 },
 }

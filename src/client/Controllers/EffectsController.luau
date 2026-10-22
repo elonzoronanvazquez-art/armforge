@@ -257,7 +257,7 @@ local function flash(pos: Vector3, color: Color3, size: number, life: number)
 		part = ball,
 		t0 = os.clock(),
 		life = life,
-		update = function(p, k)
+		update = function(p: Part, k: number)
 			local s = size * (0.4 + 1.1 * (1 - (1 - k) ^ 2))
 			p.Size = Vector3.new(s, s, s)
 			p.Transparency = 0.1 + 0.9 * k
@@ -265,7 +265,7 @@ local function flash(pos: Vector3, color: Color3, size: number, life: number)
 				light.Brightness = 3 * (1 - k)
 			end
 		end,
-		done = function(p)
+		done = function(p: Part)
 			if light then
 				light:Destroy()
 				lightsActive -= 1
@@ -289,12 +289,12 @@ local function ring(pos: Vector3, normal: Vector3, color: Color3, startSize: num
 		part = r,
 		t0 = os.clock(),
 		life = life,
-		update = function(p, k)
+		update = function(p: Part, k: number)
 			local s = startSize + (endSize - startSize) * (1 - (1 - k) ^ 3)
 			p.Size = Vector3.new(0.18 * (1 - k * 0.6), s, s)
 			p.Transparency = 0.25 + 0.75 * k
 		end,
-		done = function(p)
+		done = function(p: Part)
 			p.Parent = nil
 			table.insert(freeRings, p)
 		end,

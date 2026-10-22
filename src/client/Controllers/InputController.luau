@@ -35,7 +35,7 @@ local SKILL_KEYS: { [Enum.KeyCode]: number } = {
 local pointerHeld = false
 
 function InputController.start()
-	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui") :: PlayerGui
 
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then

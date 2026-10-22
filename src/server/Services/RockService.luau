@@ -64,7 +64,7 @@ function RockService.near(pos: Vector3, radius: number, exclude: number?): { Ent
 			end
 		end
 	end
-	table.sort(out, function(a, b)
+	table.sort(out, function(a: { e: Entry, d: number }, b: { e: Entry, d: number })
 		return a.d < b.d
 	end)
 	local list = {}

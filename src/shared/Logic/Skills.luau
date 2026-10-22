@@ -56,7 +56,7 @@ end
 
 -- Numeric effect of a skill at a rank, including the equipped arm's affinity.
 function Skills.effect(id: string, rank: number, armId: string): { [string]: number }
-	local fx = SkillConfig.Effects[id] :: any
+	local fx = (SkillConfig.Effects :: any)[id]
 	local boost = 1 + Skills.affinity(armId, id)
 	if id == "ChargedSmash" then
 		return { damageMult = at(fx.damageMult, rank) * boost, windup = fx.windup, minChunks = fx.minChunks }

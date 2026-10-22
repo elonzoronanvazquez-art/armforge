@@ -174,21 +174,22 @@ local function onPunch(player: Player, rockIdRaw: any, _seq: any)
 	if not entry then
 		return
 	end
-	local generation = entry.state.generation
+	local target: RockService.Entry = entry
+	local generation = target.state.generation
 	task.delay(delay, function()
 		if not Sessions.ready(player) then
 			return
 		end
 		local _, hrp2 = liveCharacter(player)
-		if not hrp2 or not entry.state.alive or entry.state.generation ~= generation then
+		if not hrp2 or not target.state.alive or target.state.generation ~= generation then
 			return
 		end
 		-- the attacker may have moved: allow generous slack but not teleporting
-		if not RockService.inReach(entry, hrp2.Position, stats.reach, Game.Combat.reachSlack + 4) then
+		if not RockService.inReach(target, hrp2.Position, stats.reach, Game.Combat.reachSlack + 4) then
 			return
 		end
-		local hit = Combat.resolveHit(stats, entry.def, comboIndex, rng, nil)
-		applyStrike(session, player, entry, stats, hit, move, hrp2, nil)
+		local hit = Combat.resolveHit(stats, target.def, comboIndex, rng, nil)
+		applyStrike(session, player, target, stats, hit, move, hrp2, nil)
 	end)
 end
 

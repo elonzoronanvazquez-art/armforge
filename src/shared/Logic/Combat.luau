@@ -39,7 +39,7 @@ export type Stats = {
 	trait: string,
 }
 
-export type Rng = { next: (Rng) -> number }
+export type Rng = { next: (any) -> number }
 
 export type HitOpts = { skillMult: number?, guaranteedCrit: boolean?, noTrait: boolean? }
 

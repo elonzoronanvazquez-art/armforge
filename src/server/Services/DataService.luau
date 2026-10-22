@@ -109,7 +109,9 @@ function DataService.save(session: Sessions.Session, release: boolean): boolean
 	if not store or not session.data then
 		return false
 	end
-	local ok, err = Persistence.retry(Game.Data.saveRetries, task.wait, function()
+	local ok, err = Persistence.retry(Game.Data.saveRetries, function(seconds: number)
+		task.wait(seconds)
+	end, function()
 		return Persistence.save(store :: any, key(session.userId), session.data, game.JobId ~= "" and game.JobId or "studio", os.time(), release)
 	end)
 	if ok then

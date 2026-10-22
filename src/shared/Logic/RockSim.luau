@@ -91,7 +91,7 @@ local function candidates(state: State, hitDir: Vector3?): { number }
 			end
 		end
 	end
-	table.sort(list, function(a, b)
+	table.sort(list, function(a: { index: number, score: number }, b: { index: number, score: number })
 		if a.score ~= b.score then
 			return a.score < b.score
 		end

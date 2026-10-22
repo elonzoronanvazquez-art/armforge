@@ -29,11 +29,12 @@ local UI = require(UIFolder:WaitForChild("UI"))
 local Hud = require(UIFolder:WaitForChild("Hud"))
 local Notifications = require(UIFolder:WaitForChild("Notifications"))
 local Panels = require(UIFolder:WaitForChild("Panels"))
+local Splash = require(UIFolder:WaitForChild("Splash"))
 
 local function safe(name: string, fn: () -> ())
-	local ok, err = xpcall(function(): any
-		return fn()
-	end, debug.traceback)
+	local ok, err = xpcall(fn :: any, function(e: any): string
+		return debug.traceback(tostring(e))
+	end)
 	if not ok then
 		warn(`[ARMFORGE] {name} failed to start: {err}`)
 	end
@@ -54,6 +55,7 @@ safe("DevCam", DevCamController.start)
 safe("UI", function()
 	UI.start(Panels.list(), Hud)
 	Notifications.start(UI.root :: Frame)
+	Splash.show(UI.root :: Frame)
 end)
 safe("InputController", InputController.start)
 
