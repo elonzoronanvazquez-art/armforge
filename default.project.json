@@ -1,6 +1,8 @@
 {
   "name": "ARMFORGE",
-  "globIgnorePaths": ["**/*.spec.luau"],
+  "globIgnorePaths": [
+    "**/*.spec.luau"
+  ],
   "tree": {
     "$className": "DataModel",
     "Workspace": {
@@ -21,17 +23,29 @@
     },
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "Armforge": { "$path": "src/shared" }
+      "Armforge": {
+        "$path": "src/shared"
+      }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "Armforge": { "$path": "src/server" }
+      "Armforge": {
+        "$path": "src/server"
+      }
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "Armforge": { "$path": "src/client" }
+        "Armforge": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future"
       }
     }
   }

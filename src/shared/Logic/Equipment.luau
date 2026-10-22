@@ -172,6 +172,7 @@ function Equipment.visualRecipe(data: any, armId: string): any
 		reflectance = finish.reflectance,
 		glowScale = glow.scale,
 		tier = tier,
+		tint = if sel.palette ~= "Default" then palette.primary else nil,
 	}
 end
 

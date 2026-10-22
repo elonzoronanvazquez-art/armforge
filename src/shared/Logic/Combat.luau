@@ -41,6 +41,8 @@ export type Stats = {
 
 export type Rng = { next: (Rng) -> number }
 
+export type HitOpts = { skillMult: number?, guaranteedCrit: boolean?, noTrait: boolean? }
+
 export type Hit = {
 	damage: number,
 	crit: boolean,
@@ -141,9 +143,9 @@ function Combat.resolveHit(
 	rock: { family: string, resistance: number },
 	comboIndex: number,
 	rng: Rng,
-	opts: { skillMult: number?, guaranteedCrit: boolean?, noTrait: boolean? }?
+	opts: HitOpts?
 ): Hit
-	local o = opts or {}
+	local o: HitOpts = opts or {}
 	local raw = stats.power * (o.skillMult or 1)
 	local hit: Hit = {
 		damage = 0,

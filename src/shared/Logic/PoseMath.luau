@@ -40,7 +40,7 @@ function PoseMath.sample(move: Move, t: number): Pose
 		out[joint] = v:Lerp(hi.pose[joint] or ZERO, a)
 	end
 	for joint, v in hi.pose do
-		if out[joint] == nil then
+		if not out[joint] then
 			out[joint] = ZERO:Lerp(v, a)
 		end
 	end

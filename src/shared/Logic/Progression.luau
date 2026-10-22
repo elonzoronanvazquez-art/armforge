@@ -3,7 +3,6 @@
 
 local Config = script.Parent.Parent.Config
 local ProgressionConfig = require(Config.Progression)
-local Arms = require(Config.Arms)
 local Training = require(Config.Training)
 local Skills = require(Config.Skills)
 local Formulas = require(script.Parent.Formulas)
@@ -127,7 +126,7 @@ function Progression.rebirth(data: any): { ok: boolean, err: string?, rebirths: 
 		end
 	end
 	data.rebirths += 1
-	for id, n in rules.reward.boosters do
+	for id, n in (rules.reward.boosters :: { [string]: number }) do
 		Boosters.give(data, id, n)
 	end
 	data.shards += rules.reward.shards

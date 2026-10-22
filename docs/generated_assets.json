@@ -55,5 +55,200 @@
    1.6374871730804443
   ],
   "parts": 1
+ },
+ "CoreQuartz": {
+  "prompt": "a tall cluster of translucent white lavender quartz crystal spires, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://126003500634902",
+  "textureId": "rbxassetid://116870406169815",
+  "size": [
+   4,
+   6.828682899475098,
+   3.9317619800567627
+  ],
+  "parts": 1
+ },
+ "CoreAmethyst": {
+  "prompt": "a cluster of deep violet amethyst crystals pointing upward, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://72315913314263",
+  "textureId": "rbxassetid://115276928882439",
+  "size": [
+   5,
+   3.9955291748046875,
+   4.886935234069824
+  ],
+  "parts": 1
+ },
+ "CoreMagma": {
+  "prompt": "a lump of cracked black rock with glowing orange lava seams, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://124294163386112",
+  "textureId": "rbxassetid://116305625529658",
+  "size": [
+   4.5,
+   3.692317008972168,
+   3.479062557220459
+  ],
+  "parts": 1
+ },
+ "CoreObsidian": {
+  "prompt": "a jagged cluster of black volcanic glass shards with violet inner glow, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://120536325372690",
+  "textureId": "rbxassetid://101570599636057",
+  "size": [
+   5,
+   5.025592803955078,
+   4.993282318115234
+  ],
+  "parts": 1
+ },
+ "ArmStonebreaker": {
+  "prompt": "a massive armored gauntlet glove made of stacked stone slabs with large blocky knuckle plates, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://120900745139294",
+  "textureId": "rbxassetid://104716423497508",
+  "size": [
+   1.9919254779815674,
+   3.1999998092651367,
+   1.5223067998886108
+  ],
+  "parts": 1
+ },
+ "ArmAlloy": {
+  "prompt": "an industrial mechanical armored gauntlet with steel plating, hydraulic pistons and yellow and black hazard stripes, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://118555248878035",
+  "textureId": "rbxassetid://86440920338838",
+  "size": [
+   1.740358829498291,
+   3,
+   1.5701379776000977
+  ],
+  "parts": 1
+ },
+ "ArmCrystal": {
+  "prompt": "an armored gauntlet glove of white plating with faceted cyan crystal shards growing out of it, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://116137361607302",
+  "textureId": "rbxassetid://105391374076938",
+  "size": [
+   1.8250538110733032,
+   3.1999998092651367,
+   1.4961003065109253
+  ],
+  "parts": 1
+ },
+ "ArmMagma": {
+  "prompt": "a black basalt armored gauntlet glove with glowing orange lava cracks and spiked fins, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://118915943920906",
+  "textureId": "rbxassetid://130222934109698",
+  "size": [
+   2.024521589279175,
+   3.4000000953674316,
+   1.843759298324585
+  ],
+  "parts": 1
+ },
+ "ArmVoid": {
+  "prompt": "a dark armored gauntlet glove of black metal with violet starlight inlays and sharp fins, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://117342570156641",
+  "textureId": "rbxassetid://138822422534432",
+  "size": [
+   1.1196483373641968,
+   3.200000047683716,
+   1.8778021335601807
+  ],
+  "parts": 1
+ },
+ "ArmStarter": {
+  "prompt": "a taped leather wrapped boxing glove with a bandaged wrist, simple, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://124223543319658",
+  "textureId": "rbxassetid://103461283117558",
+  "size": [
+   2.106735944747925,
+   2.200000047683716,
+   1.240041971206665
+  ],
+  "parts": 1
+ },
+ "ForgeHero": {
+  "prompt": "a giant industrial forge machine with an anvil, glowing furnace, robotic press arms and chimneys, stylized game landmark",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://77804505158751",
+  "textureId": "rbxassetid://98347797221175",
+  "size": [
+   24.88015365600586,
+   22,
+   23.01425552368164
+  ],
+  "parts": 1
+ },
+ "HaloGate": {
+  "prompt": "a gigantic ring shaped metallic gate with a glowing orange inner ring, stylized game landmark",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://92411368323283",
+  "textureId": "rbxassetid://128847417376045",
+  "size": [
+   16.697906494140625,
+   15.442764282226562,
+   6
+  ],
+  "parts": 1
+ },
+ "CrystalArch": {
+  "prompt": "a giant natural arch of translucent blue and purple crystals, stylized game landmark",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://94377176137444",
+  "textureId": "rbxassetid://79479329800552",
+  "size": [
+   14.786737442016602,
+   15.131840705871582,
+   11.999999046325684
+  ],
+  "parts": 1
+ },
+ "EmberFang": {
+  "prompt": "a towering black volcanic fang spire rock with glowing lava cracks, stylized game landmark",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://137132417558763",
+  "textureId": "rbxassetid://114672101356689",
+  "size": [
+   21.99300193786621,
+   31.092891693115234,
+   21.999998092651367
+  ],
+  "parts": 1
+ },
+ "Pedestal": {
+  "prompt": "a sci-fi display pedestal with a glowing ring and a metallic base, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://125362622662565",
+  "textureId": "rbxassetid://117750215840109",
+  "size": [
+   3.977403163909912,
+   3,
+   4.519482135772705
+  ],
+  "parts": 1
  }
 }

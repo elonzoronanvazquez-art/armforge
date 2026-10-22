@@ -57,7 +57,7 @@ Cosmetics.Kinds = {
 	finish = Cosmetics.Finishes,
 	trail = Cosmetics.Trails,
 	glow = Cosmetics.Glows,
-} :: { [string]: { [string]: { name: string, cost: number } } }
+} :: any
 
 Cosmetics.KindOrder = { "palette", "finish", "trail", "glow" }
 
