@@ -240,6 +240,37 @@ local COMMANDS: { [string]: (...any) -> any } = {
 		local hrp = p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		return hrp and tostring(hrp.Position)
 	end,
+	-- Applies authoritative damage to a rock as the local player (fires the same effects as a real strike).
+	hitRock = function(id: number, damage: number, crit: boolean?)
+		local player = DevTools.player()
+		local entry = RockService.get(id)
+		if not (player and entry) then
+			return "no rock"
+		end
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local dir = if hrp then (hrp.Position - entry.center).Unit else Vector3.new(0, 0, 1)
+		local result = RockService.damage(entry, player, player.UserId, damage, {
+			hitDir = dir,
+			power = 1,
+			crit = crit == true,
+			hitPos = entry.center + dir * entry.state.layout.radius * 0.9,
+		})
+		return result and { hp = result.hp, stage = result.stage, removed = #result.removed, killed = result.killed } or "ignored"
+	end,
+	-- Simulates two different players damaging one rock; returns how many reward callbacks fired (must be 1 per contributor).
+	contend = function(defId: string)
+		local entry = RockService.spawnAt(defId, Vector3.new(0, 0.6, 140))
+		local calls = 0
+		local half = entry.state.maxHp / 2
+		RockService.damage(entry, nil, 900001, half, { hitDir = Vector3.zAxis })
+		RockService.damage(entry, nil, 900002, half + 5, { hitDir = Vector3.zAxis })
+		local again = RockService.damage(entry, nil, 900001, 999, { hitDir = Vector3.zAxis })
+		for _ in entry.state.contributors do
+			calls += 1
+		end
+		return { contributors = calls, paid = entry.state.paid, alive = entry.state.alive, secondKill = again ~= nil }
+	end,
 	spawnRock = function(defId: string, x: number, y: number, z: number)
 		return RockService.spawnAt(defId, Vector3.new(x, y, z)).id
 	end,

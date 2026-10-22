@@ -21,6 +21,11 @@ PROMPTS = {
     # rock chunks (neutral grey so the game can tint every layer)
     "ShardA": ("a single chunky faceted stone rock fragment with flat cleaved faces, neutral mid gray, low poly stylized game asset", (3, 2.4, 3), 1500),
     "ShardB": ("a flat angular broken slab of stone, neutral gray, low poly stylized game asset", (4, 1.6, 3), 1500),
+    # low-poly rock chunks for the destruction system (many of these are on screen at once, so triangle count matters)
+    "RockA": ("a rugged angular chunk of stone with chipped flat facets, stylized game rock, simple shapes", (3, 2.4, 3), 450),
+    "RockB": ("a broken flat slab of stone with sharp chipped edges, stylized game rock, simple shapes", (4, 1.8, 3), 450),
+    "RockC": ("a sharp pointed wedge shaped shard of stone, stylized game rock, simple shapes", (2.4, 3, 2.4), 450),
+    "CrystalShard": ("a single tall faceted gemstone crystal pointing up, stylized game asset, simple shapes", (1.6, 4, 1.6), 450),
     # crystal / magma cores
     "CoreCrystalCyan": ("a geode cluster of glowing cyan and magenta crystal points, stylized game asset", (4.5, 5, 4.5), 4000),
     "CoreQuartz": ("a tall cluster of translucent white lavender quartz crystal spires, stylized game asset", (4, 9, 4), 4000),

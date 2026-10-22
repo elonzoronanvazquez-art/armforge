@@ -75,7 +75,7 @@ local function meshTemplate(key: string): MeshPart?
 		return nil
 	end
 	local ok, mesh = pcall(function()
-		return game:GetService("AssetService"):CreateMeshPartAsync(info.mesh :: any)
+		return game:GetService("AssetService"):CreateMeshPartAsync(info.mesh :: any, { CollisionFidelity = Enum.CollisionFidelity.Box })
 	end)
 	if ok and mesh then
 		if info.texture then

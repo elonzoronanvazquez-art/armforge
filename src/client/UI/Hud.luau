@@ -222,7 +222,8 @@ local function buildArmCard(root: Frame)
 	local card = W.card({
 		Name = "ArmCard",
 		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 14, 1, -14),
+		-- on touch screens the left thumbstick lives bottom-left, so the card floats above it
+		Position = if W.isTouch() then UDim2.new(0, 14, 1, -190) else UDim2.new(0, 14, 1, -14),
 		Size = UDim2.fromOffset(250, 64),
 		Parent = root,
 	})
@@ -316,7 +317,7 @@ local function buildPunchButton(root: Frame)
 	local btn = W.new("TextButton", {
 		Name = "PunchButton",
 		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -100, 1, -24),
+		Position = UDim2.new(1, -170, 1, -30),
 		Size = UDim2.fromOffset(112, 112),
 		BackgroundColor3 = C.accent,
 		Text = "PUNCH",

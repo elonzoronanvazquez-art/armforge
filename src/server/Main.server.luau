@@ -27,6 +27,7 @@ DataService.init()
 
 local world = WorldBuilder.build(PlayerService.registerSpawn)
 RockService.init(world)
+require(script.Parent.World.RockBuilder).preload()
 local rockCount = RockService.populate()
 print(`[ARMFORGE] world built in {string.format("%.1f", os.clock() - t0)}s, {rockCount} rocks`)
 

@@ -4,9 +4,11 @@
 -- The server strips chunks as the rock takes damage (RockService); clients render the debris themselves.
 
 local CollectionService = game:GetService("CollectionService")
+local AssetService = game:GetService("AssetService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local RockConfig = require(Shared.Config.Rocks)
+local Assets = require(Shared.Config.Assets)
 local Geometry = require(Shared.Logic.RockGeometry)
 
 local RockBuilder = {}
@@ -14,6 +16,61 @@ local RockBuilder = {}
 export type Built = { model: Model, chunks: { [number]: BasePart }, collider: BasePart, light: PointLight? }
 
 RockBuilder.TAG = "ArmRock"
+
+-- AI-generated meshes (Config/Assets.Meshes): low-poly stone chunks for shell/mid layers, a crystal for exposed shards,
+-- and one "heart" mesh per rock type for the centre of the core. Every one falls back to a primitive part when missing.
+local CHUNK_KEYS = { "RockA", "RockB", "RockC" }
+local CORE_KEYS: { [string]: string } = {
+	Prism = "CoreCrystalCyan",
+	Quartz = "CoreQuartz",
+	Amethyst = "CoreAmethyst",
+	Heartstone = "CoreCrystalCyan",
+	Basalt = "CoreMagma",
+	MagmaCore = "CoreMagma",
+	Obsidian = "CoreObsidian",
+}
+
+local templates: { [string]: MeshPart | boolean } = {}
+
+local function template(key: string): MeshPart?
+	local cached = templates[key]
+	if cached ~= nil then
+		return if cached == false then nil else cached :: MeshPart
+	end
+	local info = Assets.Meshes[key]
+	if not info then
+		templates[key] = false
+		return nil
+	end
+	local ok, mesh = pcall(function()
+		return AssetService:CreateMeshPartAsync(info.mesh :: any, { CollisionFidelity = Enum.CollisionFidelity.Box })
+	end)
+	if not (ok and mesh) then
+		warn(`[ARMFORGE] rock mesh {key} failed to load; using primitive stand-ins`)
+		templates[key] = false
+		return nil
+	end
+	if info.texture then
+		mesh.TextureID = info.texture :: any
+	end
+	mesh.Anchored = true
+	mesh.CanCollide = false
+	mesh.CanQuery = false
+	mesh.CanTouch = false
+	templates[key] = mesh
+	return mesh
+end
+
+-- Loads every rock mesh up front so respawns never hitch on an asset download.
+function RockBuilder.preload()
+	for _, key in CHUNK_KEYS do
+		template(key)
+	end
+	template("CrystalShard")
+	for _, key in CORE_KEYS do
+		template(key)
+	end
+end
 
 -- deterministic tiny colour variation so neighbouring chunks differ
 local function vary(color: Color3, index: number, amount: number): Color3
@@ -23,7 +80,31 @@ local function vary(color: Color3, index: number, amount: number): Color3
 	return Color3.fromHSV(h, s, math.clamp(v * (1 + f * amount), 0, 1))
 end
 
-local function makeChunkPart(chunk: Geometry.Chunk): BasePart
+-- Creates the part for one chunk and returns it with a flag saying whether it is an AI mesh (whose thin axis is Y).
+-- Meshes whose thin axis is Z (everything else is authored thin-on-Y / tall-on-Y).
+local THIN_Z: { [string]: boolean } = { RockB = true }
+-- Meshes whose baked texture is dropped so the rock's own colours (and Glass / Neon materials) show instead.
+local PLAIN_COLOUR: { [string]: boolean } = { CrystalShard = true, RockA = true, RockB = true, RockC = true }
+
+local function makeChunkPart(chunk: Geometry.Chunk, def: RockConfig.RockDef, isCentreCore: boolean): (BasePart, boolean, string?)
+	local meshKey: string? = nil
+	if chunk.layer == 3 then
+		if isCentreCore then
+			meshKey = CORE_KEYS[def.id]
+		end
+	elseif chunk.shape == "Shard" then
+		meshKey = "CrystalShard"
+	else
+		meshKey = CHUNK_KEYS[chunk.variant]
+	end
+	local tpl = if meshKey then template(meshKey) else nil
+	if tpl then
+		local clone = tpl:Clone()
+		if meshKey and (PLAIN_COLOUR[meshKey] or (isCentreCore and def.id == "Heartstone")) then
+			clone.TextureID = ""
+		end
+		return clone, true, meshKey
+	end
 	local part: BasePart
 	if chunk.shape == "Wedge" or chunk.shape == "Shard" then
 		part = Instance.new("WedgePart")
@@ -34,7 +115,7 @@ local function makeChunkPart(chunk: Geometry.Chunk): BasePart
 	else
 		part = Instance.new("Part")
 	end
-	return part
+	return part, false, nil
 end
 
 function RockBuilder.build(def: RockConfig.RockDef, layout: Geometry.Layout, base: CFrame, id: number, parent: Instance): Built
@@ -53,8 +134,13 @@ function RockBuilder.build(def: RockConfig.RockDef, layout: Geometry.Layout, bas
 
 	local chunks: { [number]: BasePart } = {}
 	local glowChunk: BasePart? = nil
+	local centreDone = false
 	for _, chunk in layout.chunks do
-		local part = makeChunkPart(chunk)
+		local isCentre = chunk.layer == 3 and not centreDone
+		if chunk.layer == 3 then
+			centreDone = true
+		end
+		local part, isMesh, meshKey = makeChunkPart(chunk, def, isCentre)
 		part.Name = `C{chunk.index}`
 		part.Anchored = true
 		part.CanCollide = false
@@ -63,7 +149,6 @@ function RockBuilder.build(def: RockConfig.RockDef, layout: Geometry.Layout, bas
 		part.CastShadow = chunk.layer == 1
 		part.TopSurface = Enum.SurfaceType.Smooth
 		part.BottomSurface = Enum.SurfaceType.Smooth
-		part.Size = chunk.size
 		local layerKey = if chunk.layer == 1 then "shell" elseif chunk.layer == 2 then "mid" else "core"
 		part.Material = (def.materials :: any)[layerKey]
 		local color: Color3 = (def.colors :: any)[layerKey]
@@ -72,7 +157,30 @@ function RockBuilder.build(def: RockConfig.RockDef, layout: Geometry.Layout, bas
 			-- exposed mineral layer glows faintly so damage reads from a distance
 			part.Reflectance = 0.05
 		end
-		part.CFrame = base * CFrame.lookAt(chunk.pos, chunk.pos + chunk.dir) * CFrame.Angles(0, 0, chunk.roll)
+		if isMesh and meshKey and THIN_Z[meshKey] and chunk.layer ~= 3 then
+			-- thin-on-Z meshes use the same orientation as primitive chunks (Z = thickness along the outward direction)
+			part.Size = chunk.size
+			part.CFrame = base * CFrame.lookAt(chunk.pos, chunk.pos + chunk.dir) * CFrame.Angles(0, 0, chunk.roll)
+			part.Material = (def.materials :: any)[layerKey]
+		elseif isMesh then
+			-- AI meshes are authored with their thin axis on Y: point Y along the chunk's outward direction
+			local up = chunk.dir
+			local ref = if math.abs(up.Y) < 0.9 then Vector3.yAxis else Vector3.xAxis
+			local x = ref:Cross(up).Unit
+			local z = x:Cross(up)
+			if chunk.layer == 3 then
+				local s = layout.radius * 1.5
+				part.Size = Vector3.new(s, s * 1.1, s)
+				part.CFrame = base * CFrame.new(chunk.pos) * CFrame.Angles(0, chunk.roll, 0)
+			else
+				part.Size = Vector3.new(chunk.size.X, chunk.size.Z, chunk.size.Y)
+				part.CFrame = base * CFrame.fromMatrix(chunk.pos, x, up, z) * CFrame.Angles(0, chunk.roll, 0)
+			end
+			part.Material = if chunk.layer == 3 then Enum.Material.SmoothPlastic else (def.materials :: any)[layerKey]
+		else
+			part.Size = chunk.size
+			part.CFrame = base * CFrame.lookAt(chunk.pos, chunk.pos + chunk.dir) * CFrame.Angles(0, 0, chunk.roll)
+		end
 		part.Parent = model
 		chunks[chunk.index] = part
 		if chunk.layer == 3 and glowChunk == nil then

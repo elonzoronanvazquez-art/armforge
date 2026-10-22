@@ -35,6 +35,7 @@ UI.current = nil :: string?
 
 local panels: { [string]: Panel } = {}
 local windows: { [string]: Frame } = {}
+local windowScales: { [string]: UIScale } = {}
 local dimmer: TextButton
 local scaleObj: UIScale
 
@@ -43,7 +44,7 @@ local function computeScale(): number
 	local vp = if cam then cam.ViewportSize else Vector2.new(1280, 720)
 	local base = math.min(vp.X / Theme.designSize.X, vp.Y / Theme.designSize.Y)
 	local user = (Store.data and Store.data.settings and Store.data.settings.uiScale) or 1
-	local touch = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
+	local touch = UserInputService.TouchEnabled
 	local floor = if touch then 0.62 else 0.55
 	return math.clamp(base, floor, 1.35) * user * (if touch then 1.08 else 1)
 end
@@ -91,6 +92,12 @@ function UI.open(name: string, args: any?)
 		UI.close()
 	end
 	UI.current = name
+	-- shrink the window to fit small screens (phones): its layout is authored at panel.size
+	local cam = workspace.CurrentCamera
+	if cam and scaleObj then
+		local vp = cam.ViewportSize / scaleObj.Scale
+		windowScales[name].Scale = math.min(1, vp.X * 0.97 / panel.size.X, vp.Y * 0.95 / panel.size.Y)
+	end
 	local win = windows[name]
 	dimmer.Visible = true
 	win.Visible = true
@@ -150,6 +157,8 @@ local function buildWindow(panel: Panel, root: Frame)
 	local content = W.frame({ Name = "Content", Position = UDim2.fromOffset(0, 48), Size = UDim2.new(1, 0, 1, -48), ClipsDescendants = true, Parent = win })
 	panel.build(content)
 	windows[panel.name] = win
+	windowScales[panel.name] = Instance.new("UIScale")
+	windowScales[panel.name].Parent = win
 end
 
 function UI.start(modules: { Panel }, hud: { build: (root: Frame) -> () })

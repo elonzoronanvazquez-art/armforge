@@ -173,7 +173,7 @@ function Build.mesh(parent: Instance, key: string, cf: CFrame, scale: number, co
 	local template = meshCache[key]
 	if template == nil then
 		local ok, mesh = pcall(function()
-			return AssetService:CreateMeshPartAsync(info.mesh :: any)
+			return AssetService:CreateMeshPartAsync(info.mesh :: any, { CollisionFidelity = Enum.CollisionFidelity.Box })
 		end)
 		if not (ok and mesh) then
 			warn(`[ARMFORGE] mesh {key} failed to load, using fallback`)
@@ -193,9 +193,6 @@ function Build.mesh(parent: Instance, key: string, cf: CFrame, scale: number, co
 	part.CanCollide = collide == true
 	part.CanQuery = collide == true
 	part.CanTouch = false
-	if collide then
-		part.CollisionFidelity = Enum.CollisionFidelity.Box
-	end
 	part.Material = Enum.Material.SmoothPlastic
 	part.Parent = parent
 	return part

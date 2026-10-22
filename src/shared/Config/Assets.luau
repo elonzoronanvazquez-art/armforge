@@ -28,6 +28,10 @@ Assets.Meshes = {
 	CrystalArch = { mesh = "rbxassetid://94377176137444", texture = "rbxassetid://79479329800552", size = Vector3.new(14.79, 15.13, 12) },
 	EmberFang = { mesh = "rbxassetid://137132417558763", texture = "rbxassetid://114672101356689", size = Vector3.new(21.99, 31.09, 22) },
 	Pedestal = { mesh = "rbxassetid://125362622662565", texture = "rbxassetid://117750215840109", size = Vector3.new(3.98, 3, 4.52) },
+	RockA = { mesh = "rbxassetid://106586035340637", texture = "rbxassetid://117580761255353", size = Vector3.new(2.94, 1.16, 3.00) },
+	RockB = { mesh = "rbxassetid://84360266223252", texture = "rbxassetid://107260771398098", size = Vector3.new(1.85, 1.80, 0.68) },
+	RockC = { mesh = "rbxassetid://123307241789892", texture = "rbxassetid://95251889563666", size = Vector3.new(1.04, 3.00, 1.06) },
+	CrystalShard = { mesh = "rbxassetid://89820404737224", texture = "rbxassetid://77065705004675", size = Vector3.new(1.07, 4.00, 1.07) },
 } :: { [string]: MeshAsset }
 
 export type Sound = { id: string, volume: number, pitch: { number }, start: number?, length: number? }

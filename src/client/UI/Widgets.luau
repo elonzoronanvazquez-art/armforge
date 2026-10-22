@@ -370,8 +370,9 @@ function Widgets.overGui(playerGui: PlayerGui, position: Vector2): boolean
 	return false
 end
 
+-- True on any touch-capable device (phones, tablets, hybrids): the on-screen PUNCH button and larger targets are used.
 function Widgets.isTouch(): boolean
-	return UserInputService.TouchEnabled and not UserInputService.MouseEnabled
+	return UserInputService.TouchEnabled
 end
 
 return Widgets

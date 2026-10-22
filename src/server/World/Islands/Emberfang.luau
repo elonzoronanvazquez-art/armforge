@@ -61,6 +61,18 @@ function Emberfang.build(folder: Folder, ctx: any)
 	Build.part(gate, { name = "SignPostL", size = V3(0.8, 12, 0.8), cf = CF(gp + V3(-9, 6, 6)), color = Color3.fromRGB(50, 40, 44), material = Enum.Material.Metal })
 	Build.part(gate, { name = "SignPostR", size = V3(0.8, 12, 0.8), cf = CF(gp + V3(9, 6, 6)), color = Color3.fromRGB(50, 40, 44), material = Enum.Material.Metal })
 
+	-- the great fang: a towering landmark seen from every island approach
+	local fx, fz = c.X + 118, c.Z - 24
+	local fy = Build.groundY(fx, fz)
+	if fy then
+		local big = Build.mesh(gate, "EmberFang", CF(fx, fy + 20, fz), 2.6, true)
+		if big then
+			big.CFrame = CF(fx, fy + big.Size.Y / 2 - 1, fz)
+			local glow = Build.part(gate, { name = "FangGlow", size = V3(1, 1, 1), cf = CF(fx, fy + big.Size.Y * 0.4, fz), transparency = 1 })
+			Build.light(glow, ACCENT, 1.6, 70)
+		end
+	end
+
 	-- ring of fangs around the caldera rim + glowing vents
 	local rim = Build.model(folder, "Rim")
 	for i = 1, 22 do

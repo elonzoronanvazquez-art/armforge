@@ -4,7 +4,6 @@
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local Arms = require(Shared.Config.Arms)
-local Assets = require(Shared.Config.Assets)
 local ArmBuilder = require(Shared.Runtime.ArmBuilder)
 local Build = require(script.Parent.Parent.Build)
 local IslandTerrain = require(script.Parent.Parent.IslandTerrain)
@@ -85,44 +84,51 @@ local function buildForge(parent: Instance)
 	Build.part(m, { name = "Step2", size = V3(26, 1.2, 3), cf = CF(FORGE + V3(0, y0 + 1.8, 21.2)), color = Color3.fromRGB(94, 88, 92), material = Enum.Material.Concrete, collide = true })
 	local top = y0 + 4
 
-	-- furnace hall
-	Build.part(m, { name = "Hall", size = V3(34, 20, 22), cf = CF(FORGE + V3(0, top + 10, -6)), color = IRON, material = Enum.Material.Metal, collide = true })
-	Build.part(m, { name = "HallPlate", size = V3(35, 2.4, 23), cf = CF(FORGE + V3(0, top + 20.6, -6)), color = Color3.fromRGB(70, 66, 76), material = Enum.Material.DiamondPlate, collide = true })
-	for i = -1, 1 do
-		Build.part(m, { name = "Rib", size = V3(1.6, 20, 23.4), cf = CF(FORGE + V3(i * 13, top + 10, -6)), color = STEEL, material = Enum.Material.Metal })
-	end
-	-- the furnace mouth
-	Build.part(m, { name = "MouthFrame", size = V3(16, 11, 1.6), cf = CF(FORGE + V3(0, top + 6.5, 5.3)), color = COPPER, material = Enum.Material.Metal })
-	local mouth = Build.part(m, { name = "Mouth", size = V3(13, 8.6, 0.8), cf = CF(FORGE + V3(0, top + 6.5, 5.9)), color = GLOW, neon = true })
-	Build.light(mouth, GLOW, 2.2, 42)
-	Build.emitter(mouth, {
-		Rate = 14,
-		Lifetime = NumberRange.new(1.5, 2.8),
-		Speed = NumberRange.new(2, 5),
-		SpreadAngle = Vector2.new(25, 25),
-		Color = ColorSequence.new(Color3.fromRGB(255, 190, 90)),
-		LightEmission = 1,
-		Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) }),
-		Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) }),
-		Acceleration = Vector3.new(0, 3, 0),
-		EmissionDirection = Enum.NormalId.Front,
-	})
-	-- title sign
-	Build.sign(m, "ARMFORGE", CF(FORGE + V3(0, top + 17.2, 5.5)), V3(26, 4.4, 0.8), Color3.fromRGB(32, 30, 36), CREAM)
-	-- chimneys
-	for _, dx in { -11, 11 } do
-		local chim = Build.pillar(m, "Chimney", FORGE + V3(dx, top + 20, -12), 6.4, 34, { color = Color3.fromRGB(74, 70, 78), material = Enum.Material.Brick, collide = true })
-		local ring = Build.pillar(m, "ChimneyRing", FORGE + V3(dx, top + 52, -12), 7.4, 1.2, { color = GLOW, neon = true })
-		Build.emitter(chim, {
-			Rate = 8,
-			Lifetime = NumberRange.new(5, 8),
-			Speed = NumberRange.new(4, 7),
-			Color = ColorSequence.new(Color3.fromRGB(70, 64, 70)),
-			Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 4), NumberSequenceKeypoint.new(1, 14) }),
-			Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 1) }),
-			Acceleration = Vector3.new(1.5, 1, 0),
+	local hero = Build.mesh(m, "ForgeHero", CF(FORGE + V3(0, top + 24, -2)), 2.1, true)
+	if hero then
+		hero.CFrame = CF(FORGE + V3(0, top + hero.Size.Y / 2 - 0.4, -2))
+		local glow = Build.part(m, { name = "FurnaceGlow", size = V3(1, 1, 1), cf = CF(FORGE + V3(0, top + 8, 10)), transparency = 1 })
+		Build.light(glow, GLOW, 2.4, 46)
+	else
+		-- furnace hall
+		Build.part(m, { name = "Hall", size = V3(34, 20, 22), cf = CF(FORGE + V3(0, top + 10, -6)), color = IRON, material = Enum.Material.Metal, collide = true })
+		Build.part(m, { name = "HallPlate", size = V3(35, 2.4, 23), cf = CF(FORGE + V3(0, top + 20.6, -6)), color = Color3.fromRGB(70, 66, 76), material = Enum.Material.DiamondPlate, collide = true })
+		for i = -1, 1 do
+			Build.part(m, { name = "Rib", size = V3(1.6, 20, 23.4), cf = CF(FORGE + V3(i * 13, top + 10, -6)), color = STEEL, material = Enum.Material.Metal })
+		end
+		-- the furnace mouth
+		Build.part(m, { name = "MouthFrame", size = V3(16, 11, 1.6), cf = CF(FORGE + V3(0, top + 6.5, 5.3)), color = COPPER, material = Enum.Material.Metal })
+		local mouth = Build.part(m, { name = "Mouth", size = V3(13, 8.6, 0.8), cf = CF(FORGE + V3(0, top + 6.5, 5.9)), color = GLOW, neon = true })
+		Build.light(mouth, GLOW, 2.2, 42)
+		Build.emitter(mouth, {
+			Rate = 14,
+			Lifetime = NumberRange.new(1.5, 2.8),
+			Speed = NumberRange.new(2, 5),
+			SpreadAngle = Vector2.new(25, 25),
+			Color = ColorSequence.new(Color3.fromRGB(255, 190, 90)),
+			LightEmission = 1,
+			Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) }),
+			Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) }),
+			Acceleration = Vector3.new(0, 3, 0),
+			EmissionDirection = Enum.NormalId.Front,
 		})
-		ring.Name = "ChimneyGlow"
+		-- title sign
+		Build.sign(m, "ARMFORGE", CF(FORGE + V3(0, top + 17.2, 5.5)), V3(26, 4.4, 0.8), Color3.fromRGB(32, 30, 36), CREAM)
+		-- chimneys
+		for _, dx in { -11, 11 } do
+			local chim = Build.pillar(m, "Chimney", FORGE + V3(dx, top + 20, -12), 6.4, 34, { color = Color3.fromRGB(74, 70, 78), material = Enum.Material.Brick, collide = true })
+			local ring = Build.pillar(m, "ChimneyRing", FORGE + V3(dx, top + 52, -12), 7.4, 1.2, { color = GLOW, neon = true })
+			Build.emitter(chim, {
+				Rate = 8,
+				Lifetime = NumberRange.new(5, 8),
+				Speed = NumberRange.new(4, 7),
+				Color = ColorSequence.new(Color3.fromRGB(70, 64, 70)),
+				Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 4), NumberSequenceKeypoint.new(1, 14) }),
+				Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 1) }),
+				Acceleration = Vector3.new(1.5, 1, 0),
+			})
+			ring.Name = "ChimneyGlow"
+		end
 	end
 	-- anvil in front
 	local ax = FORGE + V3(0, top, 14)
@@ -141,24 +147,6 @@ local function buildForge(parent: Instance)
 		Build.pillar(m, "Pipe", FORGE + V3(dx, top, 4), 2, 17, { color = COPPER, material = Enum.Material.Metal, collide = true })
 		for k = 1, 3 do
 			Build.pillar(m, "PipeBand", FORGE + V3(dx, top + k * 4.5, 4), 2.3, 0.5, { color = GLOW, neon = true })
-		end
-	end
-	-- optional AI hero mesh (kept as a decorative crown if it generated)
-	local hero = Assets.Meshes.ForgeHero
-	if hero then
-		local ok, mesh = pcall(function()
-			return game:GetService("AssetService"):CreateMeshPartAsync(hero.mesh :: any)
-		end)
-		if ok and mesh then
-			mesh.Anchored = true
-			mesh.CanCollide = false
-			mesh.Size = hero.size
-			if hero.texture then
-				mesh.TextureID = hero.texture :: any
-			end
-			mesh.CFrame = CF(FORGE + V3(0, top + 36, -30))
-			mesh.Name = "ForgeHeroMesh"
-			mesh.Parent = m
 		end
 	end
 	return m
@@ -355,8 +343,13 @@ local function buildArmory(parent: Instance)
 		local def = Arms.Defs[armId]
 		local t = (i - 3.5) / 2.5
 		local pos = ARMORY + V3(t * 24, 0, 8 - math.abs(t) * 3)
-		Build.pillar(m, "Pedestal", V3(pos.X, 0.6, pos.Z), 6, 3, { color = Color3.fromRGB(60, 58, 68), material = Enum.Material.Metal, collide = true })
-		Build.disc(m, "PedestalGlow", V3(pos.X, 3.6, pos.Z), 5.4, 0.2, { color = def.palette.glow, neon = true })
+		local pedMesh = Build.mesh(m, "Pedestal", CF(pos.X, 3, pos.Z), 1.7, true)
+		if pedMesh then
+			pedMesh.CFrame = CF(pos.X, 0.6 + pedMesh.Size.Y / 2, pos.Z)
+		else
+			Build.pillar(m, "Pedestal", V3(pos.X, 0.6, pos.Z), 6, 3, { color = Color3.fromRGB(60, 58, 68), material = Enum.Material.Metal, collide = true })
+		end
+		Build.disc(m, "PedestalGlow", V3(pos.X, 0.6 + (if pedMesh then pedMesh.Size.Y else 3) + 0.05, pos.Z), 5.0, 0.2, { color = def.palette.glow, neon = true })
 		local recipe = ArmBuilder.defaultRecipe(armId)
 		recipe.tier = 2
 		local display = ArmBuilder.buildDisplay(recipe, "R")
@@ -420,27 +413,37 @@ function Forgeheart.skyport(parent: Instance, pos: Vector3, label: string, accen
 	Build.disc(m, "Pad", pos + V3(0, 0.55, 0), 34, 1.2, { color = Color3.fromRGB(58, 56, 66), material = Enum.Material.DiamondPlate, collide = true })
 	Build.disc(m, "PadGlow", pos + V3(0, 1.7, 0), 30, 0.1, { color = accent, neon = true })
 	Build.disc(m, "PadInner", pos + V3(0, 1.75, 0), 28.4, 0.1, { color = Color3.fromRGB(40, 40, 50), material = Enum.Material.Metal })
-	-- gate arch
-	for _, dx in { -9, 9 } do
-		Build.part(m, { name = "GatePost", size = V3(2.4, 20, 2.4), cf = cf * CF(dx, 11.6, -4), color = STEEL, material = Enum.Material.Metal, collide = true })
-		Build.part(m, { name = "GateGlow", size = V3(0.6, 18, 0.6), cf = cf * CF(dx * 0.86, 11.6, -4.6), color = accent, neon = true })
+	-- gate arch: the AI-generated ring gate, or primitive posts if it cannot load
+	local gate = Build.mesh(m, "HaloGate", cf * CF(0, 24, -4), 2.8, false)
+	local gateTop = 22.6
+	if gate then
+		gate.CFrame = cf * CF(0, 1.7 + gate.Size.Y / 2, -4)
+		gateTop = 1.7 + gate.Size.Y
+		-- collision for the two legs only, so players can walk through the opening
+		for _, dx in { -1, 1 } do
+			Build.part(m, { name = "GateLegCollider", size = V3(gate.Size.X * 0.16, gate.Size.Y * 0.8, gate.Size.Z), cf = cf * CF(dx * gate.Size.X * 0.4, 1.7 + gate.Size.Y * 0.4, -4), transparency = 1, collide = true })
+		end
+	else
+		for _, dx in { -9, 9 } do
+			Build.part(m, { name = "GatePost", size = V3(2.4, 20, 2.4), cf = cf * CF(dx, 11.6, -4), color = STEEL, material = Enum.Material.Metal, collide = true })
+			Build.part(m, { name = "GateGlow", size = V3(0.6, 18, 0.6), cf = cf * CF(dx * 0.86, 11.6, -4.6), color = accent, neon = true })
+		end
+		Build.part(m, { name = "GateTop", size = V3(24, 2.6, 3), cf = cf * CF(0, 22.6, -4), color = IRON, material = Enum.Material.Metal })
 	end
-	Build.part(m, { name = "GateTop", size = V3(24, 2.6, 3), cf = cf * CF(0, 22.6, -4), color = IRON, material = Enum.Material.Metal })
-	Build.sign(m, label, cf * CF(0, 22.6, -5.6) * ANG(0, math.pi, 0), V3(20, 2, 0.4), Color3.fromRGB(30, 28, 34), accent)
+	Build.sign(m, label, cf * CF(0, gateTop + 3, -4) * ANG(0, math.pi, 0), V3(20, 2.4, 0.4), Color3.fromRGB(30, 28, 34), accent)
 	-- the portal curtain
-	local curtain = Build.part(m, { name = "Portal", size = V3(15, 17, 0.4), cf = cf * CF(0, 11, -4), color = accent, neon = true, transparency = 0.7 })
+	local curtainH = if gate then gate.Size.Y * 0.62 else 17
+	local curtain = Build.part(m, { name = "Portal", size = V3(if gate then gate.Size.X * 0.5 else 15, curtainH, 0.4), cf = cf * CF(0, 1.7 + curtainH / 2, -4), color = accent, neon = true, transparency = 0.72 })
 	Build.light(curtain, accent, 1.2, 36)
-	-- airship moored behind the gate
-	local ship = Build.model(m, "Airship")
-	local hullCF = cf * CF(22, 7, -10) * ANG(0, math.rad(20), 0)
-	Build.part(ship, { name = "Hull", size = V3(8, 4, 22), cf = hullCF, color = Color3.fromRGB(92, 62, 44), material = Enum.Material.WoodPlanks })
-	Build.part(ship, { name = "Bow", size = V3(8, 4, 5), cf = hullCF * CF(0, 0, -13) * ANG(0, math.pi, 0), color = Color3.fromRGB(92, 62, 44), material = Enum.Material.WoodPlanks, shape = "Wedge" })
-	Build.part(ship, { name = "Balloon", size = V3(14, 9, 26), cf = hullCF * CF(0, 11, 0), color = accent:Lerp(Color3.new(1, 1, 1), 0.35), material = Enum.Material.Fabric, shape = "Ball" })
-	for _, dx in { -3, 3 } do
-		Build.part(ship, { name = "Rope", size = V3(0.2, 8, 0.2), cf = hullCF * CF(dx, 6, 0), color = Color3.fromRGB(60, 50, 40) })
+	-- dock dressing: cargo crates, lamps and a mooring post
+	for i = 1, 5 do
+		local p = (cf * CF(14 + (i % 3) * 3, 0, 8 + math.floor(i / 3) * 3)).Position
+		crate(m, V3(p.X, 1.7, p.Z), 2.4 + (i % 2) * 0.8, i * 0.9)
 	end
-	local lamp2 = Build.part(ship, { name = "ShipLamp", size = V3(1, 1, 1), cf = hullCF * CF(0, 3, -9), color = accent, neon = true, shape = "Ball" })
-	Build.light(lamp2, accent, 0.8, 20)
+	for _, dx in { -18, 18 } do
+		local p = (cf * CF(dx, 0, 12)).Position
+		lamp(m, V3(p.X, 1.7, p.Z), 9, true)
+	end
 	-- terminal
 	local term = Build.part(m, { name = "SkyportTerminal", size = V3(7, 4.4, 3), cf = cf * CF(-14, 3.2, 6), color = Color3.fromRGB(40, 38, 48), material = Enum.Material.Metal, collide = true })
 	Build.part(m, { name = "TerminalScreen", size = V3(6, 2, 0.2), cf = cf * CF(-14, 5, 4.4) * ANG(math.rad(-15), 0, 0), color = accent, neon = true })
