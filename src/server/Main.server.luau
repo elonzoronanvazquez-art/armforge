@@ -1,0 +1,1 @@
+print("[ARMFORGE] server boot")

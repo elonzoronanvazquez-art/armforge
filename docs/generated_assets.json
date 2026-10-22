@@ -1,0 +1,59 @@
+{
+ "CoreCrystalCyan": {
+  "prompt": "a large faceted prismatic crystal geode cluster, glowing cyan and magenta crystals inside a rough stone shell, stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": "138487262981135",
+  "meshId": "rbxassetid://108198767086062",
+  "textureId": "rbxassetid://70951425972568",
+  "size": [
+   4.88,
+   6,
+   4.91
+  ],
+  "parts": 1
+ },
+ "BoulderVein": {
+  "prompt": "a jagged granite boulder with chipped edges and veins of copper ore, stylized game rock",
+  "status": "Completed",
+  "publishedAssetId": "120174366851311",
+  "meshId": "rbxassetid://84191567053617",
+  "textureId": "rbxassetid://114644608095795",
+  "size": [
+   3.99,
+   5,
+   3.98
+  ],
+  "parts": 1
+ },
+ "ArmStarterGauntletFist": {
+  "prompt": "a heavy carved granite stone gauntlet fist (moderation failed)",
+  "status": "Failed",
+  "error": "Moderation failed"
+ },
+ "ShardA": {
+  "prompt": "a single chunky faceted stone rock fragment with flat cleaved faces, neutral mid gray, low poly stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://88741751200579",
+  "textureId": "rbxassetid://111917315322468",
+  "size": [
+   1.6907893419265747,
+   2.4000000953674316,
+   1.697158932685852
+  ],
+  "parts": 1
+ },
+ "ShardB": {
+  "prompt": "a flat angular broken slab of stone, neutral gray, low poly stylized game asset",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://128194434014737",
+  "textureId": "rbxassetid://113994536637020",
+  "size": [
+   1.639104962348938,
+   1.5999999046325684,
+   1.6374871730804443
+  ],
+  "parts": 1
+ }
+}
