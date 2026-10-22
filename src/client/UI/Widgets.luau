@@ -128,6 +128,7 @@ function Widgets.button(props: Props): any
 	local base = if style == "primary" then C.accent elseif style == "good" then C.good elseif style == "danger" then C.bad else C.panelHi
 	local textColor = if style == "ghost" then C.text else C.black
 	local btn = Widgets.new("TextButton", {
+		Name = props.Name or "Button",
 		AutoButtonColor = false,
 		BackgroundColor3 = base,
 		BorderSizePixel = 0,

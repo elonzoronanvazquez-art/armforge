@@ -131,7 +131,7 @@ local function buildDetails(parent: Instance)
 	local def = Arms.Defs[selected]
 	local owned = d.arms.owned[selected] == true
 	local level = d.arms.levels[selected] or 0
-	local list = W.frame({ Size = UDim2.new(1, 0, 1, 0), Parent = parent })
+	local list = W.frame({ Name = "Details", Size = UDim2.new(1, 0, 1, 0), Parent = parent })
 	W.list(Enum.FillDirection.Vertical, 6).Parent = list
 
 	local stats = W.frame({ Size = UDim2.new(1, 0, 0, 66), LayoutOrder = 1, Parent = list })
@@ -152,10 +152,11 @@ local function buildDetails(parent: Instance)
 
 	if owned then
 		local nextCost = Formulas.upgradeCost(selected, level)
-		local row = W.frame({ Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 3, Parent = list })
+		local row = W.frame({ Name = "Actions", Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 3, Parent = list })
 		W.list(Enum.FillDirection.Horizontal, 8).Parent = row
 		local isEq = d.arms.equipped == selected
 		W.button({
+			Name = "EquipButton",
 			Text = if isEq then "EQUIPPED" else "EQUIP",
 			Size = UDim2.new(0.4, -4, 1, 0),
 			style = if isEq then "ghost" else "primary",
@@ -167,6 +168,7 @@ local function buildDetails(parent: Instance)
 		})
 		local label = if nextCost then `UPGRADE  {Format.compact(nextCost)}` else "MAX LEVEL"
 		W.button({
+			Name = "UpgradeButton",
 			Text = label,
 			Size = UDim2.new(0.6, -4, 1, 0),
 			style = if nextCost and d.coins >= nextCost then "good" else "ghost",
@@ -203,6 +205,7 @@ local function buildDetails(parent: Instance)
 		end
 		local blocker = Equipment.purchaseBlocker(d, selected)
 		W.button({
+			Name = "BuyButton",
 			Text = if blocker == nil then "BUY ARMS" else "LOCKED",
 			Size = UDim2.new(1, 0, 0, 44),
 			LayoutOrder = 4,
@@ -357,7 +360,7 @@ function Panel.build(content: Frame)
 	end
 
 	-- right column
-	local right = W.frame({ Position = UDim2.fromOffset(318, 6), Size = UDim2.new(1, -332, 1, -18), Parent = content })
+	local right = W.frame({ Name = "Right", Position = UDim2.fromOffset(318, 6), Size = UDim2.new(1, -332, 1, -18), Parent = content })
 	viewport = W.new("ViewportFrame", {
 		Size = UDim2.new(1, 0, 0, 170),
 		BackgroundColor3 = C.panelLo,
@@ -401,7 +404,7 @@ function Panel.build(content: Frame)
 		end,
 		Parent = tabs,
 	})
-	refs.body = W.frame({ Position = UDim2.fromOffset(0, 278), Size = UDim2.new(1, 0, 1, -278), Parent = right })
+	refs.body = W.frame({ Name = "Body", Position = UDim2.fromOffset(0, 278), Size = UDim2.new(1, 0, 1, -278), Parent = right })
 end
 
 function Panel.onOpen(_args: any)

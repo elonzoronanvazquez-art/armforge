@@ -299,8 +299,8 @@ local function onTraining(player: Player, action: any, a: any, b: any, c: any)
 		end
 		if station.game == "Timing" then
 			local cfg = Training.Timing
-			if t - run.lastPress < cfg.minGap then
-				return
+			if run.reps >= cfg.reps or t - run.lastPress < cfg.minGap then
+				return -- the set is complete (finish is only delayed for the result animation)
 			end
 			run.lastPress = t
 			local pos = TrainingLogic.sweep(t, run.startT, cfg.period)

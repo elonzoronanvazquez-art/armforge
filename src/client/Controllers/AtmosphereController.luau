@@ -10,17 +10,43 @@ local CollectionService = game:GetService("CollectionService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local IslandConfig = require(Shared.Config.Islands)
+local Assets = require(Shared.Config.Assets)
+local Store = require(script.Parent.Parent.Store)
 
 local AtmosphereController = {}
 
 local THEMES = {
 	Forgeheart = { clock = 16.2, ambient = Color3.fromRGB(70, 64, 78), outdoor = Color3.fromRGB(104, 96, 110), atmoColor = Color3.fromRGB(255, 196, 150), decay = Color3.fromRGB(150, 110, 120), density = 0.32, tint = Color3.fromRGB(255, 244, 232), brightness = 2.6 },
 	Crystalfall = { clock = 14.8, ambient = Color3.fromRGB(70, 84, 124), outdoor = Color3.fromRGB(104, 122, 170), atmoColor = Color3.fromRGB(170, 196, 255), decay = Color3.fromRGB(110, 120, 190), density = 0.34, tint = Color3.fromRGB(230, 236, 255), brightness = 2.0 },
-	Emberfang = { clock = 19.2, ambient = Color3.fromRGB(96, 56, 50), outdoor = Color3.fromRGB(132, 80, 70), atmoColor = Color3.fromRGB(255, 120, 80), decay = Color3.fromRGB(150, 60, 50), density = 0.42, tint = Color3.fromRGB(255, 226, 210), brightness = 2.0 },
+	Emberfang = { clock = 17.6, ambient = Color3.fromRGB(128, 82, 74), outdoor = Color3.fromRGB(176, 112, 96), atmoColor = Color3.fromRGB(255, 130, 90), decay = Color3.fromRGB(160, 70, 56), density = 0.4, tint = Color3.fromRGB(255, 230, 214), brightness = 2.8 },
 	Voidreach = { clock = 22.5, ambient = Color3.fromRGB(60, 44, 90), outdoor = Color3.fromRGB(80, 60, 120), atmoColor = Color3.fromRGB(140, 100, 220), decay = Color3.fromRGB(60, 40, 110), density = 0.4, tint = Color3.fromRGB(230, 220, 255), brightness = 1.6 },
 }
 
 local current = ""
+local beds: { [string]: Sound } = {}
+
+-- One looping sound per island; only the current island's bed is audible (cross-faded).
+local function setupBeds()
+	for id, def in Assets.Ambience do
+		local s = Instance.new("Sound")
+		s.Name = "Ambience_" .. id
+		s.SoundId = def.id
+		s.Looped = true
+		s.Volume = 0
+		s.RollOffMode = Enum.RollOffMode.Inverse
+		s.Parent = game:GetService("SoundService")
+		s:Play()
+		beds[id] = s
+	end
+end
+
+local function fadeBeds(islandId: string)
+	local sfx = if Store.data then Store.data.settings.sfx else 1
+	for id, s in beds do
+		local target = if id == islandId then Assets.Ambience[id].volume * sfx else 0
+		TweenService:Create(s, TweenInfo.new(2.5), { Volume = target }):Play()
+	end
+end
 
 local function nearestIsland(pos: Vector3): string
 	local best, bestDist = "Forgeheart", math.huge
@@ -38,6 +64,7 @@ local function apply(id: string)
 	if not theme then
 		return
 	end
+	fadeBeds(id)
 	local info = TweenInfo.new(2.5, Enum.EasingStyle.Sine)
 	TweenService:Create(Lighting, info, {
 		ClockTime = theme.clock,
@@ -56,6 +83,7 @@ local function apply(id: string)
 end
 
 function AtmosphereController.start()
+	setupBeds()
 	local accum = 0
 	RunService.Heartbeat:Connect(function(dt)
 		for _, inst in CollectionService:GetTagged("Spin") do

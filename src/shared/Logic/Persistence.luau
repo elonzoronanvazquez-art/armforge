@@ -17,13 +17,13 @@ local function lockedByOther(record: any, jobId: string, now: number): boolean
 	return lock ~= nil and lock.jobId ~= jobId and (now - lock.time) < Game.Data.sessionLockTimeout
 end
 
-local function deepCopy(value: any): any
+function Persistence.deepCopy(value: any): any
 	if type(value) ~= "table" then
 		return value
 	end
 	local out = {}
 	for k, v in value do
-		out[k] = deepCopy(v)
+		out[k] = Persistence.deepCopy(v)
 	end
 	return out
 end
@@ -62,7 +62,7 @@ end
 function Persistence.save(store: Store, key: string, data: any, jobId: string, now: number, release: boolean): (boolean, string?)
 	local lost = false
 	data.lastSave = now
-	local snapshot = deepCopy(data)
+	local snapshot = Persistence.deepCopy(data)
 	local ok, err = pcall(function()
 		store:UpdateAsync(key, function(old: any)
 			if lockedByOther(old, jobId, now) then

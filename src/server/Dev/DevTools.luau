@@ -11,6 +11,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local Arms = require(Shared.Config.Arms)
 local Islands = require(Shared.Config.Islands)
 local Formulas = require(Shared.Logic.Formulas)
+local Combat = require(Shared.Logic.Combat)
 local Boosters = require(Shared.Logic.Boosters)
 local BoosterConfig = require(Shared.Config.Boosters)
 local Sessions = require(script.Parent.Parent.Services.Sessions)
@@ -234,6 +235,18 @@ local COMMANDS: { [string]: (...any) -> any } = {
 	state = function()
 		local d = DevTools.state(DevTools.player())
 		return d and game:GetService("HttpService"):JSONEncode(d)
+	end,
+	-- Live combat numbers (power, cooldown, crit) exactly as the server computes them right now.
+	combatStats = function()
+		local player = DevTools.player()
+		local s = player and Sessions.ready(player)
+		if not s then
+			return "no session"
+		end
+		local now = os.clock()
+		Combat.updateBuffs(s.combat, now)
+		local st = Combat.stats(s.data, s.combat, now)
+		return { power = st.power, cooldown = st.cooldown, crit = st.critChance, haste = st.haste, arm = st.armId }
 	end,
 	hrp = function()
 		local p = DevTools.player()

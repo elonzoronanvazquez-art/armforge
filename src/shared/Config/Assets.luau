@@ -63,4 +63,12 @@ Assets.Sounds = {
 	Spawn = { s(9116420454, 0.25, 1.8, 2.0, 0, 0.7) },
 } :: { [string]: { Sound } }
 
+-- Quiet looping beds per island (ProSoundEffects: "Lava Rumble 2", "Heavenly Harmonic Presence Glowing Crystal").
+Assets.Ambience = {
+	Forgeheart = { id = "rbxassetid://9112823199", volume = 0.05 },
+	Crystalfall = { id = "rbxassetid://9125602386", volume = 0.18 },
+	Emberfang = { id = "rbxassetid://9112823199", volume = 0.3 },
+	Voidreach = { id = "rbxassetid://9125602386", volume = 0.1 },
+} :: { [string]: { id: string, volume: number } }
+
 return Assets

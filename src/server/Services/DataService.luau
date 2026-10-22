@@ -20,16 +20,7 @@ DataService.storeName = ""
 
 local memory: { [string]: any } = {}
 
-local function deepCopy(v: any): any
-	if type(v) ~= "table" then
-		return v
-	end
-	local out = {}
-	for k, x in v do
-		out[k] = deepCopy(x)
-	end
-	return out
-end
+local deepCopy = Persistence.deepCopy
 
 -- Same UpdateAsync contract as a DataStore, kept in a table.
 local memoryStore: any = {
@@ -55,10 +46,13 @@ function DataService.init()
 	DataService.storeName = name
 	local ok, result = pcall(function()
 		local ds = DataStoreService:GetDataStore(name, Game.Data.storeScope)
-		-- probe: a failing UpdateAsync on a throwaway key reveals "API access disabled" immediately
-		ds:UpdateAsync("__probe", function(old)
-			return old or { probe = true }
-		end)
+		if RunService:IsStudio() then
+			-- probe: a failing UpdateAsync on a throwaway key reveals "API access disabled" immediately. Never done in live
+			-- servers (it would write to the production store on every boot).
+			ds:UpdateAsync("__probe", function(old)
+				return old or { probe = true }
+			end)
+		end
 		return ds
 	end)
 	if ok then
@@ -104,19 +98,37 @@ function DataService.load(player: Player): any?
 	return data
 end
 
+-- Frees the session lock for data that was loaded but never became a live session (the player left mid-load).
+function DataService.releaseLoaded(userId: number, data: any)
+	if store then
+		Persistence.save(store, key(userId), data, game.JobId ~= "" and game.JobId or "studio", os.time(), true)
+	end
+end
+
 -- Yields. Saves the session's data (with retries). release=true frees the session lock.
+-- Saves are serialised per session: an autosave that overlaps another save is skipped, and a releasing save waits for the
+-- in-flight one so a late autosave can never re-take the lock after it was released.
 function DataService.save(session: Sessions.Session, release: boolean): boolean
 	if not store or not session.data then
 		return false
 	end
+	if session.flags.saving then
+		if not release then
+			return false
+		end
+		while session.flags.saving do
+			task.wait(0.05)
+		end
+	end
+	session.flags.saving = true
 	local ok, err = Persistence.retry(Game.Data.saveRetries, function(seconds: number)
 		task.wait(seconds)
 	end, function()
 		return Persistence.save(store :: any, key(session.userId), session.data, game.JobId ~= "" and game.JobId or "studio", os.time(), release)
 	end)
+	session.flags.saving = false
 	if ok then
 		session.saveFailures = 0
-		session.dirty = session.dirty
 	else
 		session.saveFailures += 1
 		warn(`[ARMFORGE] save failed for {session.userId}: {err}`)

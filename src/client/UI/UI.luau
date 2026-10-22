@@ -129,6 +129,7 @@ local function buildWindow(panel: Panel, root: Frame)
 		Parent = root,
 	})
 	win:SetAttribute("BlocksWorldInput", true)
+	win.Active = true -- sink clicks so empty parts of a panel never fall through to the dimmer and close it
 	local limit = Instance.new("UISizeConstraint")
 	limit.MaxSize = Vector2.new(panel.size.X, panel.size.Y)
 	limit.Parent = win
