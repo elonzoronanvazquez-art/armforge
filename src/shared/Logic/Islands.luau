@@ -7,23 +7,48 @@ local Islands = {}
 
 export type Status = { unlocked: boolean, canUnlock: boolean, missing: { string }, comingSoon: boolean }
 
--- Which requirements the player is missing for this island (empty = may unlock).
-function Islands.missing(data: any, islandId: string): { string }
+export type Requirement = { text: string, met: boolean }
+
+-- Every requirement for entering this island with whether it is met. The guardian gate is TWO separate lines: the rebirths and
+-- the previous island's guardian victory, so neither can stand in for the other (and the UI can show each).
+function Islands.requirements(data: any, islandId: string): { Requirement }
 	local def = IslandConfig.Defs[islandId]
-	local out: { string } = {}
+	local out: { Requirement } = {}
 	if not def then
-		table.insert(out, "unknown_island")
+		table.insert(out, { text = "unknown_island", met = false })
 		return out
 	end
 	local req = def.requires
-	if req.level and data.level < req.level then
-		table.insert(out, `Level {req.level}`)
+	if req.level then
+		table.insert(out, { text = `Level {req.level}`, met = data.level >= req.level })
 	end
-	if req.rebirths and data.rebirths < req.rebirths then
-		table.insert(out, `Rebirth {req.rebirths}`)
+	if req.rebirths then
+		table.insert(out, { text = `Rebirth {req.rebirths}`, met = data.rebirths >= req.rebirths })
 	end
-	if req.coins and data.coins < req.coins then
-		table.insert(out, `{req.coins} coins`)
+	if req.coins then
+		table.insert(out, { text = `{req.coins} coins`, met = data.coins >= req.coins })
+	end
+	local previous: string? = nil
+	for i, id in IslandConfig.Order do
+		if id == islandId then
+			previous = IslandConfig.Order[i - 1]
+		end
+	end
+	local guard = previous and IslandConfig.Defs[previous].guardian
+	if previous and guard then
+		table.insert(out, { text = `Rebirth {guard.rebirths}`, met = data.rebirths >= guard.rebirths })
+		table.insert(out, { text = `Defeat the guardian of {IslandConfig.Defs[previous].name}`, met = data.guardians ~= nil and data.guardians.defeated[previous] == true })
+	end
+	return out
+end
+
+-- Which requirements the player is missing for this island (empty = may unlock).
+function Islands.missing(data: any, islandId: string): { string }
+	local out: { string } = {}
+	for _, r in Islands.requirements(data, islandId) do
+		if not r.met then
+			table.insert(out, r.text)
+		end
 	end
 	return out
 end

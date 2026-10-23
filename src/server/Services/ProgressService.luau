@@ -9,6 +9,9 @@ local Net = require(Shared.Net)
 local Game = require(Shared.Config.Game)
 local Formulas = require(Shared.Logic.Formulas)
 local Progression = require(Shared.Logic.Progression)
+local Guardians = require(Shared.Logic.Guardians)
+local Islands = require(Shared.Logic.Islands)
+local IslandConfig = require(Shared.Config.Islands)
 local Sessions = require(script.Parent.Sessions)
 local Sync = require(script.Parent.Sync)
 
@@ -96,6 +99,56 @@ function ProgressService.rockReward(player: Player, reward: any, entry: any)
 		id = entry.id,
 	})
 	announceLevelUps(player, result)
+	Sync.mark(player)
+end
+
+-- The ONE reward path for a defeated creature (mining pays separately through rockReward). Called once per contributor by
+-- EncounterService after CreatureSim.payout, which can only pay once per creature.
+function ProgressService.creatureReward(player: Player, reward: { coins: number, xp: number, shards: number }, def: any, entry: any, info: { killer: boolean, first: boolean, boss: boolean, victory: boolean })
+	local s = Sessions.ready(player)
+	if not s then
+		return
+	end
+	local data = s.data
+	local mult = devMultiplier()
+	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult)
+	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult)
+	local shards = reward.shards
+	data.coins += coins
+	data.shards += shards
+	local result = Progression.addXp(data, xp)
+	ProgressService.notify(player, "CreatureReward", {
+		name = def.name,
+		tier = def.tier,
+		coins = coins,
+		xp = xp,
+		shards = shards,
+		pos = entry.center,
+		boss = info.boss,
+		first = info.first,
+		killer = info.killer,
+		id = entry.id,
+	})
+	announceLevelUps(player, result)
+	Sync.mark(player)
+end
+
+-- First victory over an island's guardian: tell the client what it unlocks (the server already recorded the completion).
+function ProgressService.guardianVictory(player: Player, islandId: string)
+	local s = Sessions.ready(player)
+	if not s then
+		return
+	end
+	local gate = Guardians.gate(s.data, islandId, Islands.missing)
+	local nextDef = if gate.next then IslandConfig.Defs[gate.next] else nil
+	ProgressService.notify(player, "GuardianVictory", {
+		island = islandId,
+		name = gate.guardianName,
+		next = gate.next,
+		nextName = if nextDef then nextDef.name else nil,
+		nextState = gate.nextState,
+		nextMissing = gate.nextMissing,
+	})
 	Sync.mark(player)
 end
 

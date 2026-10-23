@@ -45,10 +45,11 @@ function DataSchema.default(): any
 		training = trainingStats,
 		skills = { ranks = ranks },
 		boosters = { inventory = {}, active = {} },
-		islands = { unlocked = { [Islands.Start] = true }, current = Islands.Start },
+		islands = { unlocked = { [Islands.Start] = true }, current = Islands.Start, completed = {} },
+		guardians = { defeated = {} },
 		tutorial = { step = 1, flags = {} },
 		settings = { sfx = 1, music = 0.6, shake = 1, reduceFx = false, damageNumbers = true, uiScale = 1 },
-		stats = { rocksDestroyed = 0, totalDamage = 0, strikes = 0, playSeconds = 0, trainingSessions = 0 },
+		stats = { rocksDestroyed = 0, totalDamage = 0, strikes = 0, playSeconds = 0, trainingSessions = 0, creaturesDefeated = 0, guardianVictories = 0 },
 		firstJoin = 0,
 		lastSave = 0,
 	}
@@ -74,6 +75,22 @@ end
 
 -- Migration steps keyed by the version they upgrade FROM. Each returns the data at version + 1.
 DataSchema.Migrations = {} :: { [number]: (any) -> any }
+
+-- v1 -> v2: guardians and island completion. Players who already reached an island under the old rules keep their progress: if
+-- the island AFTER an island is unlocked, that island's guardian counts as beaten (they earned the access) and nothing else
+-- changes. Arms, cosmetics, currency, levels, skills and training are untouched.
+DataSchema.Migrations[1] = function(raw: any): any
+	local unlocked = if type(raw.islands) == "table" and type(raw.islands.unlocked) == "table" then raw.islands.unlocked else {}
+	local defeated: { [string]: boolean } = {}
+	for i, id in Islands.Order do
+		local nextId = Islands.Order[i + 1]
+		if nextId and Islands.Defs[id].guardian and unlocked[nextId] == true then
+			defeated[id] = true
+		end
+	end
+	raw.guardians = { defeated = defeated }
+	return raw
+end
 
 local function migrate(raw: any): any
 	local version = if type(raw.version) == "number" then raw.version else 1
@@ -231,6 +248,19 @@ function DataSchema.reconcile(raw: any): any
 	end
 	out.islands.unlocked[Islands.Start] = true
 
+	-- guardians: only real guardian islands; the completion mirror is derived from the victory record, never trusted alone
+	if type(raw.guardians) == "table" and type(raw.guardians.defeated) == "table" then
+		for id, v in raw.guardians.defeated do
+			local def = Islands.Defs[id]
+			if def and def.guardian and v == true then
+				out.guardians.defeated[id] = true
+			end
+		end
+	end
+	for id in out.guardians.defeated do
+		out.islands.completed[id] = true
+	end
+
 	-- tutorial
 	if type(raw.tutorial) == "table" then
 		out.tutorial.step = int(raw.tutorial.step, 1, 1, #Progression.Tutorial + 1)
@@ -279,6 +309,7 @@ function DataSchema.snapshot(data: any): any
 		skills = data.skills,
 		boosters = data.boosters,
 		islands = data.islands,
+		guardians = data.guardians,
 		tutorial = data.tutorial,
 		settings = data.settings,
 		stats = data.stats,

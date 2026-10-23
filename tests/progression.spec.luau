@@ -171,18 +171,22 @@ return function(t, u)
 		t.truthy(Islands.canTravel(d, "Forgeheart").ok)
 	end)
 
-	t.test("later islands need level AND rebirth, never just coins", function()
+	t.test("later islands need level AND the previous guardian AND its rebirths, never just coins", function()
 		local d = fresh()
 		d.coins = 1e12
 		t.eq(Islands.canTravel(d, "Crystalfall").err, "locked")
 		t.eq(Islands.unlock(d, "Crystalfall").err, "requirements")
 		d.level = 12
+		t.eq(Islands.unlock(d, "Crystalfall").err, "requirements", "level alone is not enough any more")
+		d.rebirths = 1
+		d.guardians.defeated.Forgeheart = true
 		t.truthy(Islands.unlock(d, "Crystalfall").ok)
 		t.truthy(Islands.canTravel(d, "Crystalfall").ok)
 		d.level = 25
-		t.eq(Islands.unlock(d, "Emberfang").err, "requirements", "needs a rebirth too")
-		t.deepEq(Islands.missing(d, "Emberfang"), { "Rebirth 1" })
-		d.rebirths = 1
+		t.eq(Islands.unlock(d, "Emberfang").err, "requirements", "needs Crystalfall's guardian and two rebirths")
+		d.guardians.defeated.Crystalfall = true
+		t.deepEq(Islands.missing(d, "Emberfang"), { "Rebirth 2" })
+		d.rebirths = 2
 		t.truthy(Islands.unlock(d, "Emberfang").ok)
 	end)
 

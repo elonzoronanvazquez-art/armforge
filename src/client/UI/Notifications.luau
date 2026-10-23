@@ -80,6 +80,25 @@ local function onReward(p: any)
 	feedLine(`{p.rock}: +{Format.compact(p.coins)} coins, +{Format.compact(p.xp)} XP{if p.shards > 0 then `, +{p.shards} shards` else ""}`, if p.rare then C.shard else C.text)
 end
 
+local function onCreatureReward(p: any)
+	local tint = if p.boss then C.shard elseif p.tier == "elite" then C.accent else C.text
+	if p.coins > 0 then
+		EffectsController.floatText(p.pos + Vector3.new(0, 7, 0), `+{Format.compact(p.coins)}`, C.coin, if p.boss then 2 else 1.6, 7)
+	end
+	if p.xp > 0 then
+		task.delay(0.14, function()
+			EffectsController.floatText(p.pos + Vector3.new(0, 5.5, 0), `+{Format.compact(p.xp)} XP`, C.xp, 1.2, 6)
+		end)
+	end
+	if p.shards > 0 then
+		task.delay(0.28, function()
+			EffectsController.floatText(p.pos + Vector3.new(0, 9, 0), `+{p.shards} SHARDS`, C.shard, 1.5, 8)
+		end)
+	end
+	EffectsController.sound("Coin", nil, 1, if p.boss then 0.8 else 1)
+	feedLine(`{p.name} defeated: +{Format.compact(p.coins)} coins, +{Format.compact(p.xp)} XP{if p.shards > 0 then `, +{p.shards} shards` else ""}`, tint)
+end
+
 local function onLevelUp(p: any)
 	EffectsController.sound("LevelUp", nil, 1, 1)
 	CameraController.shake(0.25, 0.3)
@@ -132,6 +151,25 @@ local function banner(title: string, subtitle: string, color: Color3)
 	tweenOut(card, 3.2, 0.6)
 end
 
+local function onGuardianVictory(p: any)
+	local flash = W.frame({ Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(255, 232, 170), BackgroundTransparency = 0.35, ZIndex = 40, Parent = root })
+	TweenService:Create(flash, TweenInfo.new(1.2), { BackgroundTransparency = 1 }):Play()
+	task.delay(1.3, function()
+		flash:Destroy()
+	end)
+	EffectsController.sound("LevelUp", nil, 1, 0.8)
+	CameraController.shake(0.4, 0.5)
+	local detail
+	if p.next and #p.nextMissing == 0 then
+		detail = `{p.nextName} can now be unlocked at a Skyport.`
+	elseif p.next then
+		detail = `Next: {p.nextName}. Still needed: {table.concat(p.nextMissing, ", ")}`
+	else
+		detail = "More islands are coming."
+	end
+	banner(`{string.upper(p.name)} DEFEATED`, detail, C.shard)
+end
+
 local function onRebirth(p: any)
 	local flash = W.frame({ Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0, ZIndex = 40, Parent = root })
 	TweenService:Create(flash, TweenInfo.new(1.6), { BackgroundTransparency = 1 }):Play()
@@ -162,6 +200,10 @@ function Notifications.start(uiRoot: Frame)
 			banner(string.upper(p.name), p.tagline, C.accent)
 		elseif kind == "Rebirth" then
 			onRebirth(p)
+		elseif kind == "CreatureReward" then
+			onCreatureReward(p)
+		elseif kind == "GuardianVictory" then
+			onGuardianVictory(p)
 		end
 	end)
 end

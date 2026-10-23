@@ -134,6 +134,7 @@ function ServerWorld.new(opts)
 		kicked = {},
 		armAttachments = {},
 		rockBuilds = {},
+		creatureBuilds = {},
 		studio = opts.studio == true,
 		jobId = opts.jobId or "job-A",
 		sharedStores = opts.sharedStores, -- lets two worlds ("servers") share the same DataStores
@@ -291,6 +292,10 @@ function ServerWorld.new(opts)
 			methods.Destroy(child)
 		end
 	end
+	function methods.PivotTo(self, cf)
+		state[self].props.CFrame = cf
+		state[self].props.Position = cf.Position
+	end
 	function methods.GetPivot(self)
 		return state[self].props.CFrame or roblox.CFrame.new(state[self].props.Position or roblox.Vector3.zero)
 	end
@@ -312,6 +317,9 @@ function ServerWorld.new(opts)
 		props.Health = 100
 		props.MaxHealth = 100
 		props.Died = newSignal(world)
+		props.TakeDamage = function(self, amount)
+			self.Health = math.max(0, self.Health - amount)
+		end
 	end
 	classInit.IntValue = function(_, props)
 		props.Value = 0
@@ -635,6 +643,25 @@ function ServerWorld.new(opts)
 			return model
 		end,
 	}
+	-- Creature bodies are procedural Motor6D rigs; the fake world only needs a model with a root part to move and tag.
+	local creatureBuilder = {
+		TAG = "ArmRock",
+		CREATURE_TAG = "ArmCreature",
+		build = function(def, id, pos)
+			world.creatureBuilds[id] = (world.creatureBuilds[id] or 0) + 1
+			local model = make("Model", { Name = `Creature_{id}` })
+			model.CFrame = roblox.CFrame.new(pos)
+			local root = make("Part", { Name = "Root" })
+			root.Position = pos
+			root.Parent = model
+			model.PrimaryPart = root
+			return model
+		end,
+		tag = function(model)
+			state[CollectionService].props.AddTag(CollectionService, model, "ArmRock")
+			state[CollectionService].props.AddTag(CollectionService, model, "ArmCreature")
+		end,
+	}
 	local armBuilder = {
 		MODEL_NAME = "ArmforgeArms",
 		attach = function(character, recipe)
@@ -683,6 +710,7 @@ function ServerWorld.new(opts)
 		replace = {
 			["Runtime/ArmBuilder"] = armBuilder,
 			["server:World/RockBuilder"] = rockBuilder,
+			["server:World/CreatureBuilder"] = creatureBuilder,
 		},
 	})
 
@@ -696,13 +724,22 @@ function ServerWorld.new(opts)
 	end
 
 	-- Mirrors Main.server.luau for the services under test (no terrain / WorldBuilder).
-	function world:boot()
+	function world:boot(bootOpts)
+		bootOpts = bootOpts or {}
 		local Net = self:shared("Net")
 		Net.server()
 		local DataService = self:load("Services/DataService")
 		DataService.init()
 		local RockService = self:load("Services/RockService")
-		RockService.init(make("Folder", { Name = "ArmforgeWorld" }))
+		local worldFolder = make("Folder", { Name = "ArmforgeWorld" })
+		RockService.init(worldFolder)
+		local EncounterService = nil
+		if bootOpts.encounters then
+			-- rocks release their creatures (the default specs keep plain rocks so they test rock behaviour alone)
+			EncounterService = self:load("Services/EncounterService")
+			EncounterService.init(worldFolder)
+			EncounterService.start()
+		end
 		RockService.populate() -- no terrain in the fake world, so it places nothing; it does start the burn loop
 		local ProgressService = self:load("Services/ProgressService")
 		ProgressService.init()
@@ -717,6 +754,7 @@ function ServerWorld.new(opts)
 		return {
 			DataService = DataService,
 			RockService = RockService,
+			EncounterService = EncounterService,
 			Sessions = self:load("Services/Sessions"),
 			ProgressService = ProgressService,
 			Sync = self:load("Services/Sync"),

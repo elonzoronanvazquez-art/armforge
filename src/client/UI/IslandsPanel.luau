@@ -9,6 +9,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local IslandConfig = require(Shared.Config.Islands)
 local RockConfig = require(Shared.Config.Rocks)
 local IslandLogic = require(Shared.Logic.Islands)
+local Guardians = require(Shared.Logic.Guardians)
 local Store = require(script.Parent.Parent.Store)
 local Theme = require(script.Parent.Theme)
 local W = require(script.Parent.Widgets)
@@ -48,7 +49,6 @@ function Panel.refresh()
 	refs.banner.Text = if near then "Skyport terminal in range: you can unlock and travel." else "Walk to a Skyport terminal to unlock islands and travel between them."
 	refs.banner.TextColor3 = if near then C.good else C.warn
 	for _, id in IslandConfig.Order do
-		local def = IslandConfig.Defs[id]
 		local card = cards[id]
 		local status = IslandLogic.status(d, id)
 		local here = d.islands.current == id
@@ -72,14 +72,38 @@ function Panel.refresh()
 			n += 1
 			W.text({ Size = UDim2.new(1, 0, 0, 16), LayoutOrder = n, TextSize = 12, TextColor3 = if met then C.good else C.bad, Text = (if met then "OK    " else "NEED  ") .. text, Parent = card.reqs })
 		end
-		if def.requires.level then
-			req(`Level {def.requires.level}`, d.level >= def.requires.level)
-		end
-		if def.requires.rebirths then
-			req(`Rebirth {def.requires.rebirths}`, d.rebirths >= def.requires.rebirths)
+		for _, r in IslandLogic.requirements(d, id) do
+			req(r.text, r.met)
 		end
 		if n == 0 then
 			W.text({ Size = UDim2.new(1, 0, 0, 16), TextSize = 12, TextColor3 = C.sub, Text = "Open to everyone", Parent = card.reqs })
+		end
+		-- this island's own guardian, and what its defeat does for the island behind it
+		local gate = Guardians.gate(d, id, IslandLogic.missing)
+		local guard = card.guardian :: TextLabel
+		if gate.state == "no_guardian" then
+			guard.Text = "GUARDIAN\nNot yet awake."
+			guard.TextColor3 = C.dim
+		elseif gate.state == "rebirth_needed" then
+			guard.Text = `GUARDIAN: {gate.guardianName}\nSealed. Needs Rebirth {gate.rebirthsNeeded} (you have {gate.rebirthsHave}).`
+			guard.TextColor3 = C.bad
+		elseif gate.state == "ready" then
+			guard.Text = `GUARDIAN: {gate.guardianName}\nThe seal will open for you. Break it and fight!`
+			guard.TextColor3 = C.warn
+		else
+			local nextText = ""
+			if gate.next then
+				local nextName = IslandConfig.Defs[gate.next].name
+				if gate.nextState == "unlocked" then
+					nextText = `\n{nextName} is open.`
+				elseif gate.nextState == "available" then
+					nextText = `\n{nextName} can be unlocked now!`
+				elseif gate.nextState == "locked" then
+					nextText = `\n{nextName} still needs: {table.concat(gate.nextMissing, ", ")}`
+				end
+			end
+			guard.Text = `GUARDIAN DEFEATED: {gate.guardianName}{nextText}`
+			guard.TextColor3 = C.good
 		end
 		local btn = card.button
 		if status.comingSoon then
@@ -128,6 +152,7 @@ function Panel.build(content: Frame)
 			end
 		end
 		W.text({ Position = UDim2.fromOffset(0, 222), Size = UDim2.new(1, 0, 0, 40), TextWrapped = true, TextSize = 10, TextColor3 = C.dim, TextYAlignment = Enum.TextYAlignment.Top, Text = if #rockNames > 0 then "Rocks: " .. table.concat(rockNames, ", ") else "Rocks: unknown", Parent = card })
+		local guardianText = W.text({ Position = UDim2.fromOffset(0, 262), Size = UDim2.new(1, 0, 0, 78), TextWrapped = true, TextSize = 11, Font = Theme.fontBold, TextColor3 = C.sub, TextYAlignment = Enum.TextYAlignment.Top, Text = "", Parent = card })
 		local button = W.button({
 			Text = "",
 			Size = UDim2.new(1, 0, 0, 36),
@@ -149,7 +174,7 @@ function Panel.build(content: Frame)
 			end,
 			Parent = card,
 		})
-		cards[id] = { state = state, reqs = reqs, button = button }
+		cards[id] = { state = state, reqs = reqs, button = button, guardian = guardianText }
 	end
 end
 

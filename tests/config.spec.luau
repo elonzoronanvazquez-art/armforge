@@ -88,8 +88,14 @@ return function(t, u)
 				end
 			end
 		end
-		for id in Rocks.Defs do
-			t.truthy(used[id], id .. " is placed on an island")
+		for id, def in Rocks.Defs do
+			if def.size == "seal" then
+				-- a guardian seal is placed by its island's guardian entry, not by a field
+				local g = Islands.Defs[def.island].guardian
+				t.truthy(g and g.seal == id, id .. " is its island's guardian seal")
+			else
+				t.truthy(used[id], id .. " is placed on an island")
+			end
 		end
 	end)
 
@@ -134,7 +140,7 @@ return function(t, u)
 			lastOrder = d.order
 		end
 		t.eq(next(Islands.Defs.Forgeheart.requires), nil, "start island free")
-		t.truthy(Islands.Defs.Emberfang.requires.rebirths >= 1, "later island needs a rebirth")
+		t.truthy(Islands.Defs.Forgeheart.guardian.rebirths >= 1, "the first guardian needs a rebirth")
 		t.truthy(Islands.Defs.Crystalfall.requires.level >= 5)
 	end)
 

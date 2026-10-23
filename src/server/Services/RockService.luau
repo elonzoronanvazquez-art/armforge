@@ -15,6 +15,8 @@ local Geometry = require(Shared.Logic.RockGeometry)
 local RockSim = require(Shared.Logic.RockSim)
 local RespawnGuard = require(Shared.Logic.RespawnGuard)
 local SpatialGrid = require(Shared.Logic.SpatialGrid)
+local CreatureConfig = require(Shared.Config.Creatures)
+local EncounterInfo = require(Shared.Logic.EncounterInfo)
 local Rng = require(Shared.Util.Rng)
 local RockBuilder = require(script.Parent.Parent.World.RockBuilder)
 
@@ -45,6 +47,15 @@ local burning: { [number]: Entry } = {}
 local container: Folder
 local remotes: Net.Remotes
 local rewardHandler: ((Player, RockSim.Reward, Entry) -> ())? = nil
+
+-- EncounterService registers itself here (like the reward handler, to avoid a circular require). The rock hands over at its
+-- final hit; the encounter later asks for the respawn once the creature is gone.
+export type EncounterHandler = {
+	begin: (Entry, Player?) -> boolean, -- a creature was released: the rock must NOT respawn by itself
+	canDamage: (Entry, number) -> boolean, -- guardian seals only open for eligible players
+	onRespawn: (Entry) -> (),
+}
+local encounterHandler: EncounterHandler? = nil
 local rng = Rng.new(os.time())
 
 -- Public hooks -------------------------------------------------------------------------------------------------
@@ -52,6 +63,10 @@ local rng = Rng.new(os.time())
 -- ProgressService registers itself here to avoid a circular require.
 function RockService.setRewardHandler(fn: (Player, RockSim.Reward, Entry) -> ())
 	rewardHandler = fn
+end
+
+function RockService.setEncounterHandler(handler: EncounterHandler)
+	encounterHandler = handler
 end
 
 function RockService.get(id: number): Entry?
@@ -174,6 +189,14 @@ local function buildModel(entry: Entry)
 	built.model:SetAttribute("Stage", entry.state.stage)
 	built.model:SetAttribute("Generation", entry.state.generation)
 	built.model:SetAttribute("Island", entry.island)
+	-- what is inside, for the client to show on the targeted rock
+	local creature = CreatureConfig.Defs[entry.def.encounter]
+	if creature then
+		built.model:SetAttribute("Size", entry.def.size)
+		for k, v in EncounterInfo.forCreature(creature, entry.def.size, entry.island) :: any do
+			built.model:SetAttribute(k, v)
+		end
+	end
 end
 
 local function spawnRock(def: RockConfig.RockDef, island: string, pos: Vector3, seed: number): Entry
@@ -259,6 +282,9 @@ local function respawn(entry: Entry, seed: number, layout: Geometry.Layout, soli
 	if not solid then
 		watchGhost(entry)
 	end
+	if encounterHandler then
+		encounterHandler.onRespawn(entry)
+	end
 	RockService.fxNear(entry.center, "Spawn", { id = entry.id, pos = entry.center, def = entry.def.id, radius = entry.state.layout.radius })
 end
 
@@ -314,19 +340,41 @@ local function collapse(entry: Entry, result: RockSim.ApplyResult, killer: Playe
 		killer = if killer then killer.UserId else 0,
 	})
 
-	-- one-time payout
+	-- one-time MINING payout. A rock that holds a creature pays only its mining share here; the creature pays the rest through
+	-- the encounter's own single reward path, so nothing is paid twice.
+	local holdsCreature = encounterHandler ~= nil and CreatureConfig.Defs[entry.def.encounter] ~= nil
+	local share = if holdsCreature then entry.def.miningShare else 1
 	local rewards = RockSim.payout(state, rng)
 	if rewards and rewardHandler then
 		for userId, reward in rewards do
 			local player = Players:GetPlayerByUserId(userId)
 			if player then
+				if share < 1 then
+					reward = {
+						coins = math.floor(reward.coins * share),
+						xp = math.floor(reward.xp * share),
+						shards = reward.shards,
+						fraction = reward.fraction,
+						killer = reward.killer,
+					}
+				end
 				rewardHandler(player, reward, entry)
 			end
 		end
 	end
 
-	local token = state.generation
-	task.delay(Game.Rocks.aftermath + entry.def.respawn, function()
+	-- the creature inside (if any) is released only now, after the authoritative final hit; it then owns the respawn
+	if holdsCreature and encounterHandler and encounterHandler.begin(entry, killer) then
+		return
+	end
+	RockService.requestRespawn(entry, Game.Rocks.aftermath + entry.def.respawn)
+end
+
+-- Rebuilds a destroyed rock after `delay` seconds (held back while a player stands in its footprint). Safe to call more than
+-- once: only the first request for the current death does anything.
+function RockService.requestRespawn(entry: Entry, delay: number)
+	local token = entry.state.generation
+	task.delay(delay, function()
 		if rocks[entry.id] == entry and entry.state.generation == token and not entry.state.alive then
 			local seed = entry.seed + 17
 			attemptRespawn(entry, token, seed, Geometry.generate(entry.def, seed), nil)
@@ -353,6 +401,9 @@ export type DamageOpts = {
 function RockService.damage(entry: Entry, player: Player?, userId: number, amount: number, opts: DamageOpts): RockSim.ApplyResult?
 	local state = entry.state
 	if not state.alive then
+		return nil
+	end
+	if encounterHandler and not encounterHandler.canDamage(entry, userId) then
 		return nil
 	end
 	local hitDirWorld = opts.hitDir
@@ -488,12 +539,38 @@ function RockService.init(worldFolder: Folder)
 	container.Parent = worldFolder
 end
 
--- Spawns every configured rock. Call after the island ground exists.
+-- The nearest sensible ground to a guardian's configured seal position (flat terrain, not water), searched outward in rings.
+local function sealSpot(want: Vector3): Vector3?
+	for ringRadius = 0, 48, 8 do
+		local steps = if ringRadius == 0 then 1 else 10
+		for i = 0, steps - 1 do
+			local angle = (i / steps) * math.pi * 2
+			local pos, normal = groundAt(want.X + math.cos(angle) * ringRadius, want.Z + math.sin(angle) * ringRadius)
+			if pos and normal and normal.Y > 0.93 then
+				return pos
+			end
+		end
+	end
+	return nil
+end
+
+-- Spawns every configured rock and each island's guardian seal. Call after the island ground exists.
 function RockService.populate(): number
 	local total = 0
 	for _, islandId in IslandConfig.Order do
 		local island = IslandConfig.Defs[islandId]
 		local taken: { Vector3 } = {}
+		local guardian = island.guardian
+		if guardian then
+			local spot = sealSpot(guardian.position)
+			if spot then
+				spawnRock(RockConfig.Defs[guardian.seal], islandId, spot, 7000 + #islandId * 13)
+				table.insert(taken, spot)
+				total += 1
+			else
+				warn(`[ARMFORGE] could not place the {islandId} guardian seal near {guardian.position}`)
+			end
+		end
 		for fi, field in island.fields do
 			for ri, entry in field.rocks do
 				local def = RockConfig.Defs[entry.rock]

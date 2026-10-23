@@ -7,6 +7,15 @@ local Islands = {}
 
 export type Field = { name: string, center: Vector3, radius: number, rocks: { { rock: string, count: number } } }
 
+-- An island's ultimate guardian: a sealed boss that can only be fought by players who have reached `rebirths`. Defeating it
+-- (server-recorded, per player) completes the island. The NEXT island needs this victory AND this many rebirths.
+export type GuardianDef = {
+	creature: string, -- Config/Creatures id
+	seal: string, -- Config/Rocks seal id that releases it
+	position: Vector3, -- where the seal stands (snapped to the terrain)
+	rebirths: number,
+}
+
 export type IslandDef = {
 	id: string,
 	name: string,
@@ -14,6 +23,7 @@ export type IslandDef = {
 	description: string,
 	order: number,
 	requires: { level: number?, rebirths: number?, coins: number? },
+	guardian: GuardianDef?, -- nil while the island is not playable yet
 	comingSoon: boolean?,
 	center: Vector3,
 	radius: number,
@@ -41,15 +51,16 @@ Islands.Defs = {
 				name = "Starter Field",
 				center = Vector3.new(-6, 0, -118),
 				radius = 52,
-				rocks = { { rock = "Granite", count = 10 }, { rock = "Ironvein", count = 2 } },
+				rocks = { { rock = "Granite", count = 8 }, { rock = "Ironvein", count = 3 } },
 			},
 			{
 				name = "Deep Quarry",
 				center = Vector3.new(128, 0, -138),
 				radius = 46,
-				rocks = { { rock = "Ironvein", count = 6 }, { rock = "Granite", count = 4 }, { rock = "Prism", count = 2 } },
+				rocks = { { rock = "Ironvein", count = 5 }, { rock = "Granite", count = 3 }, { rock = "Prism", count = 2 }, { rock = "Forgestone", count = 2 } },
 			},
 		},
+		guardian = { creature = "GromAnvilKing", seal = "AnvilSeal", position = Vector3.new(-150, 0, -70), rebirths = 1 },
 		accent = Color3.fromRGB(255, 150, 60),
 		sky = Color3.fromRGB(255, 188, 120),
 		fog = Color3.fromRGB(255, 196, 150),
@@ -70,15 +81,16 @@ Islands.Defs = {
 				name = "Quartz Meadow",
 				center = Vector3.new(820, 0, -50),
 				radius = 58,
-				rocks = { { rock = "Quartz", count = 10 }, { rock = "Amethyst", count = 3 } },
+				rocks = { { rock = "Quartz", count = 8 }, { rock = "Amethyst", count = 3 } },
 			},
 			{
 				name = "Geode Basin",
 				center = Vector3.new(904, 0, -96),
 				radius = 44,
-				rocks = { { rock = "Amethyst", count = 6 }, { rock = "Quartz", count = 3 }, { rock = "Heartstone", count = 2 } },
+				rocks = { { rock = "Amethyst", count = 5 }, { rock = "Quartz", count = 3 }, { rock = "Heartstone", count = 2 } },
 			},
 		},
+		guardian = { creature = "LyraeFrozenChorus", seal = "ChoirSeal", position = Vector3.new(740, 0, -40), rebirths = 2 },
 		accent = Color3.fromRGB(110, 220, 255),
 		sky = Color3.fromRGB(170, 190, 255),
 		fog = Color3.fromRGB(190, 200, 255),
@@ -90,7 +102,7 @@ Islands.Defs = {
 		tagline = "The furnace beneath the world",
 		description = "A volcanic caldera of black basalt and living magma. Only reforged arms survive the heat.",
 		order = 3,
-		requires = { level = 25, rebirths = 1 },
+		requires = { level = 25 },
 		center = Vector3.new(-820, 0, 0),
 		radius = 190,
 		arrival = Vector3.new(-820, 4, 96),
@@ -99,15 +111,16 @@ Islands.Defs = {
 				name = "Basalt Flats",
 				center = Vector3.new(-820, 0, -50),
 				radius = 58,
-				rocks = { { rock = "Basalt", count = 10 }, { rock = "MagmaCore", count = 3 } },
+				rocks = { { rock = "Basalt", count = 8 }, { rock = "MagmaCore", count = 3 } },
 			},
 			{
 				name = "Caldera Rim",
 				center = Vector3.new(-904, 0, -96),
 				radius = 44,
-				rocks = { { rock = "MagmaCore", count = 6 }, { rock = "Basalt", count = 3 }, { rock = "Obsidian", count = 2 } },
+				rocks = { { rock = "MagmaCore", count = 5 }, { rock = "Basalt", count = 3 }, { rock = "Obsidian", count = 2 } },
 			},
 		},
+		guardian = { creature = "CinderjawSovereign", seal = "CalderaSeal", position = Vector3.new(-740, 0, -40), rebirths = 3 },
 		accent = Color3.fromRGB(255, 96, 40),
 		sky = Color3.fromRGB(110, 54, 52),
 		fog = Color3.fromRGB(120, 60, 50),
@@ -119,7 +132,7 @@ Islands.Defs = {
 		tagline = "Beyond the last forge",
 		description = "Something is humming out past the edge of the map. Not yet charted.",
 		order = 4,
-		requires = { level = 30, rebirths = 3 },
+		requires = { level = 30 },
 		comingSoon = true,
 		center = Vector3.new(0, 0, -1000),
 		radius = 190,
@@ -134,5 +147,7 @@ Islands.Defs = {
 
 Islands.Order = { "Forgeheart", "Crystalfall", "Emberfang", "Voidreach" }
 Islands.Start = "Forgeheart"
+
+-- Voidreach has no guardian yet (it is a teaser); its guardian ships with the island.
 
 return Islands

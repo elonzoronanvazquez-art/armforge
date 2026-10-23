@@ -53,7 +53,7 @@ Progression.Rebirth = {
 		"arm ownership and the equipped arm",
 		"cosmetics",
 		"Forge Shards",
-		"unlocked islands",
+		"unlocked islands, guardian victories and island completion",
 		"boosters (owned and running)",
 		"rebirth count and permanent bonuses",
 		"settings and tutorial progress",
@@ -63,7 +63,7 @@ Progression.Rebirth = {
 -- First-session guidance. Each step completes when the server records the matching flag in data.tutorial.
 Progression.Tutorial = {
 	{ id = "punch", text = "Walk up to a rock and PUNCH it! (Click, tap, or press the PUNCH button)", flag = "punched" },
-	{ id = "destroy", text = "Keep hitting! Watch the rock chip apart. Break it for coins and XP.", flag = "destroyed" },
+	{ id = "destroy", text = "Keep hitting! Every rock has a creature imprisoned inside. Break it open, then FIGHT what comes out!", flag = "destroyed" },
 	{ id = "upgrade", text = "You have coins! Open ARMS (F) and upgrade your fists.", flag = "upgraded" },
 	{ id = "level", text = "Level up to unlock training, skills and new arms. Try the Power Press at the Training Yard.", flag = "trained" },
 	{ id = "done", text = "Collect arms, rebirth, and sail to new islands from the Skyport. Good luck, Forgemaster.", flag = "finished" },

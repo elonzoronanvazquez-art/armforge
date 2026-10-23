@@ -141,6 +141,11 @@ return function(t, u)
 		t.eq(session.data.islands.unlocked.Crystalfall, nil)
 		session.data.level = 12
 		session.data.coins = 1e6
+		local gated = world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" })
+		t.eq(gated.ok, false, "level alone does not open the next island")
+		session.data.rebirths = 1
+		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" }).ok, false, "a rebirth alone does not either")
+		session.data.guardians.defeated.Forgeheart = true
 		local unlock = world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" })
 		t.eq(unlock.ok, true, tostring(unlock.err))
 		local pos = player.Character.HumanoidRootPart.Position

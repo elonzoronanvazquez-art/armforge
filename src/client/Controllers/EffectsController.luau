@@ -738,7 +738,30 @@ local function onRebirth(p: any)
 	end
 end
 
+-- helpers shared with CreatureController (same budgets, same pooled visuals)
+EffectsController.flash = flash
+EffectsController.ring = ring
+EffectsController.emit = emit
+EffectsController.hitFlash = hitFlash
+
+local function creatureFx(name: string): (any) -> ()
+	return function(p: any)
+		-- required lazily: CreatureController itself requires this module
+		local controller = require(script.Parent.CreatureController) :: any
+		controller[name](p)
+	end
+end
+
 local dispatch: { [string]: (any) -> () } = {
+	Reveal = creatureFx("reveal"),
+	Engage = creatureFx("engage"),
+	Telegraph = creatureFx("telegraph"),
+	CreatureStrike = creatureFx("strike"),
+	CreatureHit = creatureFx("hit"),
+	PhaseChange = creatureFx("phase"),
+	CreatureDefeat = creatureFx("defeat"),
+	Retreat = creatureFx("retreat"),
+	Hurt = creatureFx("hurt"),
 	Hit = onHit,
 	Break = onBreak,
 	Spawn = onSpawn,
