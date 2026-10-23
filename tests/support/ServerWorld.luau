@@ -522,6 +522,23 @@ function ServerWorld.new(opts)
 		player.Character.HumanoidRootPart.Position = position
 	end
 
+	-- workspace:GetServerTimeNow() as the server reports it
+	function world:serverNow()
+		return EPOCH + sched.now
+	end
+
+	-- A tagged part in the world (Skyport terminal, training station...).
+	function world:addTagged(tag, position, attributes)
+		local part = make("Part", { Name = tag })
+		part.Position = position
+		for k, v in attributes or {} do
+			part:SetAttribute(k, v)
+		end
+		part.Parent = workspaceNode
+		state[CollectionService].props.AddTag(CollectionService, part, tag)
+		return part
+	end
+
 	-- Unix time as the server sees it (os.time()).
 	function world:time()
 		return EPOCH + math.floor(sched.now)
@@ -542,7 +559,7 @@ function ServerWorld.new(opts)
 	end
 
 	function world:fireHeartbeat()
-		playersState.Heartbeat:Fire(1 / 60)
+		state[RunService].props.Heartbeat:Fire(1 / 60)
 	end
 
 	-- Everything sent to a client on a remote, in order.
