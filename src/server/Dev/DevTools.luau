@@ -18,6 +18,7 @@ local BoosterConfig = require(Shared.Config.Boosters)
 local Sessions = require(script.Parent.Parent.Services.Sessions)
 local Sync = require(script.Parent.Parent.Services.Sync)
 local ArmService = require(script.Parent.Parent.Services.ArmService)
+local DataService = require(script.Parent.Parent.Services.DataService)
 local ProgressService = require(script.Parent.Parent.Services.ProgressService)
 local RockService = require(script.Parent.Parent.Services.RockService)
 
@@ -247,7 +248,7 @@ local COMMANDS: { [string]: (...any) -> any } = {
 		local now = os.clock()
 		Combat.updateBuffs(s.combat, now)
 		local st = Combat.stats(s.data, s.combat, now)
-		return { power = st.power, cooldown = st.cooldown, crit = st.critChance, haste = st.haste, arm = st.armId }
+		return { power = st.power, cooldown = st.cooldown, crit = st.critChance, haste = st.haste, arm = st.armId, combo = s.combat.combo, overclock = s.combat.overclock }
 	end,
 	hrp = function()
 		local p = DevTools.player()
@@ -287,6 +288,11 @@ local COMMANDS: { [string]: (...any) -> any } = {
 	end,
 	spawnRock = function(defId: string, x: number, y: number, z: number)
 		return RockService.spawnAt(defId, Vector3.new(x, y, z)).id
+	end,
+	-- The next n DataStore operations fail (persistence failure drills against the real store; Studio only).
+	failStore = function(n: number)
+		DataService.injectFailures(n)
+		return `next {n} DataStore operations will fail`
 	end,
 	-- Times the per-strike server scans (microseconds per call) at the local player's position.
 	--   playerScan mirrors the player loop inside RockService.fxNear (every strike, hit and break pays for it).

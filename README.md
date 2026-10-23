@@ -25,7 +25,7 @@ Requirements already used by this repo: Rojo 7.7, Lune 0.11, luau-lsp, Roblox St
 # build a place file and open it in Studio
 rojo build default.project.json -o build/armforge.rbxl
 
-# tests (119, pure Luau under Lune) and strict typecheck (both Luau solvers)
+# tests (213: pure logic plus the real server services on a fake Roblox server, under Lune) and strict typecheck (both Luau solvers)
 lune run tests/run
 powershell -ExecutionPolicy Bypass -File scripts/typecheck.ps1     # or: bash scripts/tc.sh
 
@@ -53,9 +53,9 @@ default.project.json      Rojo project (ReplicatedStorage/ServerScriptService/St
 src/shared                Config (all balance data), pure Logic (tested), Runtime builders, Net, Util
 src/server                Services (authoritative game systems), World (terrain, islands, rocks), Dev (Studio only)
 src/client                Controllers (input, combat, animation, effects, camera), UI (HUD + 7 panels)
-tests                     Lune specs: logic, balance simulation, persistence, wiring checks
+tests                     Lune specs: logic, balance simulation, persistence, wiring checks, server-service integration (tests/support/ServerWorld)
 scripts                   Studio MCP tooling: sync, reload, playtest drivers, AI asset generation, typecheck
-docs                      Design, architecture, assets, verification, next steps
+docs                      Design, architecture, assets, verification, persistence test procedure, next steps
 ```
 
 ## What is in the game

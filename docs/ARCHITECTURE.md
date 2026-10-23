@@ -116,11 +116,43 @@ stats       { rocksDestroyed, totalDamage, strikes, playSeconds, trainingSession
 ```
 
 `DataSchema.reconcile` clamps every number, drops unknown ids and re-fills defaults, so corrupt or tampered data cannot
-break a session; `Migrations[v]` upgrades older versions. `Logic/Persistence` implements session-locked load/save over any
-store with `UpdateAsync` (a second server cannot load a live session; stale locks expire after 10 minutes; a server that
-lost its lock cannot overwrite). `DataService` retries with backoff, autosaves every 75s, saves on leave and in
-`BindToClose`, uses a **separate store name in Studio**, and falls back to an in-memory store (loudly) only in Studio.
-Players are kicked, not defaulted, if their data cannot be loaded safely.
+break a session; `Migrations[v]` upgrades older versions. Bump `Game.Data.schemaVersion` whenever content or fields are added
+that an older server could not round-trip: records from a newer schema are refused by older servers rather than downgraded.
+
+`Logic/Persistence` implements session-locked load/save over any store with `UpdateAsync`:
+
+* **Load** takes the lock `{jobId, time}`. A fresh lock held by another job blocks the load ("locked"); stale locks (10 minutes)
+  can be taken over. A record that is not a table, or comes from a newer schema, is refused ("corrupt" / "newer_schema") and
+  nothing is written. Failed loads therefore never turn into defaults that get saved.
+* **Save is fenced**: it commits only while the record still carries this job's lock, otherwise it fails with "lost_lock". A
+  server that lost its session (stale, taken over, even if the new owner already released) cannot overwrite newer progress;
+  `DataService` then stops writing for that session and removes the player.
+* **Release** (`Persistence.release`) clears only the lock, used when a player leaves before their session went live.
+
+`DataService` retries with backoff, serialises saves per session (a release waits for an in-flight autosave; a leaving session
+only saves with release), autosaves every 75s, saves on leave, and in `BindToClose` saves everyone and also waits for leave-saves
+already in flight. It uses a **separate store name in Studio** (`..._Studio`), probes with a read in Studio only (a live server
+does no DataStore traffic at boot) and falls back to an in-memory store (loudly) only in Studio. Players are kicked, not
+defaulted, if their data cannot be loaded safely. Studio-only failure injection (`ArmforgeFailStore` workspace attribute,
+`failStore` dev command) drives the failure paths against the real store; see PERSISTENCE_TEST.md.
+
+## Rocks: respawn safety and queries
+
+* A destroyed rock respawns after `aftermath + def.respawn`, but never solid on top of a player: `Logic/RespawnGuard` checks the
+  new layout's footprint (plus `Game.Rocks.respawnClearance`) against every character root every `respawnRetry` seconds and holds
+  the respawn back without moving or touching anyone. After `respawnMaxDefer` the rock returns as a non-solid "ghost"
+  (`Ghost` attribute, collider off) and turns solid as soon as the footprint is clear, so an idle player cannot stall it.
+* Combo and Overclock stacks are recorded only when a strike lands (`Combat.registerStrike` at contact); the swing animation
+  uses `Combat.peekStrike`. Equipping resets the chain.
+* `RockService.near` uses `Logic/SpatialGrid` (rocks never move horizontally); burning rocks live in their own set.
+
+## Testing the server services
+
+`tests/support/ServerWorld.luau` is a deterministic fake Roblox server (virtual clock and scheduler, Instance tree, Players,
+CollectionService, DataStore with latency/failure injection). It loads the REAL `src/server/Services` through
+`tests/support/Loader.luau` (`Loader.new{ server = true, env = ..., replace = ... }`), replacing only the mesh builders, so
+interleavings such as "autosave racing a leave" or "player stands where a rock respawns" are reproducible. See
+`tests/server_*.spec.luau`. It does not replace Studio playtests or the live DataStore checklist.
 
 ## World
 

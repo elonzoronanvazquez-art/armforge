@@ -2,8 +2,14 @@
 
 ## Known issues / limitations
 
-* **Persistence and multiplayer are unverified live** (see VERIFICATION.md). Publish a test place, enable Studio API access,
-  and run two clients before shipping.
+* **Persistence and multiplayer are unverified live** (see VERIFICATION.md). The persistence logic is hardened and tested against
+  a fake DataStore; run `docs/PERSISTENCE_TEST.md` in a PRIVATE test experience and a two-client session before shipping.
+* A rock whose footprint a player keeps occupying comes back as a non-solid ghost after 20 s (it can be mined, and turns solid
+  once the player moves). Tune `Game.Rocks.respawnClearance/respawnRetry/respawnMaxDefer` with real play.
+* If a final leave-save fails after all retries the lock stays until it expires (10 minutes) or the same server loads the
+  player again; the failure is logged (`save failed`) but there is no durable retry queue.
+* The combo animation for a swing is chosen when it starts, but stacks are recorded when it lands, so two swings started before
+  the first lands (only possible at extreme haste) can show the same combo move.
 * Arm visuals: the AI gauntlets look good, but the shoulder/upper-arm pieces are still simple primitives (boxy pauldron
   slabs on Stonebreaker, rope-wrapped sleeve on the Starter fabric). Left arms are mirrored right-hand meshes.
 * Rock silhouettes read as chunked formations rather than single smooth boulders; some shell slabs show a lilac cast under
@@ -21,8 +27,8 @@
 
 ## Next development priorities
 
-1. Publish a private test place, verify DataStore saves (load, autosave, leave, BindToClose, session lock) and a two-client run
-   (shared rock kill, equipment replication, swing replication).
+1. Publish a private test place and run `docs/PERSISTENCE_TEST.md` (load, autosave, leave, BindToClose, session lock, failure
+   drill), then a two-client run (shared rock kill, equipment replication, swing replication, respawn next to another player).
 2. A real mobile pass: profile on a mid-range phone, tune `Game.Budgets` and the reduce-effects preset, test touch ergonomics.
 3. Art: custom upper-arm/pauldron meshes per family, rock "crack" decals for the FRACTURED stage, richer terrain
    (material variants via `generate_material`), a second landmark per island, animated hearts.

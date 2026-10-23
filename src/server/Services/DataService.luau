@@ -20,6 +20,10 @@ DataService.storeName = ""
 
 local memory: { [string]: any } = {}
 
+-- Studio only: the next N DataStore operations fail, so the failure paths can be exercised against the real store
+-- (see docs/PERSISTENCE_TEST.md). Always 0 in live servers: injectFailures is a no-op there.
+local injectedFailures = 0
+
 local deepCopy = Persistence.deepCopy
 
 -- saves currently running or queued (any session): BindToClose must outwait leave-saves that started before shutdown
@@ -69,6 +73,27 @@ function DataService.init()
 	else
 		store = nil
 		warn(`[ARMFORGE] DataStore unavailable: {tostring(result)}`)
+	end
+	if store and RunService:IsStudio() then
+		-- Studio only: wrap the store so failures can be injected (live servers use the DataStore object untouched).
+		-- Failure drill: set the attribute in Edit mode before pressing Play (docs/PERSISTENCE_TEST.md, step 7).
+		injectedFailures = math.max(0, math.floor(tonumber(workspace:GetAttribute("ArmforgeFailStore")) or 0))
+		local inner: any = store
+		store = {
+			UpdateAsync = function(_: any, k: string, fn: (any) -> any)
+				if injectedFailures > 0 then
+					injectedFailures -= 1
+					error("injected DataStore failure", 0)
+				end
+				return inner:UpdateAsync(k, fn)
+			end,
+		}
+	end
+end
+
+function DataService.injectFailures(count: number)
+	if RunService:IsStudio() then
+		injectedFailures = math.max(0, math.floor(count))
 	end
 end
 
