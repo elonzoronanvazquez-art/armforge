@@ -24,6 +24,15 @@ Run `lune run tests/run` after every change: `config.spec`, `wiring.spec` and th
 3. Optional: a heart mesh in `RockBuilder`'s `CORE_KEYS` (falls back to a neon core).
 4. A new `sound` key needs `Hit<Key>` and `Break<Key>` in `Config/Assets.Sounds` (`wiring.spec` enforces it).
 
+## A new creature (or a rock that holds a different one)
+
+Add a def to `Config/Creatures` (archetype crawler / brute / shard / titan, `fight = { arm, level, seconds }` for its health,
+attacks with windup / recovery / area, optional armor, core and interrupters, reward multiples, recommended skills, palette), then
+point a rock's `encounter` (`Config/Rocks`) at it. `tests/guardians.spec` checks fair telegraphs, learnable skills and boss mechanics;
+`tests/encounter_balance.spec` (add a line to its PLAN table) tells you the fight length and whether punching alone is a shortcut.
+An AI body mesh is optional: register it in `Config/Assets.Meshes` and set `visual.mesh` (and `meshYaw` to face -Z, `meshLimbs` for a
+whole-body mesh). See [CREATURES.md](CREATURES.md).
+
 ## A new island
 
 1. `Config/Islands.luau`: def with `requires`, `center`, `arrival`, `fields`, theme colours (and `comingSoon = true`
@@ -32,6 +41,9 @@ Run `lune run tests/run` after every change: `config.spec`, `wiring.spec` and th
    `ctx.spawn(id, spawn)`, a return Skyport via `Forgeheart.skyport`, landmarks). Add it to `WorldBuilder.terrainSpec` and
    `build`.
 3. `AtmosphereController.THEMES` for its lighting; unique terrain materials give it a unique palette.
+
+For a guardian: add a seal rock (`size = "seal"`) and the island's `guardian = { creature, seal, position, rebirths }`; the next island's
+requirements pick up the guardian gate automatically (`Logic/Islands.requirements`).
 
 ## A new skill / booster / training station
 

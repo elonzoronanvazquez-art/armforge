@@ -100,7 +100,7 @@ than a move the animation is sped up so strikes never overlap. (R15 avatars are 
 pieces. `ArmDesigns` lists each arm's pieces (AI gauntlet mesh + primitives, gated by upgrade tier). Cosmetics are resolved
 by `Equipment.visualRecipe` and never touch stats.
 
-## Save data (`Logic/DataSchema`, schema version 1)
+## Save data (`Logic/DataSchema`, schema version 2)
 
 ```
 version, coins, shards, level, xp, skillPoints, rebirths, firstJoin, lastSave
@@ -109,10 +109,11 @@ cosmetics   { owned = {"kind:id"=true}, equipped = {armId = {palette, finish, tr
 training    { power|haste|precision|endurance = { level, points } }
 skills      { ranks = {skillId=n} }
 boosters    { inventory = {id=n}, active = {id=secondsLeft} }
-islands     { unlocked = {id=true}, current = id }
+islands     { unlocked = {id=true}, current = id, completed = {id=true} }
+guardians   { defeated = {islandId=true} }   (v2: set only by Guardians.recordDefeat; completed mirrors it)
 tutorial    { step, flags = {flag=true} }
 settings    { sfx, music, shake, uiScale, reduceFx, damageNumbers }
-stats       { rocksDestroyed, totalDamage, strikes, playSeconds, trainingSessions }
+stats       { rocksDestroyed, totalDamage, strikes, playSeconds, trainingSessions, creaturesDefeated, guardianVictories }
 ```
 
 `DataSchema.reconcile` clamps every number, drops unknown ids and re-fills defaults, so corrupt or tampered data cannot
@@ -135,6 +136,18 @@ already in flight. It uses a **separate store name in Studio** (`..._Studio`), p
 does no DataStore traffic at boot) and falls back to an in-memory store (loudly) only in Studio. Players are kicked, not
 defaulted, if their data cannot be loaded safely. Studio-only failure injection (`ArmforgeFailStore` workspace attribute,
 `failStore` dev command) drives the failure paths against the real store; see PERSISTENCE_TEST.md.
+
+## Creatures and encounters
+
+* `Config/Creatures` (data) -> `Logic/CreatureSim` (the pure combat state machine) -> `server/Services/EncounterService` (glue) ->
+  `server/World/CreatureBuilder` (model) -> `client/Controllers/CreatureController` (animation, telegraphs, readouts).
+* `Logic/EncounterSM` owns the rock-to-creature lifecycle (SEALED, REVEAL, COMBAT, DEFEATED, RECOVERY, RESPAWNING); `RockService`
+  hands over at the final hit through `setEncounterHandler` and the encounter asks for the rock's respawn when the creature is gone.
+* Creatures share the rocks' id space (a punch at the rock id hits the creature once it is in COMBAT), so `Punch` / `Skill` / the
+  targeting client needed no new remotes. Damage, armor / core / interrupt rules, rewards and guardian completion are server-only.
+* `Logic/CreatureStats` derives health from a reference arm and fight length; `Logic/Guardians` and `Logic/Islands.requirements` implement the
+  two-part island gate; `Logic/EncounterInfo` is what a sealed rock tells the player.
+* Details, rules and numbers: [CREATURES.md](CREATURES.md).
 
 ## Rocks: respawn safety and queries
 

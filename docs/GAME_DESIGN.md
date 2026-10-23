@@ -55,9 +55,20 @@ respawn with a freshly generated layout.
 | Basalt Slab | Emberfang | stone | 62,000 | 20% | 11,000 | 4,200 | |
 | Magma Core | Emberfang | magma | 230,000 | 25% | 40,000 | 14,000 | |
 | Obsidian Heart (rare) | Emberfang | magma | 780,000 | 35% | 135,000 | 48,000 | 8-16 shards |
+| Forgestone Monolith (rare) | Forgeheart | stone | 2,200 | 5% | 420 | 180 | large rock: releases the Quarry Colossus |
+| Anvil / Choir / Caldera Seal | each island | ore / crystal / magma | 3,600 / 52,000 / 1.15M | 5% | small | small | guardian seals (rebirth-gated); mining pays only 10% |
+
+Mining pays only a share of these coins / XP once a rock holds a creature (50% small and medium, 40% large); the creature pays the rest.
 
 **Shared kills:** every player who dealt at least 10% of a rock's health gets the FULL reward; smaller contributors get
 a proportional share; the killing blow adds +10%. The payout is computed once.
+
+## Creatures and guardians
+
+Every rock holds a creature; breaking the rock releases it and the player fights it with the same arm and skills. Rock size sets the
+challenge (small: basic enemy, medium: armored, large: elite) and each island ends with a guardian sealed in a huge rock that only opens
+for a player who has rebirthed enough times. Defeating the guardian completes the island; the next island needs that victory **and** the
+rebirths, so neither a rebirth nor a victory alone opens it. Full rules, numbers and the fight simulation: [CREATURES.md](CREATURES.md).
 
 ## Progression
 

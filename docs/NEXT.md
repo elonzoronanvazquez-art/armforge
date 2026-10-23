@@ -25,6 +25,30 @@
 * There is no on-screen button for panel opening on very small screens other than the menu column; tablets and phones were
   only checked in the emulator.
 
+## Creature / guardian system: known issues
+
+* **Animation is procedural.** The creatures move as one rigid body plus Motor6D limbs; the two whole-body AI meshes (Quarry Colossus, Grom)
+  cannot raise arms, so their attacks read from the ground telegraph, the body rearing up and the status text. Authored animations (or a
+  rigged mesh) are the biggest visual upgrade for the fights.
+* AI meshes exist for the first five creatures only; the Crystalfall and Emberfang creatures use recoloured procedural bodies.
+* Creatures walk at the height of their rock's base and ignore slopes; the islands are flat enough that this is not noticeable.
+* Players cannot collide with creatures (a moving anchored collider would shove or trap them), so a creature can overlap a player who
+  stands still inside it.
+* One early Studio run showed a guardian's armor open without a Charged Smash being sent; three later runs with tracing did not
+  reproduce it and the unit / integration tests cover the armor rules. Worth a look in a real multi-client session.
+* Shared encounters are verified server-side and by simulation only; a real second client has not fought one.
+* The two-part island gate makes the first rebirth (about 100 minutes in the greedy simulation) the exit from Forgeheart; tune `Config/Creatures`
+  rewards and `Progression.Rebirth` with real play data.
+
+## Visual-polish priorities after this sprint
+
+1. Authored creature animations and rigged meshes; arms for the Colossus and Grom (a rigged mesh, or split limb meshes).
+2. A distinct reveal per creature (rock-specific debris, creature roar sounds) and guardian arenas (ground decals, a barrier ring).
+3. Attack VFX that match each creature (rock throws, crystal beams, lava rivers) instead of the shared ground markers and rings.
+4. Creature hit sounds and voice; audio for telegraphs.
+5. Sealed-rock presentation: cracks that glow brighter as the rock wears, a silhouette of the creature inside.
+6. Boss bar phase markers, a guardian intro sequence, and Islands-panel art for the guardian states.
+
 ## Next development priorities
 
 1. Publish a private test place and run `docs/PERSISTENCE_TEST.md` (load, autosave, leave, BindToClose, session lock, failure

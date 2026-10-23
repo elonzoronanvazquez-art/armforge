@@ -8,11 +8,13 @@ islands. The arms are the game: they are the character's visual identity, the co
 progression.
 
 The first-time loop: spawn at the Great Forge, follow the glowing path to the Starter Field, punch a rock, watch its shell
-chip away to its glowing heart, collect the reward, upgrade your fists, and keep going.
+chip away to its glowing heart, and fight the creature that bursts out. Collect the rewards, upgrade your fists, learn skills,
+and keep going: every island ends with a guardian that, together with a rebirth, opens the way to the next one.
 
 * Status, what is verified and what is not: [docs/VERIFICATION.md](docs/VERIFICATION.md)
 * Game design, rules and numbers: [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md)
 * Architecture and the rock destruction system: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+* Creatures in rocks, combat mechanics, guardians and the island gate: [docs/CREATURES.md](docs/CREATURES.md)
 * Adding an arm, rock, island, skill or booster: [docs/ADDING_CONTENT.md](docs/ADDING_CONTENT.md)
 * AI-generated assets, sounds, limitations: [docs/ASSETS.md](docs/ASSETS.md)
 * Known issues and next priorities: [docs/NEXT.md](docs/NEXT.md)
@@ -25,7 +27,7 @@ Requirements already used by this repo: Rojo 7.7, Lune 0.11, luau-lsp, Roblox St
 # build a place file and open it in Studio
 rojo build default.project.json -o build/armforge.rbxl
 
-# tests (213: pure logic plus the real server services on a fake Roblox server, under Lune) and strict typecheck (both Luau solvers)
+# tests (298: pure logic, a creature fight simulation and the real server services on a fake Roblox server, under Lune) and strict typecheck (both Luau solvers)
 lune run tests/run
 powershell -ExecutionPolicy Bypass -File scripts/typecheck.ps1     # or: bash scripts/tc.sh
 

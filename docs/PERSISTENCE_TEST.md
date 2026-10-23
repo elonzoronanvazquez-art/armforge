@@ -68,14 +68,16 @@ or script errors that the step did not intentionally cause.
 3. **Earn currency and XP.** Destroy a rock with real punches (or `coins`/`xp`). `state` shows the new coins and XP.
 4. **Equip and upgrade an arm.** `giveArm Alloy`, equip it through the Armory UI, upgrade it once through the UI. Note the arm level
    and the coin balance.
-5. **Unlock progression.** Reach level 12 (`level 12`), unlock Crystalfall at the Skyport, train a stat at a station, learn a skill.
-   Note level, unlocked islands, training levels, skill ranks.
+5. **Unlock progression.** Reach level 12 (`level 12`), `rebirths 1`, defeat the Forgeheart guardian (break the Anvil Seal; for a
+   shortcut `D:Invoke("hitCreature", <seal id>, 1e9)` after it emerges), unlock Crystalfall at the Skyport, train a stat at a
+   station, learn a skill. Note level, unlocked islands, **guardian victories and island completion** (`D:Invoke("guardians")`),
+   training levels, skill ranks.
 6. **Save, leave, rejoin, same progression.**
    1. Wait for the autosave (75 s) and watch `lastSave` change in the record, or just leave.
    2. Stop the playtest (this exercises `BindToClose`). The record's `data` must hold everything from steps 3 to 5 and `lock` must be
       gone.
    3. Start a new playtest. `state` must show identical coins, level, owned arms and arm levels, equipped arm, unlocked islands,
-      training and skill ranks. Repeat leaving through the in-game menu / Leave button instead of stopping the server.
+      `guardians.defeated` and `islands.completed`, training and skill ranks. Repeat leaving through the in-game menu / Leave button instead of stopping the server.
 7. **Failed load never overwrites a valid profile.**
    1. Stop play and copy the stored record's JSON (including `savedAt`).
    2. In Edit mode run `workspace:SetAttribute("ArmforgeFailStore", 1000)` in the command bar (Studio only; live servers ignore it),

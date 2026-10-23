@@ -56,6 +56,31 @@ Design notes and limitations:
   that account; if the experience is moved to a group, re-upload or transfer them. Verify Roblox's current terms for
   AI-generated content before monetising.
 
+## Creatures (rock encounters)
+
+Bodies come from four procedural templates (`server/World/CreatureBuilder`: crawler, brute, shard, titan: Parts joined by
+Motor6D, tinted from `Config/Creatures`) with optional **AI-generated body meshes** that replace the torso and head. All four new meshes
+were generated with Studio's `generate_mesh` (prompts and raw results in `docs/generated_assets.json`), placed in Studio and photographed
+before use. One prompt was rejected by moderation ("a crouched stone beast ... glowing eye sockets") and regenerated with a softer one.
+
+| Creature | Tier / island | Body | Mesh id | Texture id | Inspected in Studio | Animates | Notes / limits |
+|---|---|---|---|---|---|---|---|
+| Cairn Crawler | normal, Forgeheart | AI mesh `CreatureCrawler` + procedural tail-less legs | 75810558260234 | 108489905077094 | yes: a stylised rock-golem turtle with orange cracks | body bob/lunge, procedural legs | the mesh faces +X (yaw 90); it came back cuter than the prompt; the glowing back core is a procedural part |
+| Prism Wisp | normal (rare), Forgeheart | procedural shard template + existing AI crystal `CoreCrystalCyan` as its heart | 108198767086062 | 70951425972568 | yes (in game) | orbit spin, bob | reuses the arm/rock crystal mesh |
+| Slag Brute | normal, Forgeheart | AI mesh `CreatureBrute` (iron cuirass with furnace window) + procedural arms, fists, legs | 111108270303063 | 117042508498363 | yes | arm raise/slam, walk cycle | mesh is torso only; limbs are blocks and look cruder than the torso |
+| Quarry Colossus | elite, Forgeheart | AI mesh `CreatureColossus` (a whole spiked stone golem, limbs included) | 83897845854526 | 84383511102732 | yes | whole-body only (rear up, lean, lunge) | the generator ignored "no arms, no legs", so the procedural limbs are skipped and the mesh is scaled to the creature height |
+| Grom, the Anvil-King | guardian, Forgeheart | AI mesh `CreatureAnvilKing` (purple-iron golem with a glowing furnace window and red cracks) | 83130551069179 | 115766690455151 | yes | whole-body only | same note as the Colossus; its palette is purple, not the orange of the prompt |
+| Shardling | normal, Crystalfall | procedural shard + existing `CoreQuartz` mesh | 126003500634902 | 116870406169815 | not individually | orbit spin, bob | |
+| Amethyst Warden, Choir Behemoth, Lyrae | Crystalfall | procedural brute / titan templates, crystal palette | none | none | not individually | full limb animation | procedural fallback quality |
+| Ash Hound, Magma Golem, Obsidian Executioner, Cinderjaw Sovereign | Emberfang | procedural crawler / brute / titan templates, ember palette | none | none | not individually | full limb animation | procedural fallback quality |
+
+Everything has a working fallback: if a mesh id fails to load the builder keeps the procedural body (`meshTemplate` returns nil and warns).
+The generated meshes belong to the account that ran Studio (same licensing note as above).
+
+**Animation is procedural, not authored:** the client sets `Motor6D.Transform` from the replicated creature state
+(`client/Controllers/CreatureController`); no animation asset was created or uploaded. Whole-body meshes can only move as one piece, so
+their telegraphs rely on the ground marker, the body rearing up and the status text.
+
 ## Sounds
 
 All 36 sound slots in `Config/Assets.Sounds` use free **ProSoundEffects** library assets found with Studio's

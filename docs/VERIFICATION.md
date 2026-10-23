@@ -4,7 +4,7 @@ What is actually verified, where, and what is not. "Studio" below means a single
 Roblox Studio driven through the Studio MCP server (execute_luau on Server/Client, real mouse and keyboard input, screenshots,
 console output). Nothing is claimed that was not observed.
 
-## Automated (Lune, `lune run tests/run`): 213 tests, 0 failing
+## Automated (Lune, `lune run tests/run`): 298 tests, 0 failing
 
 The first block is pure logic; the second block runs the REAL server services (`src/server/Services`) against a fake Roblox server
 (`tests/support/ServerWorld.luau`: virtual clock and scheduler, Instance tree, Players/DataStore/CollectionService fakes with latency
@@ -28,6 +28,10 @@ substitute for Studio or the live DataStore.
 | `server_combat.spec` | 12 | CombatService + RockService + Requests: landed hits build combo/Overclock, whiffs (no target, out of reach, locked island, rock dies or player moves before contact) build nothing, malformed arguments, 1,000-punch spam, unloaded sessions, swing effects only to nearby players, equipment replacement |
 | `server_rocks.spec` | 18 | rock lifecycle and single payout, respawn, rewards to contributors who stayed, safe respawn (held back while a player stands in the footprint, no movement/damage/rebuild, ghost fallback, watcher cleanup, one respawn per death), `near()` equals brute force over 150 rocks, burn lifecycle, effect radius |
 | `server_requests.spec` | 13 | Request validation and rate limit, SetSetting cannot write arbitrary data, purchases charge once, one arm set after equip/upgrade/respawn, snapshot only to the requester and coalesced, Skyport/altar gating, not_ready after leaving |
+| `creatures.spec` | 28 | CreatureSim: emerge invulnerability, aggro and leash, telegraph-before-damage, locked areas dodgeable, circle/cone/line geometry, recovery, kiting, dash bounds, armor and breaker skills, core under armor, interrupts, defeat is final and pays once, contribution split, boss phases, healing and retreat; EncounterSM legal transitions |
+| `guardians.spec` | 23 | the two-part gate (rebirth alone, victory alone, both), per-island completion, repeat victories, the four UI states, schema v2 defaults, v1 migration keeps arms/cosmetics/currency/islands, round trip, tampered guardians dropped; content rules: seals/guardians/sizes/mechanics, fair telegraphs, learnable skills (no softlock), boss phases |
+| `encounter_balance.spec` | 8 | fight simulation of all 13 creatures against matching loadouts (win rate, fight length bands, punching-only is not a shortcut for armored elites/guardians, a stationary player cannot brute-force an elite) |
+| `server_encounters.spec` | 24 | the real services on the fake server: partial damage never spawns, one creature per final hit, no rock respawn during an encounter, mining share + single creature reward, second life, real Punch/Skill remotes against creatures, locked islands, telegraph before damage, armor/Charged Smash, unlearned skills rejected, simultaneous final hits, abandoned and dead-player recovery, seal resists ineligible players, guardian victory recorded for eligible contributors only, repeat reward, end-to-end next-island gate through Requests, no client path to fake a victory, persistence across rejoin, interrupted boss fight |
 | `server_training.spec` | 10 | station/level/range gating, server-clock grading, rep and tap caps, bad arguments, target index checks, left/died/leave cleanup |
 
 Balance milestones printed by the simulation (optimal play): first upgrade 18s, level 2 32s, level 5 2.8min, Stonebreaker 5.5min,
@@ -68,6 +72,31 @@ colour and finish and did not change power, and charged exactly the price.
 Performance (Studio on a development PC, not a phone): server holds ~2,800 parts (1,758 in rocks, 1,472 MeshParts), 43 lights,
 26 emitters; a client streams ~1,100 parts; idle 60 fps; a burst of 240 rock hits in 3 seconds across 8 rocks held 60 fps (worst
 frame 22 ms) with at most 142 effect instances alive.
+
+## Creature / guardian sprint
+
+Implemented, tested and (where stated) verified in a single-client Studio playtest. See [CREATURES.md](CREATURES.md) for the design.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Rock releases exactly one creature, only after the final hit | VERIFIED (Lune + Studio) | partial punches left the Granite alive with no creature; the final punch produced `Creature_6` (Cairn Crawler, 206 hp) in REVEAL then COMBAT; the punches that kept landing never spawned a second |
+| Reveal sequence | PARTIALLY | screenshots show the rubble, the creature beside the player and its name / health readout; the dust, ring and camera shake effects were not captured in stills |
+| Fight with real input (Punch / Skill remotes) | VERIFIED | client bot in Studio: dodged 7 telegraphs (minHp 37), punched 26 times, cast Charged Smash twice, defeated the Slag Brute in 23 s; reward paid once (creaturesDefeated 1, coins/xp up) |
+| Armor and the Charged Smash remote | VERIFIED | a Slag Brute was `armored` until one real Charged Smash (Skill remote): `armorOpen` for 7.0 s (the 7 s break window), 563 damage on that strike (2316 to 1753 hp), then armored again; a guardian punched 40 times without skills never opened its armor (0 of 53 samples) |
+| Small / medium / large | VERIFIED | Cairn Crawler, Slag Brute (armor, 2316 hp), Quarry Colossus (elite, 26,626 hp, phase 2 reached; the client bot survived 45 s then fell, as designed) |
+| Rewards once, no double pay | VERIFIED | one `Reward` (mining share) + one `CreatureReward` per kill; recovery then a fresh SEALED rock at generation 2 |
+| Guardian before the rebirth requirement | VERIFIED | 10 punches on the Anvil Seal left it at 3600 / 3600 hp |
+| Guardian after Rebirth 1 | VERIFIED | seal broke, Grom (50,165 hp, armored) emerged and fought; armor opened only through Charged Smash; finished with the dev bridge |
+| Completion recorded, next island | VERIFIED | `guardians.defeated.Forgeheart`, `islands.completed.Forgeheart`, stats updated; at the Skyport Emberfang was refused (`requirements`), Crystalfall unlocked and travel worked |
+| Output log | VERIFIED | no errors or warnings in the whole session (besides the expected DataStore notice) |
+| Performance | VERIFIED (Studio, dev PC) | during a guardian fight with telegraphs: 60 fps, average frame 16.7 ms, p99 18.5 ms, max 19.1 ms; 6 effect instances, 3 telegraph parts |
+| Persistence across rejoin | SIMULATED only | the Studio DataStore is unavailable (in-memory); rejoin preservation is covered by the fake-DataStore tests (`server_encounters`, `guardians.spec`) |
+| Multiplayer | NOT VERIFIED live | shared rocks, contribution split, bystander/ineligible handling and per-player completion are covered by tests; no second client could be launched |
+| Real-person difficulty | NOT VERIFIED | the Studio client bot is not a good player (it spent most of its time dodging and dealt about 350 damage to the guardian in 45 s); the simulation bot with the same rules wins 8/8 in about 130 s |
+
+Fight simulation and economy numbers are in CREATURES.md. One unexplained observation: in the very first guardian run the boss lost
+~25k health in a few seconds with its armor flagged open although no skill had been sent; three later runs (one with trace logging)
+behaved correctly and the armor rules are covered by the creature unit and integration tests, so it is recorded as a known issue rather than a fixed bug.
 
 ## Hardening sprint: findings and how each was verified
 
