@@ -387,14 +387,7 @@ function ServerWorld.new(opts)
 
 	-- DataStore with latency (virtual seconds) and failure injection
 	local function deepCopy(v)
-		if type(v) ~= "table" then
-			return v
-		end
-		local out = {}
-		for k, x in v do
-			out[k] = deepCopy(x)
-		end
-		return out
+		return world.universe:load("Logic/Persistence").deepCopy(v)
 	end
 	local function newStore(name)
 		local store = { name = name, data = {}, calls = {}, latency = 0, failNext = 0, failAll = opts.storeFailAll == true, commits = 0 }

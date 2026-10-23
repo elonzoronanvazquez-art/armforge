@@ -90,12 +90,4 @@ function SpatialGrid.query(self: Grid, x: number, z: number, radius: number): { 
 	return out
 end
 
-function SpatialGrid.count(self: Grid): number
-	local n = 0
-	for _ in self.where do
-		n += 1
-	end
-	return n
-end
-
 return SpatialGrid

@@ -56,9 +56,8 @@ return function(t, u)
 		grid:insert(1, -300, -300) -- moving an id replaces its old entry
 		t.deepEq(grid:query(490, 490, 40), { 2 })
 		t.deepEq(grid:query(-300, -300, 1), { 1 })
-		t.eq(grid:count(), 2)
 		grid:remove(99) -- unknown id is a no-op
-		t.eq(grid:count(), 2)
+		t.deepEq(sorted(grid:query(0, 0, 1000)), { 1, 2 })
 	end)
 
 	t.test("an empty grid and a zero radius are fine", function()

@@ -168,13 +168,19 @@ function DataService.save(session: Sessions.Session, release: boolean): boolean
 		return false
 	end
 	session.flags.saving = true
-	local ok, err = Persistence.retry(Game.Data.saveRetries, function(seconds: number)
+	-- the flags are restored even if something in the retry loop raises, so a failure cannot wedge later saves or shutdown
+	local finished, ok, err = pcall(Persistence.retry, Game.Data.saveRetries, function(seconds: number)
 		task.wait(seconds)
 	end, function()
 		return Persistence.save(store :: any, key(session.userId), session.data, jobId(), os.time(), release)
 	end)
 	session.flags.saving = false
 	inflight -= 1
+	if not finished then
+		session.saveFailures += 1
+		warn(`[ARMFORGE] save raised for {session.userId}: {tostring(ok)}`)
+		return false
+	end
 	if ok then
 		session.saveFailures = 0
 		return true
