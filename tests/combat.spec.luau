@@ -257,4 +257,40 @@ return function(t, u)
 			t.truthy(v >= 3 and v <= 6)
 		end
 	end)
+
+	t.test("peekStrike previews the chain without recording anything", function()
+		local st = Combat.newState("Alloy")
+		t.eq(Combat.peekStrike(st, 10, "Alloy"), 1)
+		t.eq(Combat.peekStrike(st, 10, "Alloy"), 1, "peeking twice changes nothing")
+		t.eq(st.combo, 0)
+		t.eq(st.overclock, 0)
+		Combat.registerStrike(st, 10, "Alloy")
+		Combat.registerStrike(st, 10.4, "Alloy")
+		t.eq(Combat.peekStrike(st, 10.8, "Alloy"), 3, "inside the window the next strike extends the chain")
+		t.eq(Combat.peekStrike(st, 10.4 + Game.Combat.comboWindow + 0.01, "Alloy"), 1, "after the window it restarts")
+		t.eq(Combat.peekStrike(st, 10.8, "Magma"), 1, "a different arm starts its own chain")
+		t.eq(st.combo, 2)
+		t.eq(st.overclock, 2)
+	end)
+
+	t.test("peekStrike always agrees with what registerStrike then returns", function()
+		local st = Combat.newState("Alloy")
+		local now = 0
+		for step = 1, 30 do
+			now += if step % 7 == 0 then 2 else 0.4
+			local armId = if step % 11 == 0 then "Starter" else "Alloy"
+			local peek = Combat.peekStrike(st, now, armId)
+			t.eq(Combat.registerStrike(st, now, armId), peek, `step {step}`)
+		end
+	end)
+
+	t.test("resetChain forgets combo, Overclock stacks and the chain timer", function()
+		local st = Combat.newState("Alloy")
+		Combat.registerStrike(st, 1, "Alloy")
+		Combat.registerStrike(st, 1.3, "Alloy")
+		Combat.resetChain(st)
+		t.eq(st.combo, 0)
+		t.eq(st.overclock, 0)
+		t.eq(Combat.peekStrike(st, 1.4, "Alloy"), 1)
+	end)
 end

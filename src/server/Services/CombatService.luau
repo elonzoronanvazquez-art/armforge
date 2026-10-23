@@ -148,10 +148,11 @@ local function onPunch(player: Player, rockIdRaw: any, _seq: any)
 	end
 	local stats = Combat.stats(session.data, combat, now)
 	combat.nextAttackAt = math.max(now, combat.nextAttackAt) + stats.cooldown
-	local comboIndex = Combat.registerStrike(combat, now, stats.armId)
+	-- the swing animation follows the chain, but nothing is recorded until the strike lands (see below)
+	local swingIndex = Combat.peekStrike(combat, now, stats.armId)
 
 	local arm = Arms.Defs[stats.armId]
-	local moveName = PoseMath.moveForCombo(arm.attackStyle, comboIndex)
+	local moveName = PoseMath.moveForCombo(arm.attackStyle, swingIndex)
 	local move = PoseMath.moves()[moveName]
 	local speed = PoseMath.playSpeed(move, stats.cooldown)
 	local delay = PoseMath.contactDelay(move, stats.cooldown)
@@ -188,6 +189,11 @@ local function onPunch(player: Player, rockIdRaw: any, _seq: any)
 		if not RockService.inReach(target, hrp2.Position, stats.reach, Game.Combat.reachSlack + 4) then
 			return
 		end
+		if session.data.arms.equipped ~= stats.armId then
+			return -- the arm was swapped mid-swing: the swing belongs to the old arm and lands nothing
+		end
+		-- a strike that lands (valid target, still alive, in reach) is the only thing that extends combo / Overclock
+		local comboIndex = Combat.registerStrike(combat, os.clock(), stats.armId)
 		local hit = Combat.resolveHit(stats, target.def, comboIndex, rng, nil)
 		applyStrike(session, player, target, stats, hit, move, hrp2, nil)
 	end)

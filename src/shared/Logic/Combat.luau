@@ -117,7 +117,23 @@ function Combat.stats(data: any, state: State, now: number): Stats
 	}
 end
 
--- Records a strike at `now` and returns its position in the combo chain (1, 2, 3...).
+-- The position the next strike would take in the combo chain, without recording anything. Swings use this to pick
+-- their animation; only a strike that actually lands is recorded (registerStrike), so whiffing builds nothing.
+function Combat.peekStrike(state: State, now: number, armId: string): number
+	if armId == state.armId and now - state.lastStrike <= Game.Combat.comboWindow then
+		return state.combo + 1
+	end
+	return 1
+end
+
+-- Forgets the running chain (arm swapped): combo, Overclock stacks and the chain timer.
+function Combat.resetChain(state: State)
+	state.combo = 0
+	state.overclock = 0
+	state.lastStrike = -1e9
+end
+
+-- Records a LANDED strike at `now` and returns its position in the combo chain (1, 2, 3...).
 function Combat.registerStrike(state: State, now: number, armId: string): number
 	if armId ~= state.armId then
 		state.armId = armId

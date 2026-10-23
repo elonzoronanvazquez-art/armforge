@@ -51,6 +51,9 @@ Game.Rocks = {
 	aftermath = 1.6, -- seconds the rubble stays before respawn timer starts
 	maxActive = 160, -- hard cap on live rocks per server
 	minSpacing = 11,
+	respawnClearance = 3, -- studs around a rock's footprint that must be free of players before it respawns solid
+	respawnRetry = 1, -- seconds between footprint checks while a respawn is held back
+	respawnMaxDefer = 20, -- after this long the rock returns non-solid (ghost) until the footprint is clear
 	groundOffset = 0,
 	healOnIdle = false,
 }

@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
+local Game = require(Shared.Config.Game)
 local Arms = require(Shared.Config.Arms)
 local Islands = require(Shared.Config.Islands)
 local Formulas = require(Shared.Logic.Formulas)
@@ -286,6 +287,46 @@ local COMMANDS: { [string]: (...any) -> any } = {
 	end,
 	spawnRock = function(defId: string, x: number, y: number, z: number)
 		return RockService.spawnAt(defId, Vector3.new(x, y, z)).id
+	end,
+	-- Times the per-strike server scans (microseconds per call) at the local player's position.
+	--   playerScan mirrors the player loop inside RockService.fxNear (every strike, hit and break pays for it).
+	bench = function(iterations: number?)
+		local n = math.clamp(iterations or 2000, 10, 20000)
+		local player = DevTools.player()
+		local root = player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local pos = if root then root.Position else Vector3.zero
+		local function micros(fn: () -> ()): number
+			local t0 = os.clock()
+			for _ = 1, n do
+				fn()
+			end
+			return math.floor((os.clock() - t0) * 1e6 / n * 100) / 100
+		end
+		local rockCount = 0
+		for _ in RockService.all() do
+			rockCount += 1
+		end
+		local found = 0
+		local r2 = Game.Combat.fxRadius ^ 2
+		return {
+			rocks = rockCount,
+			players = #Players:GetPlayers(),
+			iterations = n,
+			nearMicros = micros(function()
+				found = #RockService.near(pos, 30)
+			end),
+			nearFound = found,
+			playerScanMicros = micros(function()
+				local reached = 0
+				for _, p in Players:GetPlayers() do
+					local char = p.Character
+					local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+					if hrp and (hrp.Position - pos).Magnitude ^ 2 <= r2 then
+						reached += 1
+					end
+				end
+			end),
+		}
 	end,
 }
 

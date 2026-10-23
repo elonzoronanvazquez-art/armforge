@@ -613,8 +613,11 @@ function ServerWorld.new(opts)
 		build = function(_, _, _, id, parent)
 			world.rockBuilds[id] = (world.rockBuilds[id] or 0) + 1
 			local model = make("Model", { Name = `Rock_{id}` })
+			local collider = make("Part", { Name = "Collider" })
+			collider.CanCollide = true
+			collider.Parent = model
 			model.Parent = parent
-			return { model = model, chunks = {} }
+			return { model = model, chunks = {}, collider = collider }
 		end,
 		rubble = function(_, _, _, id, parent)
 			local model = make("Model", { Name = `Rubble_{id}` })
@@ -690,6 +693,7 @@ function ServerWorld.new(opts)
 		DataService.init()
 		local RockService = self:load("Services/RockService")
 		RockService.init(make("Folder", { Name = "ArmforgeWorld" }))
+		RockService.populate() -- no terrain in the fake world, so it places nothing; it does start the burn loop
 		local ProgressService = self:load("Services/ProgressService")
 		ProgressService.init()
 		RockService.setRewardHandler(ProgressService.rockReward)

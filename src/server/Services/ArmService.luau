@@ -3,6 +3,7 @@
 -- validated equip / buy / upgrade / cosmetic operations (all maths in shared/Logic/Equipment).
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
+local Combat = require(Shared.Logic.Combat)
 local Equipment = require(Shared.Logic.Equipment)
 local Progression = require(Shared.Logic.Progression)
 local ArmBuilder = require(Shared.Runtime.ArmBuilder)
@@ -34,7 +35,7 @@ function ArmService.equip(player: Player, armId: string): Equipment.Result
 	end
 	local result = Equipment.equip(s.data, armId)
 	if result.ok then
-		s.combat.combo = 0
+		Combat.resetChain(s.combat)
 		ArmService.refresh(player)
 		Sync.mark(player)
 	end

@@ -13,6 +13,8 @@ local RockConfig = require(Shared.Config.Rocks)
 local IslandConfig = require(Shared.Config.Islands)
 local Geometry = require(Shared.Logic.RockGeometry)
 local RockSim = require(Shared.Logic.RockSim)
+local RespawnGuard = require(Shared.Logic.RespawnGuard)
+local SpatialGrid = require(Shared.Logic.SpatialGrid)
 local Rng = require(Shared.Util.Rng)
 local RockBuilder = require(script.Parent.Parent.World.RockBuilder)
 
@@ -26,6 +28,7 @@ export type Entry = {
 	base: CFrame,
 	seed: number,
 	model: Model?,
+	collider: BasePart?, -- the solid hitbox of the current model (nil while destroyed)
 	chunks: { [number]: BasePart },
 	rubble: Model?,
 	burn: { userId: number, dps: number, untilT: number, nextTick: number }?,
@@ -33,6 +36,12 @@ export type Entry = {
 }
 
 local rocks: { [number]: Entry } = {}
+-- Rocks never move horizontally, so a grid over their base positions answers "what is near this point" without
+-- scanning every rock. maxExtent is the largest rock radius, the margin a query needs on top of its own radius.
+local grid = SpatialGrid.new(32)
+local maxExtent = 0
+-- rocks that are currently burning: the burn loop only visits these instead of every rock
+local burning: { [number]: Entry } = {}
 local container: Folder
 local remotes: Net.Remotes
 local rewardHandler: ((Player, RockSim.Reward, Entry) -> ())? = nil
@@ -53,11 +62,12 @@ function RockService.all(): { [number]: Entry }
 	return rocks
 end
 
--- Alive rocks within `radius` of `pos`, nearest first.
+-- Alive rocks within `radius` of `pos` (measured to the rock's centre, plus the rock's own radius), nearest first.
 function RockService.near(pos: Vector3, radius: number, exclude: number?): { Entry }
 	local out: { { e: Entry, d: number } } = {}
-	for id, e in rocks do
-		if id ~= exclude and e.state.alive then
+	for _, id in grid:query(pos.X, pos.Z, radius + maxExtent) do
+		local e = rocks[id]
+		if e and id ~= exclude and e.state.alive then
 			local d = (e.center - pos).Magnitude
 			if d <= radius + e.state.layout.radius then
 				table.insert(out, { e = e, d = d })
@@ -85,13 +95,19 @@ end
 
 -- FX broadcast ------------------------------------------------------------------------------------------------
 
+-- Sends an effect to every player whose character is within `radius` of `pos`. One pass over the players with no
+-- allocation: it is called for every strike, hit and break.
 function RockService.fxNear(pos: Vector3, kind: string, payload: any, radius: number?)
-	local r2 = (radius or Game.Combat.fxRadius) ^ 2
+	local r = radius or Game.Combat.fxRadius
+	local r2 = r * r
 	for _, player in Players:GetPlayers() do
 		local char = player.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
-		if hrp and (hrp.Position - pos).Magnitude ^ 2 <= r2 then
-			remotes.Fx:FireClient(player, kind, payload)
+		if hrp then
+			local d = hrp.Position - pos
+			if d:Dot(d) <= r2 then
+				remotes.Fx:FireClient(player, kind, payload)
+			end
 		end
 	end
 end
@@ -152,6 +168,7 @@ local function buildModel(entry: Entry)
 	local layout = entry.state.layout
 	local built = RockBuilder.build(entry.def, layout, entry.base, entry.id, container)
 	entry.model = built.model
+	entry.collider = built.collider
 	entry.chunks = built.chunks
 	built.model:SetAttribute("Hp", entry.state.hp)
 	built.model:SetAttribute("Stage", entry.state.stage)
@@ -173,17 +190,61 @@ local function spawnRock(def: RockConfig.RockDef, island: string, pos: Vector3, 
 		base = base,
 		seed = seed,
 		model = nil,
+		collider = nil,
 		chunks = {},
 		rubble = nil,
 		burn = nil,
 		center = base * layout.center,
 	}
 	rocks[id] = entry
+	grid:insert(id, base.Position.X, base.Position.Z)
+	maxExtent = math.max(maxExtent, layout.radius)
 	buildModel(entry)
 	return entry
 end
 
-local function respawn(entry: Entry)
+-- Root-part positions of every character currently in the server (the only thing a respawn has to keep clear).
+local function playerPositions(): { Vector3 }
+	local out: { Vector3 } = {}
+	for _, player in Players:GetPlayers() do
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if hrp and hrp:IsA("BasePart") then
+			table.insert(out, hrp.Position)
+		end
+	end
+	return out
+end
+
+local function footprintBlocked(entry: Entry, layout: Geometry.Layout): boolean
+	return RespawnGuard.blocked(entry.base.Position, layout.radius, layout.height, playerPositions(), Game.Rocks.respawnClearance)
+end
+
+-- A rock that had to come back while someone still stands in it is non-solid ("ghost") until they move away, so
+-- it can neither shove nor trap them. One watcher per model; it retires itself if the rock dies or is rebuilt.
+local function watchGhost(entry: Entry)
+	local collider, model = entry.collider, entry.model
+	if not (collider and model) then
+		return
+	end
+	collider.CanCollide = false
+	model:SetAttribute("Ghost", true)
+	local token = entry.state.generation
+	local function watch()
+		if rocks[entry.id] ~= entry or entry.state.generation ~= token or entry.collider ~= collider or not entry.state.alive then
+			return
+		end
+		if footprintBlocked(entry, entry.state.layout) then
+			task.delay(Game.Rocks.respawnRetry, watch)
+			return
+		end
+		collider.CanCollide = true
+		model:SetAttribute("Ghost", nil)
+	end
+	task.delay(Game.Rocks.respawnRetry, watch)
+end
+
+local function respawn(entry: Entry, seed: number, layout: Geometry.Layout, solid: boolean)
 	if entry.rubble then
 		entry.rubble:Destroy()
 		entry.rubble = nil
@@ -191,11 +252,33 @@ local function respawn(entry: Entry)
 	RockSim.respawn(entry.state)
 	entry.burn = nil
 	-- a fresh layout each life so rocks do not look identical every time
-	entry.seed += 17
-	entry.state.layout = Geometry.generate(entry.def, entry.seed)
-	entry.center = entry.base * entry.state.layout.center
+	entry.seed = seed
+	entry.state.layout = layout
+	entry.center = entry.base * layout.center
 	buildModel(entry)
+	if not solid then
+		watchGhost(entry)
+	end
 	RockService.fxNear(entry.center, "Spawn", { id = entry.id, pos = entry.center, def = entry.def.id, radius = entry.state.layout.radius })
+end
+
+-- Brings a destroyed rock back, but never on top of a player: while anyone stands in (or right beside) the new
+-- footprint the respawn is held back and re-checked every respawnRetry seconds, without moving or touching them.
+-- After respawnMaxDefer it returns as a non-solid ghost instead, so an idle player cannot stall a rock forever.
+local function attemptRespawn(entry: Entry, token: number, seed: number, layout: Geometry.Layout, heldSince: number?)
+	if rocks[entry.id] ~= entry or entry.state.generation ~= token or entry.state.alive then
+		return
+	end
+	if not footprintBlocked(entry, layout) then
+		respawn(entry, seed, layout, true)
+		return
+	end
+	local since = heldSince or os.clock()
+	if os.clock() - since >= Game.Rocks.respawnMaxDefer then
+		respawn(entry, seed, layout, false)
+		return
+	end
+	task.delay(Game.Rocks.respawnRetry, attemptRespawn, entry, token, seed, layout, since)
 end
 
 local function collapse(entry: Entry, result: RockSim.ApplyResult, killer: Player?)
@@ -218,6 +301,7 @@ local function collapse(entry: Entry, result: RockSim.ApplyResult, killer: Playe
 		end)
 	end
 	entry.model = nil
+	entry.collider = nil
 	entry.rubble = RockBuilder.rubble(entry.def, state.layout, entry.base, entry.id, container)
 
 	RockService.fxNear(entry.center, "Break", {
@@ -244,7 +328,8 @@ local function collapse(entry: Entry, result: RockSim.ApplyResult, killer: Playe
 	local token = state.generation
 	task.delay(Game.Rocks.aftermath + entry.def.respawn, function()
 		if rocks[entry.id] == entry and entry.state.generation == token and not entry.state.alive then
-			respawn(entry)
+			local seed = entry.seed + 17
+			attemptRespawn(entry, token, seed, Geometry.generate(entry.def, seed), nil)
 		end
 	end)
 end
@@ -361,6 +446,7 @@ function RockService.ignite(entry: Entry, userId: number, dps: number, duration:
 	end
 	local now = os.clock()
 	entry.burn = { userId = userId, dps = dps, untilT = now + duration, nextTick = now + 1 }
+	burning[entry.id] = entry
 	if entry.model then
 		entry.model:SetAttribute("Burning", true)
 	end
@@ -370,7 +456,7 @@ local function burnLoop()
 	while true do
 		task.wait(0.5)
 		local now = os.clock()
-		for _, entry in rocks do
+		for id, entry in burning do
 			local burn = entry.burn
 			if burn and entry.state.alive then
 				if now >= burn.nextTick then
@@ -378,14 +464,16 @@ local function burnLoop()
 					local player = Players:GetPlayerByUserId(burn.userId)
 					RockService.damage(entry, player, burn.userId, burn.dps, { silent = true, power = 0.3 })
 				end
-				if now >= burn.untilT then
+				if burn.untilT <= now then
 					entry.burn = nil
+					burning[id] = nil
 					if entry.model then
 						entry.model:SetAttribute("Burning", nil)
 					end
 				end
-			elseif burn then
+			else
 				entry.burn = nil
+				burning[id] = nil
 			end
 		end
 	end
