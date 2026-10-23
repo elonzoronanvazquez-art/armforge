@@ -80,7 +80,7 @@ export type CreatureDef = {
 	reward: { coinsMult: number, xpMult: number, shards: number },
 	repeatMult: number?, -- guardians: reward multiplier after the first victory
 	recommended: { level: number, skills: { string }, text: string },
-	visual: { body: Color3, plate: Color3, glow: Color3, material: Enum.Material, mesh: string? },
+	visual: { body: Color3, plate: Color3, glow: Color3, material: Enum.Material, mesh: string?, meshYaw: number?, meshLimbs: boolean? },
 }
 
 local function rgb(r: number, g: number, b: number): Color3
@@ -129,7 +129,7 @@ Creatures.Defs = {
 		},
 		reward = { coinsMult = 5, xpMult = 5, shards = 0 },
 		recommended = { level = 1, skills = {}, text = "No preparation needed. Hit its glowing back after a lunge." },
-		visual = { body = rgb(132, 124, 118), plate = rgb(92, 84, 82), glow = rgb(255, 160, 90), material = Enum.Material.Granite },
+		visual = { body = rgb(132, 124, 118), plate = rgb(92, 84, 82), glow = rgb(255, 160, 90), material = Enum.Material.Granite, mesh = "CreatureCrawler", meshYaw = 90 },
 	},
 	PrismWisp = {
 		id = "PrismWisp",
@@ -172,7 +172,7 @@ Creatures.Defs = {
 		},
 		reward = { coinsMult = 3, xpMult = 3.2, shards = 2 },
 		recommended = { level = 3, skills = {}, text = "It hovers back; close in while its beam recharges and hit the exposed core." },
-		visual = { body = rgb(120, 214, 230), plate = rgb(96, 100, 112), glow = rgb(255, 110, 230), material = Enum.Material.Glass },
+		visual = { body = rgb(120, 214, 230), plate = rgb(96, 100, 112), glow = rgb(255, 110, 230), material = Enum.Material.Glass, mesh = "CoreCrystalCyan" },
 	},
 	SlagBrute = {
 		id = "SlagBrute",
@@ -232,7 +232,7 @@ Creatures.Defs = {
 		},
 		reward = { coinsMult = 6.5, xpMult = 6.5, shards = 0 },
 		recommended = { level = 3, skills = { "ChargedSmash" }, text = "Charged Smash breaks its armor for 7 seconds. Interrupt the slam, then punish the exposed core." },
-		visual = { body = rgb(64, 70, 82), plate = rgb(148, 84, 52), glow = rgb(255, 120, 60), material = Enum.Material.CorrodedMetal },
+		visual = { body = rgb(64, 70, 82), plate = rgb(148, 84, 52), glow = rgb(255, 120, 60), material = Enum.Material.CorrodedMetal, mesh = "CreatureBrute", meshYaw = 180 },
 	},
 	QuarryColossus = {
 		id = "QuarryColossus",
@@ -316,7 +316,7 @@ Creatures.Defs = {
 			skills = { "ChargedSmash" },
 			text = "Needs Charged Smash (level 3) to break its armor. Critical Focus and Overdrive help during the exposed-core windows.",
 		},
-		visual = { body = rgb(112, 106, 100), plate = rgb(70, 66, 62), glow = rgb(255, 150, 70), material = Enum.Material.Slate },
+		visual = { body = rgb(112, 106, 100), plate = rgb(70, 66, 62), glow = rgb(255, 150, 70), material = Enum.Material.Slate, mesh = "CreatureColossus", meshYaw = 180, meshLimbs = true },
 	},
 	GromAnvilKing = {
 		id = "GromAnvilKing",
@@ -419,7 +419,7 @@ Creatures.Defs = {
 			skills = { "ChargedSmash" },
 			text = "Rebirth once. Charged Smash breaks his armor; interrupt Molten Quake with Charged Smash or Shatter Wave; strike the core when it opens.",
 		},
-		visual = { body = rgb(58, 62, 72), plate = rgb(150, 88, 50), glow = rgb(255, 140, 50), material = Enum.Material.Metal },
+		visual = { body = rgb(58, 62, 72), plate = rgb(150, 88, 50), glow = rgb(255, 140, 50), material = Enum.Material.Metal, mesh = "CreatureAnvilKing", meshYaw = 180, meshLimbs = true },
 	},
 
 	-- CRYSTALFALL -----------------------------------------------------------------------------------------------
@@ -463,7 +463,7 @@ Creatures.Defs = {
 		},
 		reward = { coinsMult = 3.2, xpMult = 3.2, shards = 0 },
 		recommended = { level = 10, skills = {}, text = "Fast but fragile. Overdrive makes short work of it." },
-		visual = { body = rgb(232, 222, 236), plate = rgb(196, 170, 226), glow = rgb(150, 240, 255), material = Enum.Material.Glass },
+		visual = { body = rgb(232, 222, 236), plate = rgb(196, 170, 226), glow = rgb(150, 240, 255), material = Enum.Material.Glass, mesh = "CoreQuartz" },
 	},
 	AmethystWarden = {
 		id = "AmethystWarden",

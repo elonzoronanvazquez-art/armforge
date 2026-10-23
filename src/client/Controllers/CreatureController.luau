@@ -231,6 +231,7 @@ local function animate(rig: Rig, dt: number, now: number)
 	local sway = 0
 	local spikeOut = 0
 	local lunge = 0
+	local rise = 0 -- the whole body rears up before a slam (creatures with a one-piece mesh have no arms to raise)
 	if state == "EMERGING" then
 		sink = -height * 1.1 * (1 - ease(p))
 		lean = -0.4 * (1 - ease(p))
@@ -239,7 +240,8 @@ local function animate(rig: Rig, dt: number, now: number)
 		local e = ease(p)
 		if kind == "circle" then
 			armRaise = 0.2 + 2.6 * e
-			lean = -0.18 * e
+			lean = -0.3 * e
+			rise = 0.9 * e * def.scale
 		elseif kind == "cone" then
 			armRaise = 0.2 + 1.2 * e
 			sway = -1.1 * e
@@ -255,6 +257,7 @@ local function animate(rig: Rig, dt: number, now: number)
 		if kind == "circle" then
 			armRaise = 2.8 - 2.6 * e
 			lean = 0.45 * e
+			rise = 0.9 * (1 - e) * def.scale
 		elseif kind == "cone" then
 			armRaise = 1.4 - 1.0 * e
 			sway = -1.1 + 2.4 * e
@@ -288,7 +291,7 @@ local function animate(rig: Rig, dt: number, now: number)
 	local gait = math.sin(rig.phase) * 0.55 * walking
 	local gait2 = math.sin(rig.phase + math.pi) * 0.55 * walking
 
-	setJoint(rig, "Body", CFrame.new(0, sink + bob + (if arch == "shard" then math.sin(t * 1.7) * 0.35 * def.scale else 0), lunge * def.scale) * rot(lean, if arch == "shard" then t * (0.6 + spikeOut) else 0, 0))
+	setJoint(rig, "Body", CFrame.new(0, sink + rise + bob + (if arch == "shard" then math.sin(t * 1.7) * 0.35 * def.scale else 0), lunge * def.scale) * rot(lean, if arch == "shard" then t * (0.6 + spikeOut) else 0, 0))
 	setJoint(rig, "Head", rot(head, 0, 0))
 	setJoint(rig, "ArmL", rot(armRaise + gait * 0.4, sway, armSpread))
 	setJoint(rig, "ArmR", rot(armRaise + gait2 * 0.4, -sway, -armSpread))
@@ -777,7 +780,7 @@ local function buildUi()
 	infoBoard.LightInfluence = 0
 	infoBoard.MaxDistance = 90
 	infoBoard.Enabled = false
-	infoBoard.Parent = gui
+	infoBoard.Parent = overlay -- a BillboardGui lives in the workspace (a folder), not under a ScreenGui
 	local function line(y: number, h: number, size: number, font: Enum.Font): TextLabel
 		local l = Instance.new("TextLabel")
 		l.BackgroundTransparency = 1

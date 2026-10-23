@@ -9,9 +9,11 @@
 -- fails to load the procedural body remains, so a creature always renders.
 
 local CollectionService = game:GetService("CollectionService")
+local AssetService = game:GetService("AssetService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local Creatures = require(Shared.Config.Creatures)
+local Assets = require(Shared.Config.Assets)
 
 local CreatureBuilder = {}
 
@@ -23,7 +25,37 @@ type Ctx = {
 	def: Creatures.CreatureDef,
 	s: number,
 	root: Part,
+	meshBody: boolean, -- an AI body mesh replaced the procedural torso (and head), so those decorations are skipped
+	wholeBody: boolean, -- the mesh also has arms and legs, so the procedural limbs are skipped too
 }
+
+-- AI body meshes (Config/Assets.Meshes). A mesh that fails to load leaves the procedural body in place.
+local meshTemplates: { [string]: MeshPart | boolean } = {}
+
+local function meshTemplate(key: string): MeshPart?
+	local cached = meshTemplates[key]
+	if cached ~= nil then
+		return if cached == false then nil else cached :: MeshPart
+	end
+	local info = Assets.Meshes[key]
+	if not info then
+		meshTemplates[key] = false
+		return nil
+	end
+	local ok, mesh = pcall(function()
+		return AssetService:CreateMeshPartAsync(info.mesh :: any, { CollisionFidelity = Enum.CollisionFidelity.Box })
+	end)
+	if not (ok and mesh) then
+		warn(`[ARMFORGE] creature mesh {key} failed to load; using the procedural body`)
+		meshTemplates[key] = false
+		return nil
+	end
+	if info.texture then
+		mesh.TextureID = info.texture :: any
+	end
+	meshTemplates[key] = mesh
+	return mesh
+end
 
 type Opts = { pivotTop: boolean?, shape: Enum.PartType?, glow: boolean?, plate: boolean? }
 
@@ -63,6 +95,42 @@ local function make(ctx: Ctx, parent: BasePart, name: string, size: Vector3, c0:
 	return p
 end
 
+-- The torso: the creature's AI mesh when it has one (scaled to the template's body size), else the procedural block.
+local function makeBody(ctx: Ctx, size: Vector3, c0: CFrame): Part
+	local v = ctx.def.visual
+	local tpl = if v.mesh then meshTemplate(v.mesh) else nil
+	if tpl then
+		local p = tpl:Clone()
+		p.Name = "Body"
+		p.Size = size * ctx.s
+		p.Anchored = false
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.Massless = true
+		p.CastShadow = true
+		p.Parent = ctx.model
+		local m = Instance.new("Motor6D")
+		m.Name = "J_Body"
+		m.Part0 = ctx.root
+		m.Part1 = p
+		m.C0 = CFrame.new(c0.Position * ctx.s) * CFrame.Angles(0, math.rad(v.meshYaw or 0), 0)
+		if v.meshLimbs then
+			-- a whole-body mesh (it has its own arms and legs): scale it to the creature's height and stand it on the ground
+			local info = Assets.Meshes[v.mesh :: string]
+			local native = info.size
+			local k = ctx.def.height / native.Y
+			p.Size = native * k
+			m.C0 = CFrame.new(0, p.Size.Y / 2 + 0.15, 0) * CFrame.Angles(0, math.rad(v.meshYaw or 0), 0)
+			ctx.wholeBody = true
+		end
+		m.Parent = p
+		ctx.meshBody = true
+		return p
+	end
+	return make(ctx, ctx.root, "Body", size, c0, v.body, v.material)
+end
+
 local function darker(c: Color3, k: number): Color3
 	return c:Lerp(Color3.new(0, 0, 0), k)
 end
@@ -77,15 +145,22 @@ end
 
 local function crawler(ctx: Ctx)
 	local v = ctx.def.visual
-	local body = make(ctx, ctx.root, "Body", Vector3.new(3.4, 1.7, 5), CFrame.new(0, 1.9, 0), v.body, v.material)
-	make(ctx, body, "PlateA", Vector3.new(3.0, 0.7, 2.0), CFrame.new(0, 1.0, -0.9) * CFrame.Angles(math.rad(-8), 0, 0), v.plate, v.material, { plate = true })
-	make(ctx, body, "PlateB", Vector3.new(2.6, 0.6, 1.7), CFrame.new(0, 0.95, 1.3) * CFrame.Angles(math.rad(10), 0, 0), v.plate, v.material, { plate = true })
-	make(ctx, body, "Core", Vector3.new(1.1, 0.5, 1.1), CFrame.new(0, 0.95, 0.2), v.glow, v.material, { glow = true })
-	local head = make(ctx, body, "Head", Vector3.new(2.2, 1.5, 2.1), CFrame.new(0, 0.1, -3.1), darker(v.body, 0.1), v.material)
-	eyes(ctx, head, -1.1, 0.25, 0.55, v.glow)
-	make(ctx, head, "Jaw", Vector3.new(1.8, 0.45, 1.5), CFrame.new(0, -0.8, -0.4), v.plate, v.material)
-	local tail = make(ctx, body, "Tail", Vector3.new(0.9, 0.8, 2.6), CFrame.new(0, 0.2, 3.2) * CFrame.Angles(math.rad(-15), 0, 0), v.plate, v.material, { pivotTop = false })
-	make(ctx, tail, "TailTip", Vector3.new(0.5, 0.5, 1.2), CFrame.new(0, 0.2, 1.8), v.glow, v.material, { glow = true })
+	local body = makeBody(ctx, Vector3.new(3.4, 2.0, 5.2), CFrame.new(0, 1.9, 0))
+	if not ctx.meshBody then
+		make(ctx, body, "PlateA", Vector3.new(3.0, 0.7, 2.0), CFrame.new(0, 1.0, -0.9) * CFrame.Angles(math.rad(-8), 0, 0), v.plate, v.material, { plate = true })
+		make(ctx, body, "PlateB", Vector3.new(2.6, 0.6, 1.7), CFrame.new(0, 0.95, 1.3) * CFrame.Angles(math.rad(10), 0, 0), v.plate, v.material, { plate = true })
+		make(ctx, body, "Core", Vector3.new(1.1, 0.5, 1.1), CFrame.new(0, 0.95, 0.2), v.glow, v.material, { glow = true })
+		local head = make(ctx, body, "Head", Vector3.new(2.2, 1.5, 2.1), CFrame.new(0, 0.1, -3.1), darker(v.body, 0.1), v.material)
+		eyes(ctx, head, -1.1, 0.25, 0.55, v.glow)
+		make(ctx, head, "Jaw", Vector3.new(1.8, 0.45, 1.5), CFrame.new(0, -0.8, -0.4), v.plate, v.material)
+	else
+		-- the mesh has its own head and plates; a small glowing back core marks the weak point the player should hit
+		make(ctx, body, "Core", Vector3.new(1.0, 0.45, 1.0), CFrame.new(0, 1.05, 0.3), v.glow, v.material, { glow = true })
+	end
+	if not ctx.meshBody then
+		local tail = make(ctx, body, "Tail", Vector3.new(0.9, 0.8, 2.6), CFrame.new(0, 0.2, 3.2) * CFrame.Angles(math.rad(-15), 0, 0), v.plate, v.material, { pivotTop = false })
+		make(ctx, tail, "TailTip", Vector3.new(0.5, 0.5, 1.2), CFrame.new(0, 0.2, 1.8), v.glow, v.material, { glow = true })
+	end
 	local legs: { { x: number, z: number, name: string } } = {
 		{ x = -1.6, z = -1.8, name = "LegFL" },
 		{ x = 1.6, z = -1.8, name = "LegFR" },
@@ -100,17 +175,22 @@ end
 
 local function brute(ctx: Ctx)
 	local v = ctx.def.visual
-	local body = make(ctx, ctx.root, "Body", Vector3.new(3.6, 3.0, 2.6), CFrame.new(0, 3.9, 0), v.body, v.material)
-	make(ctx, body, "Chest", Vector3.new(2.6, 2.0, 0.6), CFrame.new(0, 0.3, -1.4), v.plate, v.material, { plate = true })
-	make(ctx, body, "Core", Vector3.new(1.0, 1.0, 0.5), CFrame.new(0, 0.3, -1.75), v.glow, v.material, { glow = true, shape = Enum.PartType.Ball })
-	make(ctx, body, "Back", Vector3.new(2.4, 2.2, 0.8), CFrame.new(0, 0.4, 1.5), darker(v.plate, 0.2), v.material, { plate = true })
-	make(ctx, body, "Vent", Vector3.new(1.6, 0.4, 0.3), CFrame.new(0, 1.0, 1.95), v.glow, v.material, { glow = true })
-	local head = make(ctx, body, "Head", Vector3.new(1.9, 1.6, 1.8), CFrame.new(0, 2.5, -0.1), darker(v.body, 0.1), v.material)
-	eyes(ctx, head, -0.95, 0.15, 0.45, v.glow)
+	local body = makeBody(ctx, Vector3.new(3.8, 3.2, 2.8), CFrame.new(0, 3.9, 0))
+	if not ctx.meshBody then
+		make(ctx, body, "Chest", Vector3.new(2.6, 2.0, 0.6), CFrame.new(0, 0.3, -1.4), v.plate, v.material, { plate = true })
+		make(ctx, body, "Core", Vector3.new(1.0, 1.0, 0.5), CFrame.new(0, 0.3, -1.75), v.glow, v.material, { glow = true, shape = Enum.PartType.Ball })
+		make(ctx, body, "Back", Vector3.new(2.4, 2.2, 0.8), CFrame.new(0, 0.4, 1.5), darker(v.plate, 0.2), v.material, { plate = true })
+		make(ctx, body, "Vent", Vector3.new(1.6, 0.4, 0.3), CFrame.new(0, 1.0, 1.95), v.glow, v.material, { glow = true })
+		local head = make(ctx, body, "Head", Vector3.new(1.9, 1.6, 1.8), CFrame.new(0, 2.5, -0.1), darker(v.body, 0.1), v.material)
+		eyes(ctx, head, -0.95, 0.15, 0.45, v.glow)
+	else
+		make(ctx, body, "Core", Vector3.new(0.9, 0.9, 0.4), CFrame.new(0, 0.3, -1.5), v.glow, v.material, { glow = true, shape = Enum.PartType.Ball })
+	end
 	for _, side in { -1, 1 } do
 		local n = if side < 0 then "L" else "R"
-		make(ctx, body, "Pauldron" .. n, Vector3.new(1.8, 1.0, 2.0), CFrame.new(side * 2.3, 1.4, 0), v.plate, v.material, { plate = true })
-		local arm = make(ctx, body, "Arm" .. n, Vector3.new(1.3, 2.6, 1.3), CFrame.new(side * 2.5, 1.0, 0), darker(v.body, 0.1), v.material, { pivotTop = true })
+		local reach = if ctx.meshBody then 1.9 else 2.5 -- a mesh torso is narrower than the procedural block
+		make(ctx, body, "Pauldron" .. n, Vector3.new(1.8, 1.0, 2.0), CFrame.new(side * (reach - 0.2), 1.4, 0), v.plate, v.material, { plate = true })
+		local arm = make(ctx, body, "Arm" .. n, Vector3.new(1.3, 2.6, 1.3), CFrame.new(side * reach, 1.0, 0), darker(v.body, 0.1), v.material, { pivotTop = true })
 		make(ctx, arm, "Fist" .. n, Vector3.new(2.1, 1.9, 2.1), CFrame.new(0, -2.9, 0), v.plate, v.material, { plate = true })
 		local leg = make(ctx, body, "Leg" .. n, Vector3.new(1.5, 2.6, 1.6), CFrame.new(side * 1.0, -1.4, 0), darker(v.body, 0.2), v.material, { pivotTop = true })
 		make(ctx, leg, "Foot" .. n, Vector3.new(1.9, 0.7, 2.4), CFrame.new(0, -2.6, -0.3), v.plate, v.material)
@@ -121,7 +201,28 @@ local function shard(ctx: Ctx)
 	local v = ctx.def.visual
 	local core = make(ctx, ctx.root, "Body", Vector3.new(2.4, 2.4, 2.4), CFrame.new(0, 3.4, 0), v.glow, v.material, { glow = true, shape = Enum.PartType.Ball })
 	core.Transparency = 0.1
-	make(ctx, core, "Core", Vector3.new(1.3, 1.3, 1.3), CFrame.identity, Color3.new(1, 1, 1), v.material, { glow = true, shape = Enum.PartType.Ball })
+	local crystal = if v.mesh then meshTemplate(v.mesh) else nil
+	if crystal then
+		-- an existing AI crystal mesh (Config/Assets) is the heart of this creature; the glow ball becomes its halo
+		core.Transparency = 0.55
+		local heart = crystal:Clone()
+		heart.Name = "Core"
+		heart.Size = Vector3.new(2.6, 3.4, 2.6) * ctx.s
+		heart.Anchored = false
+		heart.CanCollide = false
+		heart.CanQuery = false
+		heart.CanTouch = false
+		heart.Massless = true
+		heart.Parent = ctx.model
+		local hm = Instance.new("Motor6D")
+		hm.Name = "J_Core"
+		hm.Part0 = core
+		hm.Part1 = heart
+		hm.Parent = heart
+		heart:SetAttribute("Glow", true)
+	else
+		make(ctx, core, "Core", Vector3.new(1.3, 1.3, 1.3), CFrame.identity, Color3.new(1, 1, 1), v.material, { glow = true, shape = Enum.PartType.Ball })
+	end
 	local count = 7
 	for i = 1, count do
 		local a = (i / count) * math.pi * 2
@@ -146,18 +247,22 @@ end
 
 local function titan(ctx: Ctx)
 	local v = ctx.def.visual
-	local body = make(ctx, ctx.root, "Body", Vector3.new(4.2, 3.8, 3.0), CFrame.new(0, 4.6, 0), v.body, v.material)
-	for i = 1, 5 do
-		make(ctx, body, "Slab" .. i, Vector3.new(1.4, 0.9, 1.0), CFrame.new((i - 3) * 0.95, 2.05 + (i % 2) * 0.2, 0.3) * CFrame.Angles(0, 0, math.rad((i - 3) * 8)), v.plate, v.material, { plate = true })
+	local body = makeBody(ctx, Vector3.new(4.4, 4.2, 3.2), CFrame.new(0, 4.6, 0))
+	if not ctx.meshBody then
+		for i = 1, 5 do
+			make(ctx, body, "Slab" .. i, Vector3.new(1.4, 0.9, 1.0), CFrame.new((i - 3) * 0.95, 2.05 + (i % 2) * 0.2, 0.3) * CFrame.Angles(0, 0, math.rad((i - 3) * 8)), v.plate, v.material, { plate = true })
+		end
+		make(ctx, body, "Chest", Vector3.new(3.2, 2.6, 0.8), CFrame.new(0, 0.2, -1.75), v.plate, v.material, { plate = true })
+		make(ctx, body, "Core", Vector3.new(1.5, 1.5, 0.7), CFrame.new(0, 0.3, -2.2), v.glow, v.material, { glow = true, shape = Enum.PartType.Ball })
+		make(ctx, body, "Back", Vector3.new(3.0, 3.0, 1.0), CFrame.new(0, 0.4, 1.9), darker(v.plate, 0.25), v.material, { plate = true })
+		make(ctx, body, "Vent", Vector3.new(2.2, 0.5, 0.4), CFrame.new(0, 1.4, 2.5), v.glow, v.material, { glow = true })
+		local head = make(ctx, body, "Head", Vector3.new(2.4, 1.9, 2.2), CFrame.new(0, 2.9, -0.2), darker(v.body, 0.1), v.material)
+		eyes(ctx, head, -1.15, 0.2, 0.6, v.glow)
+		make(ctx, head, "Crown", Vector3.new(2.6, 0.5, 1.2), CFrame.new(0, 1.1, 0.1), v.plate, v.material, { plate = true })
+	elseif not ctx.wholeBody then
+		make(ctx, body, "Core", Vector3.new(1.3, 1.3, 0.6), CFrame.new(0, 0.3, -1.9), v.glow, v.material, { glow = true, shape = Enum.PartType.Ball })
 	end
-	make(ctx, body, "Chest", Vector3.new(3.2, 2.6, 0.8), CFrame.new(0, 0.2, -1.75), v.plate, v.material, { plate = true })
-	make(ctx, body, "Core", Vector3.new(1.5, 1.5, 0.7), CFrame.new(0, 0.3, -2.2), v.glow, v.material, { glow = true, shape = Enum.PartType.Ball })
-	make(ctx, body, "Back", Vector3.new(3.0, 3.0, 1.0), CFrame.new(0, 0.4, 1.9), darker(v.plate, 0.25), v.material, { plate = true })
-	make(ctx, body, "Vent", Vector3.new(2.2, 0.5, 0.4), CFrame.new(0, 1.4, 2.5), v.glow, v.material, { glow = true })
-	local head = make(ctx, body, "Head", Vector3.new(2.4, 1.9, 2.2), CFrame.new(0, 2.9, -0.2), darker(v.body, 0.1), v.material)
-	eyes(ctx, head, -1.15, 0.2, 0.6, v.glow)
-	make(ctx, head, "Crown", Vector3.new(2.6, 0.5, 1.2), CFrame.new(0, 1.1, 0.1), v.plate, v.material, { plate = true })
-	for _, side in { -1, 1 } do
+	for _, side in if ctx.wholeBody then {} else { -1, 1 } do
 		local n = if side < 0 then "L" else "R"
 		make(ctx, body, "Pauldron" .. n, Vector3.new(2.4, 1.4, 2.6), CFrame.new(side * 3.1, 1.7, 0), v.plate, v.material, { plate = true })
 		local arm = make(ctx, body, "Arm" .. n, Vector3.new(1.7, 3.4, 1.7), CFrame.new(side * 3.2, 1.2, 0), darker(v.body, 0.1), v.material, { pivotTop = true })
@@ -190,7 +295,7 @@ function CreatureBuilder.build(def: Creatures.CreatureDef, id: number, pos: Vect
 	root.CFrame = CFrame.new(pos)
 	root.Parent = model
 	model.PrimaryPart = root
-	local ctx: Ctx = { model = model, def = def, s = def.scale, root = root }
+	local ctx: Ctx = { model = model, def = def, s = def.scale, root = root, meshBody = false, wholeBody = false }
 	local template = templates[def.archetype]
 	assert(template, `no body template for archetype {def.archetype}`)
 	template(ctx)

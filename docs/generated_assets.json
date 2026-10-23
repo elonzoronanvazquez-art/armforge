@@ -302,5 +302,57 @@
    1.0746896266937256
   ],
   "parts": 1
+ },
+ "CreatureCrawler": {
+  "prompt": "a small stylized rock golem body shaped like a low turtle, rounded grey boulder shell with a glowing orange crack down the back, a blunt stone head, no legs, cartoon game monster",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://75810558260234",
+  "textureId": "rbxassetid://108489905077094",
+  "size": [
+   2.824591636657715,
+   2.4000000953674316,
+   4.656523704528809
+  ],
+  "parts": 1
+ },
+ "CreatureBrute": {
+  "prompt": "a heavy furnace forged iron monster torso with riveted rust orange plates, a glowing furnace window in the chest, broad shoulders and a small head sunk between them, no arms, no legs, stylized game monster",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://111108270303063",
+  "textureId": "rbxassetid://117042508498363",
+  "size": [
+   4.200000286102295,
+   3.8916068077087402,
+   2.614138126373291
+  ],
+  "parts": 1
+ },
+ "CreatureColossus": {
+  "prompt": "a massive cliff like monster torso built from stacked grey granite slabs with a glowing orange core in a chest crack, hunched rocky shoulders and a small blocky head, no arms, no legs, stylized game boss",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://83897845854526",
+  "textureId": "rbxassetid://84383511102732",
+  "size": [
+   5.400000095367432,
+   5.122803688049316,
+   2.6384153366088867
+  ],
+  "parts": 1
+ },
+ "CreatureAnvilKing": {
+  "prompt": "a colossal dark anvil iron king monster torso wearing an anvil shaped crown helmet, a glowing molten chest core, spiked shoulder stumps, dark iron with orange glow, no arms, no legs, stylized game boss",
+  "status": "Completed",
+  "publishedAssetId": null,
+  "meshId": "rbxassetid://83130551069179",
+  "textureId": "rbxassetid://115766690455151",
+  "size": [
+   5.599999904632568,
+   5.539146423339844,
+   2.6493706703186035
+  ],
+  "parts": 1
  }
 }

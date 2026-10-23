@@ -443,13 +443,23 @@ local function refreshDynamic()
 	end
 	-- target card
 	local target = TargetController.current
-	if target and target.Parent and target:GetAttribute("Alive") == true then
+	local isBoss = target ~= nil and target:GetAttribute("CreatureId") ~= nil and target:GetAttribute("Tier") == "boss"
+	if target and target.Parent and target:GetAttribute("Alive") == true and not isBoss then -- guardians have their own bar
 		local def = Rocks.Defs[target:GetAttribute("DefId") :: string]
 		local hp: number = (target:GetAttribute("Hp") :: number?) or 0
 		local maxHp: number = (target:GetAttribute("MaxHp") :: number?) or 1
 		refs.targetCard.Visible = true
-		refs.targetName.Text = def and def.name or "Rock"
-		refs.targetStage.Text = (target:GetAttribute("Stage") :: string) or ""
+		local creatureName = target:GetAttribute("Name") :: string?
+		if target:GetAttribute("CreatureId") and creatureName then
+			-- a creature released from a rock: show it, its tier and what it is doing
+			local tier = string.upper((target:GetAttribute("Tier") :: string?) or "normal")
+			local state = (target:GetAttribute("State") :: string?) or ""
+			refs.targetName.Text = creatureName
+			refs.targetStage.Text = if (target:GetAttribute("Armored") :: boolean?) == true then `{tier}  ARMORED` else `{tier}  {state}`
+		else
+			refs.targetName.Text = def and def.name or "Rock"
+			refs.targetStage.Text = (target:GetAttribute("Stage") :: string) or ""
+		end
 		refs.targetBar.set(hp / maxHp, `{Format.compact(hp)} / {Format.compact(maxHp)}`)
 		refs.targetBar.fill.BackgroundColor3 = if def then def.colors.glow else C.accent
 	else

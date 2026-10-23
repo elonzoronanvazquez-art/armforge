@@ -39,6 +39,11 @@ PROMPTS = {
     "ArmCrystal": ("an armored gauntlet glove of white plating with faceted cyan crystal shards growing out of it, stylized game asset", (3.2, 3.2, 5), 6000),
     "ArmMagma": ("a black basalt armored gauntlet glove with glowing orange lava cracks and spiked fins, stylized game asset", (3.4, 3.4, 5), 6000),
     "ArmVoid": ("a dark armored gauntlet glove of black metal with violet starlight inlays and sharp fins, stylized game asset", (3.2, 3.2, 5), 6000),
+    # creature bodies (torso + head only: limbs stay procedural so the client can animate them)
+    "CreatureCrawler": ("a small stylized rock golem body shaped like a low turtle, rounded grey boulder shell with a glowing orange crack down the back, a blunt stone head, no legs, cartoon game monster", (3.4, 2.4, 5.2), 5000),
+    "CreatureBrute": ("a heavy furnace forged iron monster torso with riveted rust orange plates, a glowing furnace window in the chest, broad shoulders and a small head sunk between them, no arms, no legs, stylized game monster", (4.2, 4.2, 3.2), 6000),
+    "CreatureColossus": ("a massive cliff like monster torso built from stacked grey granite slabs with a glowing orange core in a chest crack, hunched rocky shoulders and a small blocky head, no arms, no legs, stylized game boss", (5.4, 5.4, 4.0), 8000),
+    "CreatureAnvilKing": ("a colossal dark anvil iron king monster torso wearing an anvil shaped crown helmet, a glowing molten chest core, spiked shoulder stumps, dark iron with orange glow, no arms, no legs, stylized game boss", (5.6, 6.0, 4.4), 9000),
     # hero landmarks
     "ForgeHero": ("a giant industrial forge machine with an anvil, glowing furnace, robotic press arms and chimneys, stylized game landmark", (28, 22, 28), 18000),
     "HaloGate": ("a gigantic ring shaped metallic gate with a glowing orange inner ring, stylized game landmark", (30, 30, 6), 10000),

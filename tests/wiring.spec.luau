@@ -241,4 +241,39 @@ return function(t, u)
 			t.eq(src:find("rbxassetid://12345", 1, true), nil, path)
 		end
 	end)
+
+	t.test("creature bodies: every archetype has a template, every mesh is registered, every animated joint exists", function()
+		local Creatures = u:load("Config/Creatures")
+		local builder = read("src/server/World/CreatureBuilder.luau")
+		for id, def in Creatures.Defs do
+			t.truthy(builder:find(def.archetype .. " = " .. def.archetype, 1, true), `{id}: no template for archetype {def.archetype}`)
+			if def.visual.mesh then
+				t.truthy(Assets.Meshes[def.visual.mesh], `{id}: visual.mesh {def.visual.mesh} is not in Config/Assets`)
+			end
+		end
+		-- the client animates joints by name (J_<Part>); each name it drives must be created by some template
+		local controller = read("src/client/Controllers/CreatureController.luau")
+		local joints = 0
+		for name in controller:gmatch('setJoint%(rig, "(%w+)"') do
+			joints += 1
+			local built = builder:find(`"{name}"`, 1, true) ~= nil
+				or (name:match("^Arm[LR]$") ~= nil and builder:find('"Arm" .. n', 1, true) ~= nil)
+				or (name:match("^Leg[LR]$") ~= nil and builder:find('"Leg" .. n', 1, true) ~= nil)
+			t.truthy(built, `joint {name} is animated but never built`)
+		end
+		t.truthy(joints >= 8, "found the animated joints")
+	end)
+
+	t.test("creature fx and notification kinds are all handled, and the creature remotes accept nothing from clients", function()
+		local service = read("src/server/Services/EncounterService.luau")
+		-- the only client -> server inputs are the existing Punch / Skill / Request remotes: there is no creature remote
+		t.eq(service:find("OnServerEvent", 1, true), nil, "EncounterService listens to no remote")
+		t.eq(service:find("OnServerInvoke", 1, true), nil)
+		for _, name in Net.Events do
+			t.eq(name:lower():find("creature", 1, true), nil, name)
+		end
+		for _, name in Net.Functions do
+			t.eq(name:lower():find("creature", 1, true), nil, name)
+		end
+	end)
 end
