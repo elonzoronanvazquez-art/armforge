@@ -276,4 +276,45 @@ return function(t, u)
 			t.eq(name:lower():find("creature", 1, true), nil, name)
 		end
 	end)
+
+	t.test("AI creature rigs: every referenced rig exists with a torso, real asset ids and sane sizes", function()
+		local Creatures = u:load("Config/Creatures")
+		local Rigs = u:load("Config/CreatureRigs")
+		for id, def in Creatures.Defs do
+			local key = def.visual.rig
+			if key then
+				local rig = Rigs.Defs[key]
+				t.truthy(rig, `{id}: rig {key} is not in Config/CreatureRigs`)
+				local hasBody = false
+				for _, part in rig.parts do
+					t.truthy(part.mesh:match("^rbxassetid://%d+$"), `{key}.{part.name} mesh id`)
+					t.truthy(part.texture == "" or part.texture:match("^rbxassetid://%d+$"), `{key}.{part.name} texture id`)
+					t.truthy(part.size.X > 0 and part.size.Y > 0 and part.size.Z > 0, `{key}.{part.name} size`)
+					if part.name == "torso" or part.name == "body" then
+						hasBody = true
+					end
+				end
+				t.truthy(hasBody, `{key} has a torso/body part`)
+				t.truthy(#rig.parts >= 5, `{key} is segmented`)
+			end
+		end
+	end)
+
+	t.test("Config/CreatureRigs matches the generation record (every id came from a Studio run)", function()
+		local serde = require("@lune/serde")
+		local record = serde.decode("json", read("docs/generated_assets.json"))
+		local Rigs = u:load("Config/CreatureRigs")
+		local n = 0
+		for key, rig in Rigs.Defs do
+			n += 1
+			local entry = record[key]
+			t.truthy(entry and entry.status == "Completed", `{key} is recorded as a completed generation`)
+			t.eq(#rig.parts, #entry.parts, key .. " part count")
+			for i, part in rig.parts do
+				local rec = entry.parts[i]
+				t.eq(part.mesh, "rbxassetid://" .. tostring(rec.mesh):gsub("rbxassetid://", ""), `{key}.{part.name} mesh id`)
+			end
+		end
+		t.truthy(n >= 10, "all ten rigs are present")
+	end)
 end

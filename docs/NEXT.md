@@ -27,10 +27,12 @@
 
 ## Creature / guardian system: known issues
 
-* **Animation is procedural.** The creatures move as one rigid body plus Motor6D limbs; the two whole-body AI meshes (Quarry Colossus, Grom)
-  cannot raise arms, so their attacks read from the ground telegraph, the body rearing up and the status text. Authored animations (or a
-  rigged mesh) are the biggest visual upgrade for the fights.
-* AI meshes exist for the first five creatures only; the Crystalfall and Emberfang creatures use recoloured procedural bodies.
+* **Animation is procedural.** Every rigged creature swings real limbs (arms, legs, head, tail), but the motions are generic poses driven from the
+  replicated state, with rigid mesh parts and no skinning, so joints show seams. Authored animations are the next visual upgrade.
+* The generated rig palettes do not always match the prompts or each creature's identity (the Choir Behemoth is a thin winged figure, the Magma Golem is
+  grey, Cinderjaw is blue-stone), and the Amethyst Warden is small. Regenerate with tighter prompts, or pick a different generation, before the polish pass.
+* The final posed screenshots of the rigs could not be captured (the Studio screenshot tool stopped responding late in the session); facing and poses
+  were checked numerically, so a visual review of every creature is still owed.
 * Creatures walk at the height of their rock's base and ignore slopes; the islands are flat enough that this is not noticeable.
 * Players cannot collide with creatures (a moving anchored collider would shove or trap them), so a creature can overlap a player who
   stands still inside it.

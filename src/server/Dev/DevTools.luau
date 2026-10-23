@@ -23,6 +23,8 @@ local ProgressService = require(script.Parent.Parent.Services.ProgressService)
 local RockService = require(script.Parent.Parent.Services.RockService)
 local EncounterService = require(script.Parent.Parent.Services.EncounterService)
 local CreatureSim = require(Shared.Logic.CreatureSim)
+local CreatureConfig = require(Shared.Config.Creatures)
+local CreatureBuilder = require(script.Parent.Parent.World.CreatureBuilder)
 
 local DevTools = {}
 
@@ -190,6 +192,62 @@ function DevTools.encounter(id: number): any
 	}
 end
 
+-- Visual showcase (Studio only): builds a creature body WITHOUT a rock or a fight so its look and animation can be inspected.
+local showcaseCount = 0
+local function showcaseFolder(): Folder
+	local f = workspace:FindFirstChild("ShowcaseCreatures")
+	if not f then
+		f = Instance.new("Folder")
+		f.Name = "ShowcaseCreatures"
+		f.Parent = workspace
+	end
+	return f :: Folder
+end
+
+function DevTools.showcase(defId: string, x: number, y: number, z: number, yawDeg: number?): number
+	local def = CreatureConfig.Defs[defId]
+	if not (enabled and def) then
+		return 0
+	end
+	showcaseCount += 1
+	local id = 90000 + showcaseCount
+	local model = CreatureBuilder.build(def, id, Vector3.new(x, y, z))
+	model:PivotTo(CFrame.new(x, y, z) * CFrame.Angles(0, math.rad(yawDeg or 0), 0))
+	model:SetAttribute("RockId", id)
+	model:SetAttribute("CreatureId", def.id)
+	model:SetAttribute("Radius", def.radius)
+	model:SetAttribute("Height", def.height)
+	model:SetAttribute("Tier", def.tier)
+	model:SetAttribute("Name", def.name)
+	model:SetAttribute("Hp", 100)
+	model:SetAttribute("MaxHp", 100)
+	model:SetAttribute("Alive", false) -- never a combat target
+	model:SetAttribute("State", "IDLE")
+	model:SetAttribute("StateStart", workspace:GetServerTimeNow())
+	model:SetAttribute("StateEnd", workspace:GetServerTimeNow())
+	model:SetAttribute("Phase", 1)
+	model.Parent = showcaseFolder()
+	CreatureBuilder.tag(model)
+	return id
+end
+
+-- Puts every showcase creature (or the one with `id`) into a state for `seconds`; kind is the attack shape (circle / cone / line).
+function DevTools.showcaseState(state: string, kind: string?, seconds: number?, id: number?)
+	local now = workspace:GetServerTimeNow()
+	for _, model in showcaseFolder():GetChildren() do
+		if model:IsA("Model") and (id == nil or model:GetAttribute("RockId") == id) then
+			model:SetAttribute("AttackKind", kind or "")
+			model:SetAttribute("StateStart", now)
+			model:SetAttribute("StateEnd", now + (seconds or 1.5))
+			model:SetAttribute("State", state)
+		end
+	end
+end
+
+function DevTools.clearShowcase()
+	showcaseFolder():ClearAllChildren()
+end
+
 -- Teleports next to the island's guardian seal.
 function DevTools.tpToSeal(player: Player?, island: string): any
 	for _, e in RockService.all() do
@@ -283,6 +341,17 @@ local COMMANDS: { [string]: (...any) -> any } = {
 	end,
 	encounter = function(id: number)
 		return DevTools.encounter(id)
+	end,
+	showcase = function(defId: string, x: number, y: number, z: number, yaw: number?)
+		return DevTools.showcase(defId, x, y, z, yaw)
+	end,
+	showcaseState = function(state: string, kind: string?, seconds: number?, id: number?)
+		DevTools.showcaseState(state, kind, seconds, id)
+		return "ok"
+	end,
+	clearShowcase = function()
+		DevTools.clearShowcase()
+		return "cleared"
 	end,
 	tpToSeal = function(island: string)
 		return DevTools.tpToSeal(DevTools.player(), island)

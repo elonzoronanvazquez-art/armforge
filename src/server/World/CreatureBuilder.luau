@@ -14,6 +14,7 @@ local AssetService = game:GetService("AssetService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local Creatures = require(Shared.Config.Creatures)
 local Assets = require(Shared.Config.Assets)
+local CreatureRigs = require(Shared.Config.CreatureRigs)
 
 local CreatureBuilder = {}
 
@@ -27,6 +28,7 @@ type Ctx = {
 	root: Part,
 	meshBody: boolean, -- an AI body mesh replaced the procedural torso (and head), so those decorations are skipped
 	wholeBody: boolean, -- the mesh also has arms and legs, so the procedural limbs are skipped too
+	rigged: boolean, -- built from a segmented AI rig (limbs animate)
 }
 
 -- AI body meshes (Config/Assets.Meshes). A mesh that fails to load leaves the procedural body in place.
@@ -129,6 +131,148 @@ local function makeBody(ctx: Ctx, size: Vector3, c0: CFrame): BasePart
 		return p
 	end
 	return make(ctx, ctx.root, "Body", size, c0, v.body, v.material)
+end
+
+-- Segmented AI rigs ---------------------------------------------------------------------------------------------------------------------
+-- A rig is the set of separate MeshParts Studio generated (torso, head, arms, legs...). Each keeps the CFrame it was generated at;
+-- here they are scaled to the creature's height, turned to face -Z and joined by Motor6Ds named like the procedural templates
+-- (J_Body, J_Head, J_ArmL, J_LegR...), so the client animation drives both kinds of creature identically. Joint frames are aligned
+-- to the creature (not to the mesh), so a positive rotation about X always swings a limb forward.
+
+local rigPartTemplates: { [string]: MeshPart | boolean } = {}
+
+local function rigPartTemplate(part: CreatureRigs.Part): MeshPart?
+	local cached = rigPartTemplates[part.mesh]
+	if cached ~= nil then
+		return if cached == false then nil else cached :: MeshPart
+	end
+	local ok, mesh = pcall(function()
+		return AssetService:CreateMeshPartAsync(part.mesh :: any, { CollisionFidelity = Enum.CollisionFidelity.Box })
+	end)
+	if not (ok and mesh) then
+		warn(`[ARMFORGE] rig mesh {part.mesh} ({part.name}) failed to load`)
+		rigPartTemplates[part.mesh] = false
+		return nil
+	end
+	if part.texture ~= "" then
+		mesh.TextureID = part.texture :: any
+	end
+	rigPartTemplates[part.mesh] = mesh
+	return mesh
+end
+
+local ROLE_JOINT: { [string]: string } = {
+	torso = "Body",
+	body = "Body",
+	head = "Head",
+	["left arm"] = "ArmL",
+	["right arm"] = "ArmR",
+	["left leg"] = "LegL",
+	["right leg"] = "LegR",
+	tail = "Tail",
+}
+
+-- Where a part swings from, in the rig's own space (before scaling): shoulders and hips near the top of the limb, the neck at
+-- the bottom of the head, the hips at the bottom of the torso, a tail where it meets the body.
+local function pivotFor(role: string, cf: CFrame, size: Vector3, bodyPos: Vector3): Vector3
+	local p = cf.Position
+	if role == "Body" then
+		return p - Vector3.new(0, size.Y / 2, 0)
+	elseif role == "Head" then
+		return p - Vector3.new(0, size.Y / 2, 0)
+	elseif role == "ArmL" or role == "ArmR" then
+		return p + Vector3.new(0, size.Y * 0.3, 0)
+	elseif role == "Tail" then
+		local toBody = bodyPos - p
+		return p + (if math.abs(toBody.Z) >= math.abs(toBody.X) then Vector3.new(0, 0, math.sign(toBody.Z) * size.Z / 2) else Vector3.new(math.sign(toBody.X) * size.X / 2, 0, 0))
+	end
+	return p + Vector3.new(0, size.Y * 0.42, 0) -- legs
+end
+
+local function buildRig(ctx: Ctx, rigKey: string): boolean
+	local rig = CreatureRigs.Defs[rigKey]
+	if not rig then
+		return false
+	end
+	local templates: { MeshPart } = {}
+	for i, part in rig.parts do
+		local tpl = rigPartTemplate(part)
+		if not tpl then
+			return false
+		end
+		templates[i] = tpl
+	end
+	local def = ctx.def
+	local k = def.height / rig.bbox.Y
+	local yaw = CFrame.Angles(0, math.rad(def.visual.meshYaw or 0), 0)
+	local lift = CFrame.new(0, def.height / 2 + 0.12, 0)
+	local function world(cf: CFrame): CFrame
+		return lift * yaw * CFrame.new(cf.Position * k) * (cf - cf.Position)
+	end
+	-- the body first: everything else hangs from it
+	local bodyIndex = 0
+	for i, part in rig.parts do
+		if ROLE_JOINT[part.name] == "Body" then
+			bodyIndex = i
+		end
+	end
+	if bodyIndex == 0 then
+		return false
+	end
+	local bodyPart = rig.parts[bodyIndex]
+	local bodyWorld = world(bodyPart.cf)
+	local bodyPos = bodyPart.cf.Position
+	local built: { [string]: BasePart } = {}
+	local order: { number } = { bodyIndex }
+	for i in rig.parts do
+		if i ~= bodyIndex then
+			table.insert(order, i)
+		end
+	end
+	for _, i in order do
+		local part = rig.parts[i]
+		local role = ROLE_JOINT[part.name]
+		if not role then
+			-- four-legged rigs: "front left leg" etc.; the end nearer the head is the front
+			local front = part.name:find("front", 1, true) ~= nil
+			local left = part.name:find("left", 1, true) ~= nil
+			if part.name:find("leg", 1, true) then
+				role = (if front then "LegF" else "LegB") .. (if left then "L" else "R")
+			else
+				role = part.name
+			end
+		end
+		local mesh = templates[i]:Clone()
+		mesh.Name = role
+		mesh.Size = part.size * k
+		mesh.Anchored = false
+		mesh.CanCollide = false
+		mesh.CanQuery = false
+		mesh.CanTouch = false
+		mesh.Massless = true
+		mesh.CastShadow = true
+		mesh.Parent = ctx.model
+		local partWorld = world(part.cf)
+		local pivot = lift * yaw * CFrame.new(pivotFor(role, part.cf, part.size, bodyPos) * k)
+		local pivotFrame = CFrame.new(pivot.Position)
+		local motor = Instance.new("Motor6D")
+		motor.Name = "J_" .. role
+		if i == bodyIndex then
+			motor.Part0 = ctx.root
+			motor.C0 = pivotFrame
+		else
+			motor.Part0 = built.Body
+			motor.C0 = bodyWorld:Inverse() * pivotFrame
+		end
+		motor.Part1 = mesh
+		motor.C1 = partWorld:Inverse() * pivotFrame
+		motor.Parent = mesh
+		built[role] = mesh
+	end
+	ctx.meshBody = true
+	ctx.wholeBody = true
+	ctx.rigged = true
+	return true
 end
 
 local function darker(c: Color3, k: number): Color3
@@ -296,10 +440,21 @@ function CreatureBuilder.build(def: Creatures.CreatureDef, id: number, pos: Vect
 	root.CFrame = CFrame.new(pos)
 	root.Parent = model
 	model.PrimaryPart = root
-	local ctx: Ctx = { model = model, def = def, s = def.scale, root = root, meshBody = false, wholeBody = false }
-	local template = templates[def.archetype]
-	assert(template, `no body template for archetype {def.archetype}`)
-	template(ctx)
+	local ctx: Ctx = { model = model, def = def, s = def.scale, root = root, meshBody = false, wholeBody = false, rigged = false }
+	local rigKey = def.visual.rig
+	if not (rigKey and buildRig(ctx, rigKey)) then
+		-- no rig, or one of its meshes failed to load: any partly built parts are discarded and the template takes over
+		for _, child in model:GetChildren() do
+			if child ~= root then
+				child:Destroy()
+			end
+		end
+		ctx.meshBody, ctx.wholeBody = false, false
+		local template = templates[def.archetype]
+		assert(template, `no body template for archetype {def.archetype}`)
+		template(ctx)
+	end
+	model:SetAttribute("Rigged", ctx.rigged)
 	return model
 end
 

@@ -80,7 +80,7 @@ export type CreatureDef = {
 	reward: { coinsMult: number, xpMult: number, shards: number },
 	repeatMult: number?, -- guardians: reward multiplier after the first victory
 	recommended: { level: number, skills: { string }, text: string },
-	visual: { body: Color3, plate: Color3, glow: Color3, material: Enum.Material, mesh: string?, meshYaw: number?, meshLimbs: boolean? },
+	visual: { body: Color3, plate: Color3, glow: Color3, material: Enum.Material, mesh: string?, meshYaw: number?, meshLimbs: boolean?, rig: string? },
 }
 
 local function rgb(r: number, g: number, b: number): Color3
@@ -232,7 +232,7 @@ Creatures.Defs = {
 		},
 		reward = { coinsMult = 6.5, xpMult = 6.5, shards = 0 },
 		recommended = { level = 3, skills = { "ChargedSmash" }, text = "Charged Smash breaks its armor for 7 seconds. Interrupt the slam, then punish the exposed core." },
-		visual = { body = rgb(64, 70, 82), plate = rgb(148, 84, 52), glow = rgb(255, 120, 60), material = Enum.Material.CorrodedMetal, mesh = "CreatureBrute", meshYaw = 180 },
+		visual = { body = rgb(64, 70, 82), plate = rgb(148, 84, 52), glow = rgb(255, 120, 60), material = Enum.Material.CorrodedMetal, mesh = "CreatureBrute", meshYaw = 180, rig = "RigBrute" },
 	},
 	QuarryColossus = {
 		id = "QuarryColossus",
@@ -316,7 +316,7 @@ Creatures.Defs = {
 			skills = { "ChargedSmash" },
 			text = "Needs Charged Smash (level 3) to break its armor. Critical Focus and Overdrive help during the exposed-core windows.",
 		},
-		visual = { body = rgb(112, 106, 100), plate = rgb(70, 66, 62), glow = rgb(255, 150, 70), material = Enum.Material.Slate, mesh = "CreatureColossus", meshYaw = 180, meshLimbs = true },
+		visual = { body = rgb(112, 106, 100), plate = rgb(70, 66, 62), glow = rgb(255, 150, 70), material = Enum.Material.Slate, mesh = "CreatureColossus", meshYaw = 180, meshLimbs = true, rig = "RigColossus" },
 	},
 	GromAnvilKing = {
 		id = "GromAnvilKing",
@@ -419,7 +419,7 @@ Creatures.Defs = {
 			skills = { "ChargedSmash" },
 			text = "Rebirth once. Charged Smash breaks his armor; interrupt Molten Quake with Charged Smash or Shatter Wave; strike the core when it opens.",
 		},
-		visual = { body = rgb(58, 62, 72), plate = rgb(150, 88, 50), glow = rgb(255, 140, 50), material = Enum.Material.Metal, mesh = "CreatureAnvilKing", meshYaw = 180, meshLimbs = true },
+		visual = { body = rgb(58, 62, 72), plate = rgb(150, 88, 50), glow = rgb(255, 140, 50), material = Enum.Material.Metal, mesh = "CreatureAnvilKing", meshYaw = 180, meshLimbs = true, rig = "RigAnvilKing" },
 	},
 
 	-- CRYSTALFALL -----------------------------------------------------------------------------------------------
@@ -523,7 +523,7 @@ Creatures.Defs = {
 		},
 		reward = { coinsMult = 3.6, xpMult = 3.6, shards = 1 },
 		recommended = { level = 12, skills = { "ShatterWave" }, text = "Shatter Wave or Charged Smash cracks the carapace. Critical Focus loves the open core." },
-		visual = { body = rgb(78, 62, 104), plate = rgb(150, 90, 220), glow = rgb(235, 160, 255), material = Enum.Material.Glass },
+		visual = { body = rgb(78, 62, 104), plate = rgb(150, 90, 220), glow = rgb(235, 160, 255), material = Enum.Material.Glass, meshYaw = 180, rig = "RigWarden" },
 	},
 	ChoirBehemoth = {
 		id = "ChoirBehemoth",
@@ -604,7 +604,7 @@ Creatures.Defs = {
 			skills = { "ShatterWave" },
 			text = "Only Shatter Wave breaks its shell. Use Charged Smash or Shatter Wave to interrupt the Dirge.",
 		},
-		visual = { body = rgb(40, 52, 96), plate = rgb(82, 150, 255), glow = rgb(255, 214, 90), material = Enum.Material.Glass },
+		visual = { body = rgb(40, 52, 96), plate = rgb(82, 150, 255), glow = rgb(255, 214, 90), material = Enum.Material.Glass, meshYaw = 180, rig = "RigChoir" },
 	},
 	LyraeFrozenChorus = {
 		id = "LyraeFrozenChorus",
@@ -690,7 +690,7 @@ Creatures.Defs = {
 			skills = { "ShatterWave" },
 			text = "Rebirth twice. Only Shatter Wave breaks Lyrae's shell; interrupt Requiem; strike the core when it opens.",
 		},
-		visual = { body = rgb(60, 80, 140), plate = rgb(150, 220, 255), glow = rgb(190, 230, 255), material = Enum.Material.Glass },
+		visual = { body = rgb(60, 80, 140), plate = rgb(150, 220, 255), glow = rgb(190, 230, 255), material = Enum.Material.Glass, meshYaw = 180, rig = "RigLyrae" },
 	},
 
 	-- EMBERFANG -------------------------------------------------------------------------------------------------
@@ -734,7 +734,7 @@ Creatures.Defs = {
 		},
 		reward = { coinsMult = 1.5, xpMult = 1.5, shards = 0 },
 		recommended = { level = 25, skills = {}, text = "Dodge sideways, hit it while it recovers." },
-		visual = { body = rgb(40, 38, 44), plate = rgb(78, 52, 50), glow = rgb(255, 98, 32), material = Enum.Material.Basalt },
+		visual = { body = rgb(40, 38, 44), plate = rgb(78, 52, 50), glow = rgb(255, 98, 32), material = Enum.Material.Basalt, meshYaw = 0, rig = "RigAshHound" },
 	},
 	MagmaGolem = {
 		id = "MagmaGolem",
@@ -794,7 +794,7 @@ Creatures.Defs = {
 		},
 		reward = { coinsMult = 1.3, xpMult = 1.3, shards = 1 },
 		recommended = { level = 26, skills = { "ChargedSmash" }, text = "Break its crust, interrupt the slam, then hit the core." },
-		visual = { body = rgb(58, 44, 44), plate = rgb(206, 72, 30), glow = rgb(255, 214, 80), material = Enum.Material.CrackedLava },
+		visual = { body = rgb(58, 44, 44), plate = rgb(206, 72, 30), glow = rgb(255, 214, 80), material = Enum.Material.CrackedLava, meshYaw = 180, rig = "RigMagmaGolem" },
 	},
 	ObsidianExecutioner = {
 		id = "ObsidianExecutioner",
@@ -872,7 +872,7 @@ Creatures.Defs = {
 		phases = { { hpBelow = 0.5, name = "Shattered", speedMult = 1.25, windupMult = 0.85, text = "The Executioner sheds its shell and speeds up!" } },
 		reward = { coinsMult = 1.3, xpMult = 1.3, shards = 10 },
 		recommended = { level = 28, skills = { "ChargedSmash" }, text = "Break the shell with Charged Smash or Shatter Wave. Interrupt Guillotine and Nova." },
-		visual = { body = rgb(18, 16, 24), plate = rgb(60, 30, 90), glow = rgb(210, 130, 255), material = Enum.Material.Glass },
+		visual = { body = rgb(18, 16, 24), plate = rgb(60, 30, 90), glow = rgb(210, 130, 255), material = Enum.Material.Glass, meshYaw = 180, rig = "RigObsidian" },
 	},
 	CinderjawSovereign = {
 		id = "CinderjawSovereign",
@@ -974,7 +974,7 @@ Creatures.Defs = {
 			skills = { "ChargedSmash", "ShatterWave" },
 			text = "Rebirth three times. Charged Smash or Shatter Wave breaks its shell and interrupts Eruption; the core opens after its big attacks.",
 		},
-		visual = { body = rgb(30, 22, 24), plate = rgb(206, 72, 30), glow = rgb(255, 150, 40), material = Enum.Material.CrackedLava },
+		visual = { body = rgb(30, 22, 24), plate = rgb(206, 72, 30), glow = rgb(255, 150, 40), material = Enum.Material.CrackedLava, meshYaw = 180, rig = "RigCinderjaw" },
 	},
 } :: { [string]: CreatureDef }
 

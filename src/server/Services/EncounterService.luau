@@ -62,6 +62,14 @@ local function flatDist(a: Vector3, b: Vector3): number
 	return math.sqrt(dx * dx + dz * dz)
 end
 
+-- Visual height of the creature: an AI rig is built at def.height, procedural bodies are scaled by def.scale.
+local function bodyHeight(enc: Enc): number
+	if enc.model and enc.model:GetAttribute("Rigged") == true then
+		return enc.def.height
+	end
+	return enc.def.height * enc.def.scale
+end
+
 local function referenceRock(enc: Enc): RockConfig.RockDef
 	return RockConfig.Defs[enc.def.refRock or enc.entry.def.id]
 end
@@ -225,7 +233,7 @@ local function onKilled(enc: Enc, killer: Player?)
 		boss = boss,
 		color = def.visual.glow,
 		radius = def.radius,
-		height = def.height * def.scale * 0.4,
+		height = bodyHeight(enc) * 0.4,
 		killer = if killer then killer.UserId else 0,
 	}, 140)
 	local token = enc.sm.token
@@ -357,7 +365,7 @@ local function begin(entry: RockService.Entry, killer: Player?): boolean
 		title = def.title,
 		tier = def.tier,
 		boss = def.tier == "boss",
-		radius = def.radius * def.scale,
+		radius = def.radius * (if model:GetAttribute("Rigged") == true then 1 else def.scale),
 		height = def.height,
 		color = def.visual.glow,
 		dur = def.emerge,
@@ -442,7 +450,7 @@ function EncounterService.inReach(enc: Enc, pos: Vector3, reach: number, extra: 
 		return false
 	end
 	local def = enc.def
-	return flatDist(pos, sim.pos) <= reach + def.radius + extra and math.abs(pos.Y - sim.pos.Y) <= def.height * def.scale + 8
+	return flatDist(pos, sim.pos) <= reach + def.radius + extra and math.abs(pos.Y - sim.pos.Y) <= bodyHeight(enc) + 8
 end
 
 function EncounterService.eligible(session: Sessions.Session, enc: Enc): (boolean, string?)
@@ -469,7 +477,7 @@ function EncounterService.hit(enc: Enc, player: Player, amount: number, opts: { 
 	end
 	RockService.fxNear(sim.pos, "CreatureHit", {
 		id = enc.id,
-		pos = sim.pos + Vector3.new(0, enc.def.height * enc.def.scale * 0.35, 0),
+		pos = sim.pos + Vector3.new(0, bodyHeight(enc) * 0.35, 0),
 		dmg = result.applied,
 		crit = opts.crit == true,
 		rend = opts.rend == true,

@@ -39,6 +39,7 @@ type Rig = {
 	phase: number,
 	def: CreatureConfig.CreatureDef?,
 	billboard: BillboardGui?,
+	highlight: Highlight?,
 	labels: { name: TextLabel, hp: Frame, fill: Frame, status: TextLabel }?,
 }
 
@@ -83,7 +84,7 @@ local function buildBillboard(rig: Rig)
 	local board = Instance.new("BillboardGui")
 	board.Name = "CreatureInfo"
 	board.Size = UDim2.fromOffset(190, 46)
-	board.StudsOffsetWorldSpace = Vector3.new(0, def.height * def.scale + 3, 0)
+	board.StudsOffsetWorldSpace = Vector3.new(0, (if model:GetAttribute("Rigged") == true then def.height else def.height * def.scale) + 3, 0)
 	board.AlwaysOnTop = false
 	board.LightInfluence = 0
 	board.MaxDistance = 140
@@ -145,6 +146,7 @@ local function register(model: Model)
 		phase = 0,
 		def = defOf(model),
 		billboard = nil,
+		highlight = nil,
 		labels = nil,
 	}
 	local function scan()
@@ -220,9 +222,12 @@ local function animate(rig: Rig, dt: number, now: number)
 	local kind = (model:GetAttribute("AttackKind") :: string?) or ""
 	local t = os.clock()
 	local arch = def.archetype
-	local height = def.height * def.scale
+	-- procedural bodies are scaled by def.scale; an AI rig is already built at def.height, so its motions scale from the height
+	local rigged = model:GetAttribute("Rigged") == true
+	local unit = if rigged then def.height / 8 else def.scale
+	local height = if rigged then def.height else def.height * unit
 
-	local bob = math.sin(t * 2.2 + rig.phase * 0.1) * 0.12 * def.scale
+	local bob = math.sin(t * 2.2 + rig.phase * 0.1) * 0.12 * unit
 	local lean = 0
 	local sink = 0
 	local armRaise = 0.15 + math.sin(t * 1.6) * 0.06 -- radians, forward/up
@@ -241,7 +246,7 @@ local function animate(rig: Rig, dt: number, now: number)
 		if kind == "circle" then
 			armRaise = 0.2 + 2.6 * e
 			lean = -0.3 * e
-			rise = 0.9 * e * def.scale
+			rise = 0.9 * e * unit
 		elseif kind == "cone" then
 			armRaise = 0.2 + 1.2 * e
 			sway = -1.1 * e
@@ -257,7 +262,7 @@ local function animate(rig: Rig, dt: number, now: number)
 		if kind == "circle" then
 			armRaise = 2.8 - 2.6 * e
 			lean = 0.45 * e
-			rise = 0.9 * (1 - e) * def.scale
+			rise = 0.9 * (1 - e) * unit
 		elseif kind == "cone" then
 			armRaise = 1.4 - 1.0 * e
 			sway = -1.1 + 2.4 * e
@@ -269,13 +274,13 @@ local function animate(rig: Rig, dt: number, now: number)
 	elseif state == "RECOVERING" then
 		armRaise = 0.1
 		lean = 0.3 * (1 - p * 0.5)
-		sink = -0.15 * def.scale
+		sink = -0.15 * unit
 		head = 0.4
 	elseif state == "STAGGERED" then
 		lean = -0.45
 		armRaise = 0.5 + math.sin(t * 18) * 0.12
 		head = -0.5
-		sink = -0.1 * def.scale
+		sink = -0.1 * unit
 	elseif state == "TRANSITION" then
 		armSpread = 1.2 * math.sin(math.min(p, 1) * math.pi)
 		armRaise = 1.2 * math.sin(math.min(p, 1) * math.pi)
@@ -291,7 +296,7 @@ local function animate(rig: Rig, dt: number, now: number)
 	local gait = math.sin(rig.phase) * 0.55 * walking
 	local gait2 = math.sin(rig.phase + math.pi) * 0.55 * walking
 
-	setJoint(rig, "Body", CFrame.new(0, sink + rise + bob + (if arch == "shard" then math.sin(t * 1.7) * 0.35 * def.scale else 0), lunge * def.scale) * rot(lean, if arch == "shard" then t * (0.6 + spikeOut) else 0, 0))
+	setJoint(rig, "Body", CFrame.new(0, sink + rise + bob + (if arch == "shard" then math.sin(t * 1.7) * 0.35 * unit else 0), lunge * unit) * rot(-lean, if arch == "shard" then t * (0.6 + spikeOut) else 0, 0))
 	setJoint(rig, "Head", rot(head, 0, 0))
 	setJoint(rig, "ArmL", rot(armRaise + gait * 0.4, sway, armSpread))
 	setJoint(rig, "ArmR", rot(armRaise + gait2 * 0.4, -sway, -armSpread))
@@ -324,6 +329,33 @@ local function animate(rig: Rig, dt: number, now: number)
 	end
 	for _, entry in rig.plateParts do
 		entry.part.Color = if armorOpen then entry.color:Lerp(glow, 0.5) else entry.color
+	end
+	-- Textured AI meshes cannot be tinted through Color, so the state cue is a fill highlight: a pulsing gold glow while the core is
+	-- exposed, a steady ember glow while the armor is broken.
+	if coreOpen or armorOpen then
+		local h: Highlight
+		local existing = rig.highlight
+		if existing then
+			h = existing
+		else
+			local fresh = Instance.new("Highlight")
+			fresh.Name = "ArmforgeCreatureState"
+			fresh.OutlineTransparency = 1
+			fresh.DepthMode = Enum.HighlightDepthMode.Occluded
+			fresh.Parent = model
+			rig.highlight = fresh
+			h = fresh
+		end
+		h.Enabled = true
+		if coreOpen then
+			h.FillColor = Color3.fromRGB(255, 226, 120)
+			h.FillTransparency = 0.45 + 0.2 * math.sin(t * 14)
+		else
+			h.FillColor = glow
+			h.FillTransparency = 0.72
+		end
+	elseif rig.highlight then
+		rig.highlight.Enabled = false
 	end
 end
 

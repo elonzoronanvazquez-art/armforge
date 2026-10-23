@@ -58,28 +58,46 @@ Design notes and limitations:
 
 ## Creatures (rock encounters)
 
-Bodies come from four procedural templates (`server/World/CreatureBuilder`: crawler, brute, shard, titan: Parts joined by
-Motor6D, tinted from `Config/Creatures`) with optional **AI-generated body meshes** that replace the torso and head. All four new meshes
-were generated with Studio's `generate_mesh` (prompts and raw results in `docs/generated_assets.json`), placed in Studio and photographed
-before use. One prompt was rejected by moderation ("a crouched stone beast ... glowing eye sockets") and regenerated with a softer one.
+Twelve of the thirteen creatures are built from **segmented AI rigs**: Studio's `generate_mesh` with `segmentation = "explicit"` returns
+the torso, head, arms and legs (quadrupeds: body, head, tail, four legs) as separate MeshParts with their own textures
+(`scripts/gen_rigs.py`; prompts, part lists and raw results in `docs/generated_assets.json`). `scripts/export_rigs.py` writes every id into
+`src/shared/Config/CreatureRigs.luau`, and `server/World/CreatureBuilder` scales the parts to the creature's height, turns them to
+face -Z and joins them with Motor6Ds named `J_Body`, `J_Head`, `J_ArmL/R`, `J_LegL/R` (or `J_LegFL/FR/BL/BR`, `J_Tail`). The client animation
+moves those joints, so the limbs really swing (`tests/wiring.spec` checks every id against the generation record).
 
-| Creature | Tier / island | Body | Mesh id | Texture id | Inspected in Studio | Animates | Notes / limits |
-|---|---|---|---|---|---|---|---|
-| Cairn Crawler | normal, Forgeheart | AI mesh `CreatureCrawler` + procedural tail-less legs | 75810558260234 | 108489905077094 | yes: a stylised rock-golem turtle with orange cracks | body bob/lunge, procedural legs | the mesh faces +X (yaw 90); it came back cuter than the prompt; the glowing back core is a procedural part |
-| Prism Wisp | normal (rare), Forgeheart | procedural shard template + existing AI crystal `CoreCrystalCyan` as its heart | 108198767086062 | 70951425972568 | yes (in game) | orbit spin, bob | reuses the arm/rock crystal mesh |
-| Slag Brute | normal, Forgeheart | AI mesh `CreatureBrute` (iron cuirass with furnace window) + procedural arms, fists, legs | 111108270303063 | 117042508498363 | yes | arm raise/slam, walk cycle | mesh is torso only; limbs are blocks and look cruder than the torso |
-| Quarry Colossus | elite, Forgeheart | AI mesh `CreatureColossus` (a whole spiked stone golem, limbs included) | 83897845854526 | 84383511102732 | yes | whole-body only (rear up, lean, lunge) | the generator ignored "no arms, no legs", so the procedural limbs are skipped and the mesh is scaled to the creature height |
-| Grom, the Anvil-King | guardian, Forgeheart | AI mesh `CreatureAnvilKing` (purple-iron golem with a glowing furnace window and red cracks) | 83130551069179 | 115766690455151 | yes | whole-body only | same note as the Colossus; its palette is purple, not the orange of the prompt |
-| Shardling | normal, Crystalfall | procedural shard + existing `CoreQuartz` mesh | 126003500634902 | 116870406169815 | not individually | orbit spin, bob | |
-| Amethyst Warden, Choir Behemoth, Lyrae | Crystalfall | procedural brute / titan templates, crystal palette | none | none | not individually | full limb animation | procedural fallback quality |
-| Ash Hound, Magma Golem, Obsidian Executioner, Cinderjaw Sovereign | Emberfang | procedural crawler / brute / titan templates, ember palette | none | none | not individually | full limb animation | procedural fallback quality |
+| Creature | Tier / island | Rig (parts) | Inspected in Studio | Notes / limits |
+|---|---|---|---|---|
+| Cairn Crawler | normal, Forgeheart | single AI mesh `CreatureCrawler` (stone turtle) + procedural legs | yes | the mesh faces +X (yaw 90); cuter than the prompt |
+| Prism Wisp | normal (rare), Forgeheart | procedural shard template + existing AI crystal `CoreCrystalCyan` | yes | crystal mesh reused from the rocks |
+| Shardling | normal, Crystalfall | procedural shard template + existing `CoreQuartz` | not individually | |
+| Slag Brute | normal, Forgeheart | `RigBrute` (6) | rig laid out in Edit, fought in Play | rust-orange iron golem |
+| Quarry Colossus | elite, Forgeheart | `RigColossus` (6) | yes | stone golem with shoulder spikes, glowing chest gem |
+| Grom, the Anvil-King | guardian, Forgeheart | `RigAnvilKing` (6) | yes | armored king with an anvil crown |
+| Amethyst Warden | normal, Crystalfall | `RigWarden` (6) | laid out in Edit | violet crystal sentinel; small (it is a medium-rock creature) |
+| Choir Behemoth | elite, Crystalfall | `RigChoir` (6) | laid out in Edit | came back as a winged ice figure, thin (1.7 deep): a distinct silhouette but not hulking |
+| Lyrae, the Frozen Chorus | guardian, Crystalfall | `RigLyrae` (6) | laid out in Edit | tall ice queen with crystal pipes on the shoulders |
+| Ash Hound | normal, Emberfang | `RigAshHound` (7) | yes (parts measured: head forward, tail behind) | four-legged basalt hound, faces -Z as generated |
+| Magma Golem | normal, Emberfang | `RigMagmaGolem` (6) | laid out in Edit | grey crust golem, less fiery than prompted (its first generation failed with an HTTP 504 and was retried) |
+| Obsidian Executioner | elite, Emberfang | `RigObsidian` (6) | laid out in Edit | |
+| Cinderjaw Sovereign | guardian, Emberfang | `RigCinderjaw` (6) | laid out in Edit | blue-stone torso with violet cracks and ember limbs; it does not look like the "black basalt and lava" prompt |
 
-Everything has a working fallback: if a mesh id fails to load the builder keeps the procedural body (`meshTemplate` returns nil and warns).
-The generated meshes belong to the account that ran Studio (same licensing note as above).
+The earlier one-piece meshes (`CreatureBrute` 111108270303063, `CreatureColossus` 83897845854526, `CreatureAnvilKing` 83130551069179 in `Config/Assets`)
+stay registered as the fallback: if any rig part fails to load the builder discards the rig and uses the one-piece mesh, and if that fails too, the
+procedural body template. Generated palettes do not always match the prompts or the creature's `visual` colours (those only tint the
+procedural fallback, the telegraphs and the effects).
 
-**Animation is procedural, not authored:** the client sets `Motor6D.Transform` from the replicated creature state
-(`client/Controllers/CreatureController`); no animation asset was created or uploaded. Whole-body meshes can only move as one piece, so
-their telegraphs rely on the ground marker, the body rearing up and the status text.
+Orientation is per generation: all biped rigs face +Z as generated (`meshYaw = 180`), the hound faces -Z (`meshYaw = 0`), the turtle +X (`meshYaw = 90`).
+This was verified in Studio for the Colossus, Grom and the hound (part positions); the remaining biped rigs follow the same convention but
+the final posed screenshots could not be captured (the Studio screenshot tool stopped responding late in the session), so their facing
+and poses were checked by measuring joint positions, not by eye.
+
+**Animation is procedural, not authored**: the client sets `Motor6D.Transform` from the replicated creature state in
+`client/Controllers/CreatureController`. No animation asset was created or uploaded. Measured on Grom (joint positions, 16-stud rig): idle arms
+at hip height (8.3), windup raises both fists to 16.1 and rears the body back, the strike swings them forward and down (z -2.6) with the body
+leaning in, stagger leans back, defeat slumps and sinks. Textured meshes cannot be tinted through Color, so armor-broken and exposed-core
+states are shown with a fill highlight (gold pulse for the core, ember for broken armor).
+
+Everything has a fallback and the generated meshes belong to the account that ran Studio (same licensing note as above).
 
 ## Sounds
 

@@ -94,6 +94,13 @@ Implemented, tested and (where stated) verified in a single-client Studio playte
 | Multiplayer | NOT VERIFIED live | shared rocks, contribution split, bystander/ineligible handling and per-player completion are covered by tests; no second client could be launched |
 | Real-person difficulty | NOT VERIFIED | the Studio client bot is not a good player (it spent most of its time dodging and dealt about 350 damage to the guardian in 45 s); the simulation bot with the same rules wins 8/8 in about 130 s |
 
+**Visual polish pass (rigged creatures).** All ten new segmented AI rigs generated and were exported to `Config/CreatureRigs.luau` (ids checked against the
+generation record by `tests/wiring.spec`; now 300 tests). In Studio: the builder produced all ten as rigged models without warnings; a rigged Slag Brute
+was fought and defeated by the client bot (minHp 63, 7 Charged Smashes, 16 telegraphs) with no errors in the output log; Grom's joints were measured per state
+(windup fists to 16.1 studs and body rearing back, strike swings forward and down, stagger leans back, defeat slumps) and the hound's parts confirmed
+head-forward, tail-behind. Not verified: screenshots of the final poses (the capture tool stopped responding), so colour and silhouette of the later rigs
+were only seen laid out in Edit mode.
+
 Fight simulation and economy numbers are in CREATURES.md. One unexplained observation: in the very first guardian run the boss lost
 ~25k health in a few seconds with its armor flagged open although no skill had been sent; three later runs (one with trace logging)
 behaved correctly and the armor rules are covered by the creature unit and integration tests, so it is recorded as a known issue rather than a fixed bug.
