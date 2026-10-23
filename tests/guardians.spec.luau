@@ -7,6 +7,7 @@ return function(t, u)
 	local Persistence = u:load("Logic/Persistence")
 	local IslandCfg = u:load("Config/Islands")
 	local Rocks = u:load("Config/Rocks")
+	local Arms = u:load("Config/Arms")
 	local Creatures = u:load("Config/Creatures")
 	local SkillCfg = u:load("Config/Skills")
 	local ProgressionCfg = u:load("Config/Progression")
@@ -348,7 +349,8 @@ return function(t, u)
 
 	t.test("creature definitions are valid and fair", function()
 		for id, c in Creatures.Defs do
-			t.truthy(c.hpMult > 0 and c.speed > 0 and c.radius > 0 and c.emerge > 0, id)
+			t.truthy(c.fight.seconds > 0 and c.fight.level >= 0 and c.speed > 0 and c.radius > 0 and c.emerge > 0, id)
+			t.truthy(Arms.Defs[c.fight.arm] and c.fight.level <= Arms.Defs[c.fight.arm].maxLevel, id .. " reference loadout is real")
 			t.truthy(#c.attacks >= 1, id .. " attacks")
 			t.truthy(c.visual.glow ~= nil and c.visual.material ~= nil, id .. " visual")
 			for _, a in c.attacks do

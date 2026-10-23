@@ -511,17 +511,16 @@ return function(t, u)
 		world:assertNoErrors()
 	end)
 
-	t.test("creature health scales from the reference rock so late islands stay in step with arm power", function()
+	t.test("creature health follows the declared reference fight (arm dps x seconds)", function()
+		local Stats = u:load("Logic/CreatureStats")
 		for id, c in Creatures.Defs do
-			local rock
-			for _, r in Rocks.Defs do
-				if r.encounter == id then
-					rock = r
-				end
-			end
-			local ref = Rocks.Defs[c.refRock or rock.id]
-			t.truthy(ref, id)
-			t.truthy(ref.maxHp * c.hpMult >= ref.maxHp * 2, id .. " is not a pushover")
+			local hp = Stats.maxHp(c)
+			t.truthy(hp >= 100, id .. " has real health")
+			t.near(hp, Stats.referenceDps(c.fight.arm, c.fight.level) * c.fight.seconds, 1, id)
 		end
+		-- and a creature's fight is at least as long as the tier above it is demanding
+		local small = Stats.maxHp(Creatures.Defs.CairnCrawler) / Stats.referenceDps("Starter", 0)
+		local boss = Stats.maxHp(Creatures.Defs.GromAnvilKing) / Stats.referenceDps("Alloy", 2)
+		t.truthy(boss > small * 5)
 	end)
 end

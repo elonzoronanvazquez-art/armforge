@@ -17,6 +17,7 @@ local Net = require(Shared.Net)
 local CreatureConfig = require(Shared.Config.Creatures)
 local RockConfig = require(Shared.Config.Rocks)
 local CreatureSim = require(Shared.Logic.CreatureSim)
+local CreatureStats = require(Shared.Logic.CreatureStats)
 local EncounterSM = require(Shared.Logic.EncounterSM)
 local Guardians = require(Shared.Logic.Guardians)
 local Rng = require(Shared.Util.Rng)
@@ -327,7 +328,7 @@ local function begin(entry: RockService.Entry, killer: Player?): boolean
 	enc.entry = entry
 	enc.def = def
 	local home = Vector3.new(entry.base.Position.X, entry.base.Position.Y, entry.base.Position.Z)
-	local maxHp = math.max(1, math.floor(referenceRock(enc).maxHp * def.hpMult))
+	local maxHp = CreatureStats.maxHp(def)
 	enc.sim = CreatureSim.new(entry.id, def, maxHp, home, now())
 	enc.lastStep = now()
 	local model = CreatureBuilder.build(def, entry.id, home)

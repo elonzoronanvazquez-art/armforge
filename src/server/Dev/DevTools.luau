@@ -21,6 +21,8 @@ local ArmService = require(script.Parent.Parent.Services.ArmService)
 local DataService = require(script.Parent.Parent.Services.DataService)
 local ProgressService = require(script.Parent.Parent.Services.ProgressService)
 local RockService = require(script.Parent.Parent.Services.RockService)
+local EncounterService = require(script.Parent.Parent.Services.EncounterService)
+local CreatureSim = require(Shared.Logic.CreatureSim)
 
 local DevTools = {}
 
@@ -161,6 +163,54 @@ function DevTools.tpToRock(player: Player?, defId: string?, island: string?): an
 	return nil
 end
 
+-- The creature released from a rock: lifecycle state, health, armor / core status.
+function DevTools.encounter(id: number): any
+	local enc = EncounterService.get(id)
+	if not enc then
+		return nil
+	end
+	local sim = enc.sim
+	local status = if sim then CreatureSim.status(sim, os.clock()) else nil
+	return {
+		creature = enc.def.name,
+		tier = enc.def.tier,
+		state = enc.sm.state,
+		spawns = enc.sm.spawns,
+		rewards = enc.sm.rewards,
+		simState = if sim then sim.state else nil,
+		hp = if sim then math.floor(sim.hp) else nil,
+		maxHp = if sim then sim.maxHp else nil,
+		phase = if sim then sim.phase else nil,
+		armored = if status then status.armored else nil,
+		armorOpen = if status then status.armorOpen else nil,
+		coreOpen = if status then status.coreOpen else nil,
+		x = if sim then sim.pos.X else nil,
+		z = if sim then sim.pos.Z else nil,
+		attack = if sim and sim.attack then sim.attack.id else nil,
+	}
+end
+
+-- Teleports next to the island's guardian seal.
+function DevTools.tpToSeal(player: Player?, island: string): any
+	for _, e in RockService.all() do
+		if e.island == island and e.def.size == "seal" then
+			DevTools.tp(player, e.center + Vector3.new(0, 3, e.state.layout.radius + 6))
+			return { id = e.id, alive = e.state.alive }
+		end
+	end
+	return nil
+end
+
+-- Damages the creature of rock `id` as the local player (optionally through a skill, which is what breaks armor).
+function DevTools.hitCreature(player: Player?, id: number, damage: number, skill: string?): any
+	local enc = EncounterService.targetFor(id)
+	if not (enc and player) then
+		return "no creature"
+	end
+	local r = EncounterService.hit(enc, player, damage, { skill = skill })
+	return if r then { applied = r.applied, killed = r.killed, armored = r.armored, armorBroken = r.armorBroken, core = r.coreHit } else "refused"
+end
+
 function DevTools.rockInfo(id: number): any
 	local e = RockService.get(id)
 	if not e then
@@ -230,6 +280,19 @@ local COMMANDS: { [string]: (...any) -> any } = {
 	tp = function(x: number, y: number, z: number)
 		DevTools.tp(DevTools.player(), Vector3.new(x, y, z))
 		return "ok"
+	end,
+	encounter = function(id: number)
+		return DevTools.encounter(id)
+	end,
+	tpToSeal = function(island: string)
+		return DevTools.tpToSeal(DevTools.player(), island)
+	end,
+	hitCreature = function(id: number, damage: number, skill: string?)
+		return DevTools.hitCreature(DevTools.player(), id, damage, skill)
+	end,
+	guardians = function()
+		local s = session(DevTools.player())
+		return s and s.data.guardians
 	end,
 	rockInfo = function(id: number)
 		return DevTools.rockInfo(id)

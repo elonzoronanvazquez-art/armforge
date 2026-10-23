@@ -11,6 +11,8 @@ return function(t, u)
 	local Arms = u:load("Config/Arms")
 	local Rocks = u:load("Config/Rocks")
 	local IslandCfg = u:load("Config/Islands")
+	local Creatures = u:load("Config/Creatures")
+	local CreatureStats = u:load("Logic/CreatureStats")
 
 	local TRAVEL = 3.5 -- seconds of walking/aiming between rocks
 
@@ -26,15 +28,31 @@ return function(t, u)
 		return s.power * expectedMult * (1 - resist) * famBonus * finisher * sing / s.cooldown
 	end
 
+	-- The fight inside a rock: how long a competent player spends on it (health / damage rate / 60% uptime, armored creatures are
+	-- slowed 30% because the player has to land the breaker skill) and what it pays on top of the mining share.
+	local function encounter(data, rock)
+		local def = Creatures.Defs[rock.encounter]
+		local ref = Rocks.Defs[def.refRock or rock.id]
+		local rate = dps(data, { family = def.family, resistance = def.resistance })
+		local seconds = CreatureStats.maxHp(def) / rate / 0.6 * (if def.armor then 1.3 else 1)
+		return {
+			seconds = seconds,
+			coins = math.floor(ref.coins * def.reward.coinsMult),
+			xp = math.floor(ref.xp * def.reward.xpMult),
+			shards = def.reward.shards,
+		}
+	end
+
 	local function bestRock(data, island)
 		local best, bestRate
 		for _, field in IslandCfg.Defs[island].fields do
 			for _, entry in field.rocks do
 				local rock = Rocks.Defs[entry.rock]
 				local rate_dps = dps(data, rock)
-				local time = rock.maxHp / rate_dps + TRAVEL
+				local fight = encounter(data, rock)
+				local time = rock.maxHp / rate_dps + fight.seconds + TRAVEL
 				-- spawn weight: rare rocks are scarce, assume 1 in 6 mining actions can be a rare
-				local rate = (rock.coins * Formulas.coinMultiplier(data, data.arms.equipped)) / time
+				local rate = ((rock.coins * rock.miningShare + fight.coins) * Formulas.coinMultiplier(data, data.arms.equipped)) / time
 				if rock.rare then
 					rate *= 0.35
 				end
@@ -68,12 +86,15 @@ return function(t, u)
 			end
 			local rock = bestRock(d, island)
 			local rate = dps(d, rock)
-			clock += rock.maxHp / rate + TRAVEL
-			d.coins += math.floor(rock.coins * Formulas.coinMultiplier(d, d.arms.equipped))
+			local fight = encounter(d, rock)
+			clock += rock.maxHp / rate + fight.seconds + TRAVEL
+			-- mining pays its share, the creature pays the rest (a single reward path each)
+			d.coins += math.floor((math.floor(rock.coins * rock.miningShare) + fight.coins) * Formulas.coinMultiplier(d, d.arms.equipped))
+			d.shards += fight.shards
 			if rock.shards then
 				d.shards += math.floor((rock.shards[1] + rock.shards[2]) / 2 * (rock.rare and 1 or 0))
 			end
-			local xp = Prog.addXp(d, math.floor(rock.xp * Formulas.xpMultiplier(d)))
+			local xp = Prog.addXp(d, math.floor((math.floor(rock.xp * rock.miningShare) + fight.xp) * Formulas.xpMultiplier(d)))
 			if d.level >= 2 then mark("level2") end
 			if d.level >= 5 then mark("level5") end
 			if d.level >= 12 then mark("level12") end

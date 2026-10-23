@@ -208,13 +208,19 @@ local function chooseAttack(sim: Sim, now: number, dist: number, rng: { next: (a
 	return pool[#pool]
 end
 
+-- The creature itself never walks farther than `leash` from home, but a player pinning it at that edge can still fight it: they
+-- stay valid targets a little beyond the leash. Only genuinely leaving the area drops aggro (and lets it heal).
+local function targetLimit(sim: Sim): number
+	return sim.def.leash + sim.def.radius + 20
+end
+
 local function nearestTarget(sim: Sim, players: { Player }, range: number): Player?
 	local best: Player? = nil
 	local bestDist = range
 	for _, p in players do
 		if p.alive and p.canFight then
 			local d = flatDist(p.pos, sim.pos)
-			if d <= bestDist and flatDist(p.pos, sim.home) <= sim.def.leash then
+			if d <= bestDist and flatDist(p.pos, sim.home) <= targetLimit(sim) then
 				best, bestDist = p, d
 			end
 		end
@@ -350,7 +356,7 @@ function CreatureSim.step(sim: Sim, now: number, dt: number, players: { Player }
 
 	-- IDLE or ENGAGED -------------------------------------------------------------------------------------------
 	local target = findPlayer(players, sim.target)
-	if target and not (target.alive and target.canFight and flatDist(target.pos, sim.home) <= sim.def.leash) then
+	if target and not (target.alive and target.canFight and flatDist(target.pos, sim.home) <= targetLimit(sim)) then
 		target = nil
 	end
 	if not target then
@@ -459,11 +465,14 @@ function CreatureSim.applyDamage(sim: Sim, userId: number, amount: number, opts:
 		end
 		sim.armorOpenUntil = now + def.armor.breakDuration
 	end
+	-- the core sits UNDER the armor: it only takes the core multiplier once the armor is open. A creature whose armor is
+	-- still up shrugs off even a "wide open" core, which is what makes the breaker skill a real requirement.
+	local armored = def.armor ~= nil and now >= sim.armorOpenUntil
 	local mult = 1
-	if def.core and now < sim.coreOpenUntil then
+	if def.core and now < sim.coreOpenUntil and not armored then
 		mult = def.core.mult
 		result.coreHit = true
-	elseif def.armor and now >= sim.armorOpenUntil then
+	elseif armored and def.armor then
 		mult = def.armor.mult
 		result.armored = true
 	end
@@ -559,9 +568,10 @@ end
 -- Armor / core status for the UI and the server (what a strike would do right now).
 function CreatureSim.status(sim: Sim, now: number): { armored: boolean, coreOpen: boolean, armorOpen: boolean }
 	local def = sim.def
+	local armored = def.armor ~= nil and now >= sim.armorOpenUntil
 	return {
-		armored = def.armor ~= nil and now >= sim.armorOpenUntil and not (def.core ~= nil and now < sim.coreOpenUntil),
-		coreOpen = def.core ~= nil and now < sim.coreOpenUntil,
+		armored = armored,
+		coreOpen = def.core ~= nil and now < sim.coreOpenUntil and not armored,
 		armorOpen = def.armor ~= nil and now < sim.armorOpenUntil,
 	}
 end

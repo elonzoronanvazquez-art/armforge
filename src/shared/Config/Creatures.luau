@@ -3,14 +3,15 @@
 -- Logic/CreatureSim and the glue in server/Services/EncounterService. To add a creature: append a def here, point a rock's
 -- `encounter` (Config/Rocks) at it, and pick (or add) a body template in server/World/CreatureBuilder. No service changes.
 --
--- Health is expressed relative to a reference rock (`hpMult` x that rock's maxHp) so creatures stay in step with the arm-power
--- economy of their island: a creature takes a similar NUMBER of hits whatever the island. Rewards likewise are multiples of the
--- reference rock's coins / xp (`coinsMult`, `xpMult`).
+-- Health is a design statement: `fight` names the arm (and upgrade level) a player is expected to bring and the seconds of
+-- full-uptime punching the fight is worth, so health follows the arm-power economy (Logic/CreatureStats). Rewards are multiples
+-- of the reference rock's coins / xp (`coinsMult`, `xpMult`).
 --
 -- Mechanics (all optional, all server-authoritative):
 --   armor   basic strikes only deal `mult` damage until one of `breakers` (a skill id) hits it; then it is open for
 --           `breakDuration` seconds. This is what makes a learned skill matter for that creature.
---   core    while the core is exposed (after an `exposesCore` attack, or after a stagger) every strike deals `mult` x.
+--   core    while the core is exposed (after an `exposesCore` attack, or after a stagger) every strike deals `mult` x. The core
+--           sits under the armor: an armored creature only takes the core bonus once its armor has been broken.
 --   attacks windup (telegraph) -> strike -> recover. `interruptible` attacks are cancelled (and the creature staggers) by a
 --           skill listed in `interrupters`.
 --   phases  bosses: below each `hpBelow` fraction the creature pauses briefly and gains the listed changes.
@@ -62,8 +63,8 @@ export type CreatureDef = {
 	scale: number,
 	radius: number, -- studs: reach and area checks
 	height: number,
-	hpMult: number,
-	refRock: string?, -- reference rock for hp when the container is not the right yardstick (guardians)
+	fight: { arm: string, level: number, seconds: number }, -- health = that arm's dps x seconds (Logic/CreatureStats)
+	refRock: string?, -- rock whose coins / xp the rewards are multiples of (default: the containing rock)
 	resistance: number,
 	speed: number,
 	preferredRange: number?, -- ranged creatures keep this distance
@@ -101,7 +102,7 @@ Creatures.Defs = {
 		scale = 1,
 		radius = 2.4,
 		height = 2.4,
-		hpMult = 3.5,
+		fight = { arm = "Starter", level = 0, seconds = 11 },
 		resistance = 0,
 		speed = 10,
 		aggroRange = 30,
@@ -118,7 +119,7 @@ Creatures.Defs = {
 				recover = 1.1,
 				range = 11,
 				cooldown = 1.2,
-				damage = 9,
+				damage = 7,
 				length = 10,
 				width = 3,
 				dash = true,
@@ -126,7 +127,7 @@ Creatures.Defs = {
 				text = "Rears back, then lunges in a line.",
 			},
 		},
-		reward = { coinsMult = 0.9, xpMult = 1.0, shards = 0 },
+		reward = { coinsMult = 5, xpMult = 5, shards = 0 },
 		recommended = { level = 1, skills = {}, text = "No preparation needed. Hit its glowing back after a lunge." },
 		visual = { body = rgb(132, 124, 118), plate = rgb(92, 84, 82), glow = rgb(255, 160, 90), material = Enum.Material.Granite },
 	},
@@ -143,7 +144,7 @@ Creatures.Defs = {
 		scale = 0.9,
 		radius = 2,
 		height = 3,
-		hpMult = 2.6,
+		fight = { arm = "Stonebreaker", level = 2, seconds = 30 },
 		resistance = 0.05,
 		speed = 8,
 		preferredRange = 14,
@@ -169,7 +170,7 @@ Creatures.Defs = {
 				text = "Charges a beam along a line. Step out of it.",
 			},
 		},
-		reward = { coinsMult = 1.0, xpMult = 1.0, shards = 2 },
+		reward = { coinsMult = 3, xpMult = 3.2, shards = 2 },
 		recommended = { level = 3, skills = {}, text = "It hovers back; close in while its beam recharges and hit the exposed core." },
 		visual = { body = rgb(120, 214, 230), plate = rgb(96, 100, 112), glow = rgb(255, 110, 230), material = Enum.Material.Glass },
 	},
@@ -186,7 +187,7 @@ Creatures.Defs = {
 		scale = 1.5,
 		radius = 3.4,
 		height = 5.4,
-		hpMult = 3.0,
+		fight = { arm = "Stonebreaker", level = 2, seconds = 40 },
 		resistance = 0.05,
 		speed = 7,
 		aggroRange = 30,
@@ -194,7 +195,7 @@ Creatures.Defs = {
 		emerge = 1.4,
 		staggerTime = 1.8,
 		armor = { mult = 0.45, breakDuration = 7, breakers = { "ChargedSmash" } },
-		core = { mult = 2 },
+		core = { mult = 1.6 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -229,7 +230,7 @@ Creatures.Defs = {
 				text = "Winds up a wide sweep in front of it.",
 			},
 		},
-		reward = { coinsMult = 1.1, xpMult = 1.2, shards = 0 },
+		reward = { coinsMult = 6.5, xpMult = 6.5, shards = 0 },
 		recommended = { level = 3, skills = { "ChargedSmash" }, text = "Charged Smash breaks its armor for 7 seconds. Interrupt the slam, then punish the exposed core." },
 		visual = { body = rgb(64, 70, 82), plate = rgb(148, 84, 52), glow = rgb(255, 120, 60), material = Enum.Material.CorrodedMetal },
 	},
@@ -246,7 +247,7 @@ Creatures.Defs = {
 		scale = 2.3,
 		radius = 6,
 		height = 11,
-		hpMult = 5,
+		fight = { arm = "Alloy", level = 3, seconds = 60 },
 		resistance = 0.1,
 		speed = 6,
 		aggroRange = 36,
@@ -254,7 +255,7 @@ Creatures.Defs = {
 		emerge = 2.0,
 		staggerTime = 2.4,
 		armor = { mult = 0.15, breakDuration = 7, breakers = { "ChargedSmash" } },
-		core = { mult = 2.4 },
+		core = { mult = 1.7 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -309,7 +310,7 @@ Creatures.Defs = {
 		phases = {
 			{ hpBelow = 0.5, name = "Enraged", speedMult = 1.25, windupMult = 0.85, text = "The Colossus bellows and charges!" },
 		},
-		reward = { coinsMult = 3.0, xpMult = 3.0, shards = 6 },
+		reward = { coinsMult = 16, xpMult = 16, shards = 6 },
 		recommended = {
 			level = 8,
 			skills = { "ChargedSmash" },
@@ -330,7 +331,7 @@ Creatures.Defs = {
 		scale = 3.4,
 		radius = 8,
 		height = 16,
-		hpMult = 9,
+		fight = { arm = "Alloy", level = 2, seconds = 130 },
 		refRock = "Forgestone",
 		resistance = 0.12,
 		speed = 6.5,
@@ -339,7 +340,7 @@ Creatures.Defs = {
 		emerge = 3.5,
 		staggerTime = 3,
 		armor = { mult = 0.12, breakDuration = 8, breakers = { "ChargedSmash" } },
-		core = { mult = 2.6 },
+		core = { mult = 1.8 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -411,7 +412,7 @@ Creatures.Defs = {
 			{ hpBelow = 0.66, name = "Roused", speedMult = 1.15, text = "Grom slams the ground. The Molten Quake begins!" },
 			{ hpBelow = 0.33, name = "Furious", speedMult = 1.3, windupMult = 0.88, damageMult = 1.1, text = "Grom roars. He starts to rush!" },
 		},
-		reward = { coinsMult = 10, xpMult = 10, shards = 25 },
+		reward = { coinsMult = 25, xpMult = 25, shards = 25 },
 		repeatMult = 0.15,
 		recommended = {
 			level = 12,
@@ -435,7 +436,7 @@ Creatures.Defs = {
 		scale = 1,
 		radius = 2,
 		height = 3,
-		hpMult = 3.2,
+		fight = { arm = "Alloy", level = 3, seconds = 12 },
 		resistance = 0.05,
 		speed = 14,
 		aggroRange = 32,
@@ -460,7 +461,7 @@ Creatures.Defs = {
 				text = "A fast, narrow dash. Keep moving sideways.",
 			},
 		},
-		reward = { coinsMult = 0.9, xpMult = 1.0, shards = 0 },
+		reward = { coinsMult = 3.2, xpMult = 3.2, shards = 0 },
 		recommended = { level = 10, skills = {}, text = "Fast but fragile. Overdrive makes short work of it." },
 		visual = { body = rgb(232, 222, 236), plate = rgb(196, 170, 226), glow = rgb(150, 240, 255), material = Enum.Material.Glass },
 	},
@@ -477,7 +478,7 @@ Creatures.Defs = {
 		scale = 1.6,
 		radius = 3.6,
 		height = 5.6,
-		hpMult = 3.0,
+		fight = { arm = "Crystal", level = 0, seconds = 40 },
 		resistance = 0.08,
 		speed = 7,
 		aggroRange = 32,
@@ -485,7 +486,7 @@ Creatures.Defs = {
 		emerge = 1.4,
 		staggerTime = 1.8,
 		armor = { mult = 0.4, breakDuration = 7, breakers = { "ShatterWave", "ChargedSmash" } },
-		core = { mult = 2.4 },
+		core = { mult = 1.7 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -520,7 +521,7 @@ Creatures.Defs = {
 				text = "Crystal spines spread in a fan ahead of it.",
 			},
 		},
-		reward = { coinsMult = 1.1, xpMult = 1.2, shards = 1 },
+		reward = { coinsMult = 3.6, xpMult = 3.6, shards = 1 },
 		recommended = { level = 12, skills = { "ShatterWave" }, text = "Shatter Wave or Charged Smash cracks the carapace. Critical Focus loves the open core." },
 		visual = { body = rgb(78, 62, 104), plate = rgb(150, 90, 220), glow = rgb(235, 160, 255), material = Enum.Material.Glass },
 	},
@@ -537,15 +538,15 @@ Creatures.Defs = {
 		scale = 2.3,
 		radius = 6.5,
 		height = 11,
-		hpMult = 5,
+		fight = { arm = "Crystal", level = 4, seconds = 70 },
 		resistance = 0.1,
 		speed = 6,
 		aggroRange = 38,
 		leash = 80,
 		emerge = 2.0,
 		staggerTime = 2.4,
-		armor = { mult = 0.15, breakDuration = 7, breakers = { "ShatterWave" } },
-		core = { mult = 2.4 },
+		armor = { mult = 0.15, breakDuration = 12, breakers = { "ShatterWave" } },
+		core = { mult = 1.7 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -597,7 +598,7 @@ Creatures.Defs = {
 			},
 		},
 		phases = { { hpBelow = 0.5, name = "Crescendo", speedMult = 1.2, windupMult = 0.85, text = "The note climbs: it sings faster!" } },
-		reward = { coinsMult = 3.0, xpMult = 3.0, shards = 8 },
+		reward = { coinsMult = 5, xpMult = 5, shards = 8 },
 		recommended = {
 			level = 14,
 			skills = { "ShatterWave" },
@@ -618,7 +619,7 @@ Creatures.Defs = {
 		scale = 3.3,
 		radius = 8,
 		height = 16,
-		hpMult = 9,
+		fight = { arm = "Crystal", level = 2, seconds = 100 },
 		refRock = "Heartstone",
 		resistance = 0.12,
 		speed = 6.5,
@@ -626,8 +627,8 @@ Creatures.Defs = {
 		leash = 120,
 		emerge = 3.5,
 		staggerTime = 3,
-		armor = { mult = 0.12, breakDuration = 8, breakers = { "ShatterWave" } },
-		core = { mult = 2.6 },
+		armor = { mult = 0.12, breakDuration = 12, breakers = { "ShatterWave" } },
+		core = { mult = 1.8 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -682,7 +683,7 @@ Creatures.Defs = {
 			{ hpBelow = 0.66, name = "Second Verse", speedMult = 1.15, text = "Lyrae's voice climbs. Requiem begins!" },
 			{ hpBelow = 0.33, name = "Final Chorus", speedMult = 1.3, windupMult = 0.88, damageMult = 1.1, text = "The chorus roars to a close!" },
 		},
-		reward = { coinsMult = 10, xpMult = 10, shards = 30 },
+		reward = { coinsMult = 25, xpMult = 25, shards = 30 },
 		repeatMult = 0.15,
 		recommended = {
 			level = 14,
@@ -706,7 +707,7 @@ Creatures.Defs = {
 		scale = 1.2,
 		radius = 2.6,
 		height = 2.8,
-		hpMult = 3.2,
+		fight = { arm = "Magma", level = 1, seconds = 15 },
 		resistance = 0.05,
 		speed = 13,
 		aggroRange = 34,
@@ -731,7 +732,7 @@ Creatures.Defs = {
 				text = "Digs in, then dashes down a line.",
 			},
 		},
-		reward = { coinsMult = 0.9, xpMult = 1.0, shards = 0 },
+		reward = { coinsMult = 1.5, xpMult = 1.5, shards = 0 },
 		recommended = { level = 25, skills = {}, text = "Dodge sideways, hit it while it recovers." },
 		visual = { body = rgb(40, 38, 44), plate = rgb(78, 52, 50), glow = rgb(255, 98, 32), material = Enum.Material.Basalt },
 	},
@@ -748,7 +749,7 @@ Creatures.Defs = {
 		scale = 1.7,
 		radius = 3.8,
 		height = 6,
-		hpMult = 3.0,
+		fight = { arm = "Magma", level = 3, seconds = 40 },
 		resistance = 0.08,
 		speed = 7,
 		aggroRange = 32,
@@ -756,7 +757,7 @@ Creatures.Defs = {
 		emerge = 1.4,
 		staggerTime = 1.8,
 		armor = { mult = 0.4, breakDuration = 7, breakers = { "ChargedSmash", "ShatterWave" } },
-		core = { mult = 2.3 },
+		core = { mult = 1.6 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -791,7 +792,7 @@ Creatures.Defs = {
 				text = "Gathers lava in its chest, then fires a line.",
 			},
 		},
-		reward = { coinsMult = 1.1, xpMult = 1.2, shards = 1 },
+		reward = { coinsMult = 1.3, xpMult = 1.3, shards = 1 },
 		recommended = { level = 26, skills = { "ChargedSmash" }, text = "Break its crust, interrupt the slam, then hit the core." },
 		visual = { body = rgb(58, 44, 44), plate = rgb(206, 72, 30), glow = rgb(255, 214, 80), material = Enum.Material.CrackedLava },
 	},
@@ -808,7 +809,7 @@ Creatures.Defs = {
 		scale = 2.2,
 		radius = 6,
 		height = 11,
-		hpMult = 5,
+		fight = { arm = "Magma", level = 6, seconds = 65 },
 		resistance = 0.12,
 		speed = 7.5,
 		aggroRange = 38,
@@ -816,7 +817,7 @@ Creatures.Defs = {
 		emerge = 2.0,
 		staggerTime = 2.4,
 		armor = { mult = 0.15, breakDuration = 7, breakers = { "ChargedSmash", "ShatterWave" } },
-		core = { mult = 2.4 },
+		core = { mult = 1.7 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -869,7 +870,7 @@ Creatures.Defs = {
 			},
 		},
 		phases = { { hpBelow = 0.5, name = "Shattered", speedMult = 1.25, windupMult = 0.85, text = "The Executioner sheds its shell and speeds up!" } },
-		reward = { coinsMult = 3.0, xpMult = 3.0, shards = 10 },
+		reward = { coinsMult = 1.3, xpMult = 1.3, shards = 10 },
 		recommended = { level = 28, skills = { "ChargedSmash" }, text = "Break the shell with Charged Smash or Shatter Wave. Interrupt Guillotine and Nova." },
 		visual = { body = rgb(18, 16, 24), plate = rgb(60, 30, 90), glow = rgb(210, 130, 255), material = Enum.Material.Glass },
 	},
@@ -886,7 +887,7 @@ Creatures.Defs = {
 		scale = 3.4,
 		radius = 8,
 		height = 16,
-		hpMult = 9,
+		fight = { arm = "Magma", level = 4, seconds = 140 },
 		refRock = "Obsidian",
 		resistance = 0.14,
 		speed = 7,
@@ -895,7 +896,7 @@ Creatures.Defs = {
 		emerge = 3.5,
 		staggerTime = 3,
 		armor = { mult = 0.12, breakDuration = 8, breakers = { "ChargedSmash", "ShatterWave" } },
-		core = { mult = 2.6 },
+		core = { mult = 1.8 },
 		interrupters = { "ChargedSmash", "ShatterWave" },
 		attacks = {
 			{
@@ -966,7 +967,7 @@ Creatures.Defs = {
 			{ hpBelow = 0.66, name = "Smoldering", speedMult = 1.15, text = "The Sovereign inhales. Caldera Breath begins!" },
 			{ hpBelow = 0.33, name = "Inferno", speedMult = 1.3, windupMult = 0.88, damageMult = 1.1, text = "The Sovereign erupts!" },
 		},
-		reward = { coinsMult = 10, xpMult = 10, shards = 40 },
+		reward = { coinsMult = 25, xpMult = 25, shards = 40 },
 		repeatMult = 0.15,
 		recommended = {
 			level = 28,
