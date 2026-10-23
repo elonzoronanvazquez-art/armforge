@@ -96,7 +96,7 @@ local function make(ctx: Ctx, parent: BasePart, name: string, size: Vector3, c0:
 end
 
 -- The torso: the creature's AI mesh when it has one (scaled to the template's body size), else the procedural block.
-local function makeBody(ctx: Ctx, size: Vector3, c0: CFrame): Part
+local function makeBody(ctx: Ctx, size: Vector3, c0: CFrame): BasePart
 	local v = ctx.def.visual
 	local tpl = if v.mesh then meshTemplate(v.mesh) else nil
 	if tpl then
@@ -262,7 +262,8 @@ local function titan(ctx: Ctx)
 	elseif not ctx.wholeBody then
 		make(ctx, body, "Core", Vector3.new(1.3, 1.3, 0.6), CFrame.new(0, 0.3, -1.9), v.glow, v.material, { glow = true, shape = Enum.PartType.Ball })
 	end
-	for _, side in if ctx.wholeBody then {} else { -1, 1 } do
+	local sides: { number } = if ctx.wholeBody then {} else { -1, 1 }
+	for _, side in sides do
 		local n = if side < 0 then "L" else "R"
 		make(ctx, body, "Pauldron" .. n, Vector3.new(2.4, 1.4, 2.6), CFrame.new(side * 3.1, 1.7, 0), v.plate, v.material, { plate = true })
 		local arm = make(ctx, body, "Arm" .. n, Vector3.new(1.7, 3.4, 1.7), CFrame.new(side * 3.2, 1.2, 0), darker(v.body, 0.1), v.material, { pivotTop = true })

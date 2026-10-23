@@ -416,7 +416,64 @@ local function skulls(n: number): string
 	return string.rep("*", n) .. string.rep("-", 5 - n)
 end
 
+-- The board hangs on a small invisible anchor part that is moved above whichever rock is targeted (the same arrangement as a
+-- creature's overhead readout, which renders reliably).
+local infoAnchor: Part? = nil
+
+local function makeInfoBoard()
+	local holder: Part
+	local existing = infoAnchor
+	if existing and existing.Parent ~= nil then
+		holder = existing
+	else
+		local fresh = Instance.new("Part")
+		fresh.Name = "RockInfoAnchor"
+		fresh.Anchored = true
+		fresh.CanCollide = false
+		fresh.CanQuery = false
+		fresh.CanTouch = false
+		fresh.CastShadow = false
+		fresh.Transparency = 1
+		fresh.Size = Vector3.new(1, 1, 1)
+		fresh.Parent = overlay
+		infoAnchor = fresh
+		holder = fresh
+	end
+	infoBoard = Instance.new("BillboardGui")
+	infoBoard.Name = "RockContents"
+	infoBoard.Size = UDim2.fromOffset(250, 70)
+	infoBoard.AlwaysOnTop = false
+	infoBoard.LightInfluence = 0
+	infoBoard.MaxDistance = 90
+	infoBoard.Enabled = false
+	infoBoard.Adornee = holder
+	infoBoard.Parent = holder
+	local function line(y: number, h: number, size: number, font: Enum.Font): TextLabel
+		local l = Instance.new("TextLabel")
+		l.BackgroundTransparency = 1
+		l.Position = UDim2.fromOffset(0, y)
+		l.Size = UDim2.new(1, 0, 0, h)
+		l.Font = font
+		l.TextSize = size
+		l.TextWrapped = true
+		l.TextColor3 = Color3.fromRGB(255, 244, 232)
+		l.Text = ""
+		l.Parent = infoBoard
+		local st = Instance.new("UIStroke")
+		st.Thickness = 1.5
+		st.Color = Color3.fromRGB(20, 14, 10)
+		st.Parent = l
+		return l
+	end
+	infoRefs = { title = line(0, 20, 16, Enum.Font.GothamBlack), sub = line(20, 16, 12, Enum.Font.GothamBold), rec = line(36, 34, 11, Enum.Font.Gotham) }
+end
+
 local function refreshInfo(target: Model?)
+	local holder = infoAnchor
+	if infoBoard.Parent == nil or not holder or holder.Parent == nil then
+		makeInfoBoard()
+		holder = infoAnchor
+	end
 	if not target or not target.Parent or target:GetAttribute("Contains") == nil or target:GetAttribute("CreatureId") ~= nil then
 		infoBoard.Enabled = false
 		return
@@ -428,8 +485,9 @@ local function refreshInfo(target: Model?)
 		infoBoard.Enabled = false
 		return
 	end
-	infoBoard.Adornee = anchor
-	infoBoard.StudsOffsetWorldSpace = Vector3.new(0, height * 0.55 + 5, 0)
+	if holder then
+		holder.Position = anchor.Position + Vector3.new(0, height * 0.55 + 5, 0)
+	end
 	local tier = target:GetAttribute("Tier") :: string
 	local rebirths: number = (target:GetAttribute("GuardianRebirths") :: number?) or 0
 	local contains = target:GetAttribute("Contains") :: string
@@ -773,32 +831,7 @@ local function buildUi()
 	phase.Parent = bossBar
 	bossRefs = { name = name, fill = fill, status = status, phase = phase }
 
-	infoBoard = Instance.new("BillboardGui")
-	infoBoard.Name = "RockContents"
-	infoBoard.Size = UDim2.fromOffset(250, 70)
-	infoBoard.AlwaysOnTop = true
-	infoBoard.LightInfluence = 0
-	infoBoard.MaxDistance = 90
-	infoBoard.Enabled = false
-	infoBoard.Parent = overlay -- a BillboardGui lives in the workspace (a folder), not under a ScreenGui
-	local function line(y: number, h: number, size: number, font: Enum.Font): TextLabel
-		local l = Instance.new("TextLabel")
-		l.BackgroundTransparency = 1
-		l.Position = UDim2.fromOffset(0, y)
-		l.Size = UDim2.new(1, 0, 0, h)
-		l.Font = font
-		l.TextSize = size
-		l.TextWrapped = true
-		l.TextColor3 = Color3.fromRGB(255, 244, 232)
-		l.Text = ""
-		l.Parent = infoBoard
-		local s = Instance.new("UIStroke")
-		s.Thickness = 1.5
-		s.Color = Color3.fromRGB(20, 14, 10)
-		s.Parent = l
-		return l
-	end
-	infoRefs = { title = line(0, 20, 16, Enum.Font.GothamBlack), sub = line(20, 16, 12, Enum.Font.GothamBold), rec = line(36, 34, 11, Enum.Font.Gotham) }
+	makeInfoBoard()
 end
 
 function CreatureController.start()
