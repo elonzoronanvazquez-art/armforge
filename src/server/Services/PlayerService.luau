@@ -66,12 +66,15 @@ end
 local function onPlayerAdded(player: Player)
 	local session = Sessions.create(player)
 	local data = DataService.load(player)
-	if not data or not player.Parent then
-		Sessions.remove(player)
-		if data then
-			DataService.releaseLoaded(player.UserId, data) -- left mid-load: do not leave the save locked
+	-- the player may have left (or PlayerRemoving may already have discarded this session) while the load yielded
+	local live = player.Parent ~= nil and Sessions.get(player) == session
+	if not data or not live then
+		if Sessions.get(player) == session then
+			Sessions.remove(player)
 		end
-		if player.Parent then
+		if data then
+			DataService.releaseLoaded(player.UserId) -- loaded but never went live: do not leave the save locked
+		elseif player.Parent then
 			player:Kick("ARMFORGE could not load your save data safely. Please rejoin in a moment.")
 		end
 		return

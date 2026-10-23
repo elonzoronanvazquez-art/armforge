@@ -11,9 +11,9 @@ local Loader = {}
 
 local data = setmetatable({}, { __mode = "k" })
 
-local function newNode(name, parent, path)
+local function newNode(name, parent, path, universe)
 	local node = {}
-	data[node] = { name = name, parent = parent, children = {}, path = path, loaded = false, value = nil }
+	data[node] = { name = name, parent = parent, children = {}, path = path, loaded = false, value = nil, universe = universe }
 	setmetatable(node, {
 		__index = function(self, key)
 			local d = data[self]
@@ -42,16 +42,16 @@ local function newNode(name, parent, path)
 	return node
 end
 
-local function scan(path, node)
+local function scan(path, node, universe)
 	for _, entry in fs.readDir(path) do
 		local full = path .. "/" .. entry
 		if fs.isDir(full) then
-			local child = newNode(entry, node, nil)
+			local child = newNode(entry, node, nil, universe)
 			data[node].children[entry] = child
-			scan(full, child)
+			scan(full, child, universe)
 		elseif entry:match("%.luau$") and not entry:match("%.spec%.luau$") then
 			local name = entry:gsub("%.luau$", "")
-			data[node].children[name] = newNode(name, node, full)
+			data[node].children[name] = newNode(name, node, full, universe)
 		end
 	end
 end
@@ -121,6 +121,10 @@ local function requireNode(node)
 	for k, v in stubs do
 		env[k] = v
 	end
+	-- a universe may override any global (the server harness swaps in a fake Roblox world)
+	for k, v in d.universe.env do
+		env[k] = v
+	end
 	setmetatable(env, { __index = _G })
 	local chunk = luau.load(fs.readFile(d.path), { debugName = d.path, environment = env })
 	d.value = chunk()
@@ -130,18 +134,45 @@ local function requireNode(node)
 end
 
 -- Returns a fresh module universe (so tests can't leak state between runs).
-function Loader.new()
-	local root = newNode("Armforge", nil, nil)
-	scan("src/shared", root)
-	local universe = {}
-	-- universe:load("Logic/Formulas")
-	function universe.load(_, path)
+--   opts.server   also scan src/server (load with universe:loadServer("Services/RockService"))
+--   opts.env      function(sharedRoot) -> table of globals that replace the stubs (game, task, os, Instance...)
+--   opts.replace  { ["Runtime/ArmBuilder"] = module, ["server:World/RockBuilder"] = module } returned instead of the real file
+function Loader.new(opts)
+	opts = opts or {}
+	local universe = { env = {} }
+	local root = newNode("Armforge", nil, nil, universe)
+	scan("src/shared", root, universe)
+	local serverRoot = nil
+	if opts.server then
+		serverRoot = newNode("Server", nil, nil, universe)
+		scan("src/server", serverRoot, universe)
+	end
+	if opts.env then
+		universe.env = opts.env(root)
+	end
+	local function resolve(path)
 		local node = root
+		if path:sub(1, 7) == "server:" then
+			node = assert(serverRoot, "universe has no server tree")
+			path = path:sub(8)
+		end
 		for segment in path:gmatch("[^/]+") do
 			node = node:FindFirstChild(segment)
 			assert(node ~= nil, "no such module: " .. path)
 		end
-		return requireNode(node)
+		return node
+	end
+	for path, value in opts.replace or {} do
+		local d = data[resolve(path)]
+		d.loaded = true
+		d.value = value
+	end
+	-- universe:load("Logic/Formulas")
+	function universe.load(_, path)
+		return requireNode(resolve(path))
+	end
+	function universe.loadServer(_, path)
+		return requireNode(resolve("server:" .. path))
 	end
 	-- Deep-copies a config table so a test can change numbers without leaking.
 	function universe.clone(_, value)
