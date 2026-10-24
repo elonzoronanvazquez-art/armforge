@@ -1,7 +1,7 @@
 --!strict
 -- Islands: the progression ladder. Requirements are checked by Logic/Islands (server authoritative and mirrored
 -- in the UI). To add an island: append a def here, list its rock fields, and add a builder entry in the server's
--- World/IslandBuilders (see docs/ADDING_CONTENT.md).
+-- World/WorldBuilder (see docs/ADDING_CONTENT.md).
 
 local Islands = {}
 
@@ -16,13 +16,18 @@ export type GuardianDef = {
 	rebirths: number,
 }
 
+-- Per-biome reward multipliers: everything earned on the island (rock mining and creature fights) is multiplied by these.
+export type Boost = { coins: number, xp: number }
+
 export type IslandDef = {
 	id: string,
 	name: string,
+	biome: string, -- starter | jungle | mountain | volcano | steampunk | desert | void
 	tagline: string,
 	description: string,
 	order: number,
 	requires: { level: number?, rebirths: number?, coins: number? },
+	boost: Boost?, -- nil = no boost
 	guardian: GuardianDef?, -- nil while the island is not playable yet
 	comingSoon: boolean?,
 	center: Vector3,
@@ -39,8 +44,9 @@ Islands.Defs = {
 	Forgeheart = {
 		id = "Forgeheart",
 		name = "Forgeheart Isle",
+		biome = "starter",
 		tagline = "Where every arm begins",
-		description = "The old arm-forging works. Granite, ironvein and rare prism geodes surround the Great Forge.",
+		description = "The old arm-forging works. Granite, ironvein and rare prism geodes surround the Great Forge. A fishing dock juts into the bay.",
 		order = 1,
 		requires = {},
 		center = Vector3.new(0, 0, 0),
@@ -66,12 +72,44 @@ Islands.Defs = {
 		fog = Color3.fromRGB(255, 196, 150),
 		ambient = Color3.fromRGB(120, 112, 124),
 	},
+	Mossveil = {
+		id = "Mossveil",
+		name = "Mossveil Jungle",
+		biome = "jungle",
+		tagline = "Where the old forge went green",
+		description = "A drowned-green jungle: a great lake, a roaring waterfall, mossy stone and vines older than the forge.",
+		order = 2,
+		requires = { level = 5 },
+		center = Vector3.new(0, 0, 820),
+		radius = 200,
+		arrival = Vector3.new(0, 4, 916),
+		fields = {
+			{
+				name = "Fern Hollow",
+				center = Vector3.new(-70, 0, 770),
+				radius = 50,
+				rocks = { { rock = "MossStone", count = 8 }, { rock = "Rootstone", count = 3 } },
+			},
+			{
+				name = "Jade Terrace",
+				center = Vector3.new(20, 0, 676),
+				radius = 42,
+				rocks = { { rock = "Rootstone", count = 5 }, { rock = "MossStone", count = 3 }, { rock = "Jadeheart", count = 2 } },
+			},
+		},
+		guardian = { creature = "YmiraRootmother", seal = "RootSeal", position = Vector3.new(-135, 0, 850), rebirths = 2 },
+		accent = Color3.fromRGB(120, 220, 110),
+		sky = Color3.fromRGB(150, 210, 150),
+		fog = Color3.fromRGB(150, 205, 160),
+		ambient = Color3.fromRGB(86, 120, 92),
+	},
 	Crystalfall = {
 		id = "Crystalfall",
 		name = "Crystalfall Atoll",
+		biome = "mountain",
 		tagline = "The island that sings",
 		description = "Frozen waterfalls of crystal. Quartz spires, amethyst clusters and golden Heartstone geodes.",
-		order = 2,
+		order = 3,
 		requires = { level = 12 },
 		center = Vector3.new(820, 0, 0),
 		radius = 190,
@@ -90,7 +128,7 @@ Islands.Defs = {
 				rocks = { { rock = "Amethyst", count = 5 }, { rock = "Quartz", count = 3 }, { rock = "Heartstone", count = 2 } },
 			},
 		},
-		guardian = { creature = "LyraeFrozenChorus", seal = "ChoirSeal", position = Vector3.new(740, 0, -40), rebirths = 2 },
+		guardian = { creature = "LyraeFrozenChorus", seal = "ChoirSeal", position = Vector3.new(740, 0, -40), rebirths = 3 },
 		accent = Color3.fromRGB(110, 220, 255),
 		sky = Color3.fromRGB(170, 190, 255),
 		fog = Color3.fromRGB(190, 200, 255),
@@ -99,10 +137,12 @@ Islands.Defs = {
 	Emberfang = {
 		id = "Emberfang",
 		name = "Emberfang Caldera",
+		biome = "volcano",
 		tagline = "The furnace beneath the world",
-		description = "A volcanic caldera of black basalt and living magma. Only reforged arms survive the heat.",
-		order = 3,
+		description = "A volcanic caldera of black basalt and living magma. Only reforged arms survive the heat, and it pays 50% more of everything.",
+		order = 4,
 		requires = { level = 25 },
+		boost = { coins = 1.5, xp = 1.5 },
 		center = Vector3.new(-820, 0, 0),
 		radius = 190,
 		arrival = Vector3.new(-820, 4, 96),
@@ -120,19 +160,69 @@ Islands.Defs = {
 				rocks = { { rock = "MagmaCore", count = 5 }, { rock = "Basalt", count = 3 }, { rock = "Obsidian", count = 2 } },
 			},
 		},
-		guardian = { creature = "CinderjawSovereign", seal = "CalderaSeal", position = Vector3.new(-740, 0, -40), rebirths = 3 },
+		guardian = { creature = "CinderjawSovereign", seal = "CalderaSeal", position = Vector3.new(-740, 0, -40), rebirths = 4 },
 		accent = Color3.fromRGB(255, 96, 40),
 		sky = Color3.fromRGB(110, 54, 52),
 		fog = Color3.fromRGB(120, 60, 50),
 		ambient = Color3.fromRGB(130, 80, 74),
 	},
+	Cogspire = {
+		id = "Cogspire",
+		name = "Cogspire Foundry",
+		biome = "steampunk",
+		tagline = "Brass, steam and ten thousand gears",
+		description = "A steampunk city of brass towers and pressure pipes. Still on the drawing board.",
+		order = 5,
+		requires = { level = 28 },
+		comingSoon = true,
+		center = Vector3.new(820, 0, 820),
+		radius = 200,
+		arrival = Vector3.new(820, 4, 916),
+		fields = {},
+		accent = Color3.fromRGB(214, 150, 70),
+		sky = Color3.fromRGB(214, 176, 120),
+		fog = Color3.fromRGB(190, 160, 120),
+		ambient = Color3.fromRGB(130, 108, 84),
+	},
+	Dustwake = {
+		id = "Dustwake",
+		name = "Dustwake Ruins",
+		biome = "desert",
+		tagline = "The forgotten sands",
+		description = "A forgotten desert. Ancient temples lie half-exposed and half-buried under the dunes, and something still sleeps below.",
+		order = 6,
+		requires = { level = 28 },
+		center = Vector3.new(-820, 0, 820),
+		radius = 200,
+		arrival = Vector3.new(-820, 4, 916),
+		fields = {
+			{
+				name = "Dune Quarry",
+				center = Vector3.new(-880, 0, 770),
+				radius = 54,
+				rocks = { { rock = "Sandblock", count = 8 }, { rock = "Relic", count = 3 } },
+			},
+			{
+				name = "Ruin Court",
+				center = Vector3.new(-780, 0, 690),
+				radius = 44,
+				rocks = { { rock = "Relic", count = 5 }, { rock = "Sandblock", count = 3 }, { rock = "Sunstone", count = 2 } },
+			},
+		},
+		guardian = { creature = "OszarakBuriedSovereign", seal = "SunkenSeal", position = Vector3.new(-905, 0, 865), rebirths = 5 },
+		accent = Color3.fromRGB(240, 190, 90),
+		sky = Color3.fromRGB(240, 200, 140),
+		fog = Color3.fromRGB(235, 200, 150),
+		ambient = Color3.fromRGB(150, 124, 96),
+	},
 	Voidreach = {
 		id = "Voidreach",
 		name = "Voidreach",
+		biome = "void",
 		tagline = "Beyond the last forge",
 		description = "Something is humming out past the edge of the map. Not yet charted.",
-		order = 4,
-		requires = { level = 30 },
+		order = 7,
+		requires = { level = 34 },
 		comingSoon = true,
 		center = Vector3.new(0, 0, -1000),
 		radius = 190,
@@ -145,9 +235,13 @@ Islands.Defs = {
 	},
 } :: { [string]: IslandDef }
 
-Islands.Order = { "Forgeheart", "Crystalfall", "Emberfang", "Voidreach" }
+-- The ladder: Starter Island -> Jungle -> Mountain -> Volcano -> Steampunk -> Desert -> teaser. Islands without a guardian
+-- (still coming soon) are skipped by the guardian gate, so the next playable island opens from the last guarded one
+-- (Logic/Islands.previousGuarded / nextPlayable).
+Islands.Order = { "Forgeheart", "Mossveil", "Crystalfall", "Emberfang", "Cogspire", "Dustwake", "Voidreach" }
 Islands.Start = "Forgeheart"
 
--- Voidreach has no guardian yet (it is a teaser); its guardian ships with the island.
+-- Crystalfall (the Mountain) and Emberfang (the Volcano) keep their internal ids; their reworks into the sketch's mountain and
+-- volcano follow. Cogspire (steampunk) and Voidreach are teasers without guardians yet.
 
 return Islands

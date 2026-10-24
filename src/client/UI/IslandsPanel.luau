@@ -21,7 +21,7 @@ local C = Theme.colors
 local Panel = {}
 Panel.name = "Islands"
 Panel.title = "ISLANDS"
-Panel.size = Vector2.new(820, 470)
+Panel.size = Vector2.new(900, 520)
 
 local cards: { [string]: any } = {}
 local refs: { [string]: any } = {}
@@ -121,11 +121,20 @@ end
 
 function Panel.build(content: Frame)
 	refs.banner = W.text({ Position = UDim2.fromOffset(18, 4), Size = UDim2.new(1, -36, 0, 20), Font = Theme.fontBold, TextSize = 13, Text = "", Parent = content })
-	local row = W.frame({ Position = UDim2.fromOffset(14, 30), Size = UDim2.new(1, -28, 1, -42), Parent = content })
+	-- seven islands do not fit side by side: the row scrolls sideways
+	local row = W.scroll({
+		Position = UDim2.fromOffset(14, 30),
+		Size = UDim2.new(1, -28, 1, -42),
+		CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.X,
+		ScrollingDirection = Enum.ScrollingDirection.X,
+		ScrollBarThickness = 6,
+		Parent = content,
+	})
 	W.list(Enum.FillDirection.Horizontal, 8).Parent = row
 	for i, id in IslandConfig.Order do
 		local def = IslandConfig.Defs[id]
-		local card = W.card({ Size = UDim2.new(0.25, -6, 1, 0), LayoutOrder = i, Parent = row })
+		local card = W.card({ Size = UDim2.new(0, 196, 1, -12), LayoutOrder = i, Parent = row })
 		W.padding(10, 10).Parent = card
 		local stroke = card:FindFirstChildOfClass("UIStroke") :: UIStroke
 		stroke.Color = def.accent
@@ -139,8 +148,12 @@ function Panel.build(content: Frame)
 		W.text({ Size = UDim2.fromScale(1, 1), TextXAlignment = Enum.TextXAlignment.Center, Font = Theme.fontBlack, TextSize = 28, TextColor3 = C.black, TextTransparency = 0.25, Text = tostring(def.order), Parent = banner })
 		W.text({ Position = UDim2.fromOffset(0, 62), Size = UDim2.new(1, 0, 0, 36), Font = Theme.fontBlack, TextSize = 15, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, Text = def.name, Parent = card })
 		local state = W.pill("", C.good, C.black, { Position = UDim2.fromOffset(0, 98), Parent = card })
-		W.text({ Position = UDim2.fromOffset(0, 120), Size = UDim2.new(1, 0, 0, 48), TextWrapped = true, TextSize = 11, TextColor3 = C.sub, TextYAlignment = Enum.TextYAlignment.Top, Text = def.description, Parent = card })
-		local reqs = W.frame({ Position = UDim2.fromOffset(0, 170), Size = UDim2.new(1, 0, 0, 50), Parent = card })
+		W.text({ Position = UDim2.fromOffset(0, 120), Size = UDim2.new(1, 0, 0, 74), TextWrapped = true, TextSize = 11, TextColor3 = C.sub, TextYAlignment = Enum.TextYAlignment.Top, Text = def.description, Parent = card })
+		local boostText = IslandLogic.boostText(id)
+		if boostText then
+			W.text({ Position = UDim2.fromOffset(0, 194), Size = UDim2.new(1, 0, 0, 16), TextSize = 12, Font = Theme.fontBold, TextColor3 = C.good, Text = `BOOST  {boostText}`, Parent = card })
+		end
+		local reqs = W.frame({ Position = UDim2.fromOffset(0, 214), Size = UDim2.new(1, 0, 0, 50), Parent = card })
 		W.list(Enum.FillDirection.Vertical, 1).Parent = reqs
 		local rockNames = {}
 		for _, field in def.fields do
@@ -151,8 +164,8 @@ function Panel.build(content: Frame)
 				end
 			end
 		end
-		W.text({ Position = UDim2.fromOffset(0, 222), Size = UDim2.new(1, 0, 0, 40), TextWrapped = true, TextSize = 10, TextColor3 = C.dim, TextYAlignment = Enum.TextYAlignment.Top, Text = if #rockNames > 0 then "Rocks: " .. table.concat(rockNames, ", ") else "Rocks: unknown", Parent = card })
-		local guardianText = W.text({ Position = UDim2.fromOffset(0, 262), Size = UDim2.new(1, 0, 0, 78), TextWrapped = true, TextSize = 11, Font = Theme.fontBold, TextColor3 = C.sub, TextYAlignment = Enum.TextYAlignment.Top, Text = "", Parent = card })
+		W.text({ Position = UDim2.fromOffset(0, 266), Size = UDim2.new(1, 0, 0, 40), TextWrapped = true, TextSize = 10, TextColor3 = C.dim, TextYAlignment = Enum.TextYAlignment.Top, Text = if #rockNames > 0 then "Rocks: " .. table.concat(rockNames, ", ") else "Rocks: unknown", Parent = card })
+		local guardianText = W.text({ Position = UDim2.fromOffset(0, 308), Size = UDim2.new(1, 0, 0, 78), TextWrapped = true, TextSize = 11, Font = Theme.fontBold, TextColor3 = C.sub, TextYAlignment = Enum.TextYAlignment.Top, Text = "", Parent = card })
 		local button = W.button({
 			Text = "",
 			Size = UDim2.new(1, 0, 0, 36),

@@ -10,6 +10,7 @@
 local Config = script.Parent.Parent.Config
 local IslandConfig = require(Config.Islands)
 local Creatures = require(Config.Creatures)
+local IslandLogic = require(script.Parent.Islands)
 
 local Guardians = {}
 
@@ -40,14 +41,9 @@ function Guardians.name(islandId: string): string
 	return if c then c.name else "the guardian"
 end
 
--- The island that comes after this one on the ladder (the one its guardian helps open).
+-- The island this guardian helps open: the next playable one on the ladder (coming-soon islands without a guardian are skipped).
 function Guardians.nextIsland(islandId: string): string?
-	for i, id in IslandConfig.Order do
-		if id == islandId then
-			return IslandConfig.Order[i + 1]
-		end
-	end
-	return nil
+	return IslandLogic.nextPlayable(islandId)
 end
 
 -- May this player fight this island's guardian right now? Independent of whether it was beaten before.

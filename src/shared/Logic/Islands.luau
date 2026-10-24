@@ -9,6 +9,63 @@ export type Status = { unlocked: boolean, canUnlock: boolean, missing: { string 
 
 export type Requirement = { text: string, met: boolean }
 
+-- The island whose guardian gates this one: the nearest EARLIER island on the ladder that has a guardian. Islands without a guardian
+-- yet (coming-soon teasers such as Cogspire) are skipped, so they never block the playable islands behind them.
+function Islands.previousGuarded(islandId: string): string?
+	local index = table.find(IslandConfig.Order, islandId)
+	if not index then
+		return nil
+	end
+	for i = index - 1, 1, -1 do
+		local id = IslandConfig.Order[i]
+		if IslandConfig.Defs[id].guardian then
+			return id
+		end
+	end
+	return nil
+end
+
+-- The island a guardian's victory helps open: the nearest LATER island that is not coming soon. On the last rung that is the
+-- teaser island itself (which stays closed), so the UI can still say what is next.
+function Islands.nextPlayable(islandId: string): string?
+	local index = table.find(IslandConfig.Order, islandId)
+	if not index then
+		return nil
+	end
+	for i = index + 1, #IslandConfig.Order do
+		local id = IslandConfig.Order[i]
+		if not IslandConfig.Defs[id].comingSoon then
+			return id
+		end
+	end
+	return IslandConfig.Order[index + 1]
+end
+
+-- Reward multipliers for everything earned on this island (1 / 1 when the island has no boost).
+function Islands.rewardBoost(islandId: string): { coins: number, xp: number }
+	local def = IslandConfig.Defs[islandId]
+	local boost = def and def.boost
+	if boost then
+		return { coins = boost.coins, xp = boost.xp }
+	end
+	return { coins = 1, xp = 1 }
+end
+
+-- A short label for the HUD / island cards ("+50% coins & XP"), nil without a boost.
+function Islands.boostText(islandId: string): string?
+	local def = IslandConfig.Defs[islandId]
+	local boost = def and def.boost
+	if not boost then
+		return nil
+	end
+	local coins = math.floor((boost.coins - 1) * 100 + 0.5)
+	local xp = math.floor((boost.xp - 1) * 100 + 0.5)
+	if coins == xp then
+		return `+{coins}% coins & XP`
+	end
+	return `+{coins}% coins, +{xp}% XP`
+end
+
 -- Every requirement for entering this island with whether it is met. The guardian gate is TWO separate lines: the rebirths and
 -- the previous island's guardian victory, so neither can stand in for the other (and the UI can show each).
 function Islands.requirements(data: any, islandId: string): { Requirement }
@@ -28,12 +85,7 @@ function Islands.requirements(data: any, islandId: string): { Requirement }
 	if req.coins then
 		table.insert(out, { text = `{req.coins} coins`, met = data.coins >= req.coins })
 	end
-	local previous: string? = nil
-	for i, id in IslandConfig.Order do
-		if id == islandId then
-			previous = IslandConfig.Order[i - 1]
-		end
-	end
+	local previous = Islands.previousGuarded(islandId)
 	local guard = previous and IslandConfig.Defs[previous].guardian
 	if previous and guard then
 		table.insert(out, { text = `Rebirth {guard.rebirths}`, met = data.rebirths >= guard.rebirths })

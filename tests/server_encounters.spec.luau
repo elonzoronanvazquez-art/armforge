@@ -450,17 +450,17 @@ return function(t, u)
 		local world, svc, player, session = setup(650)
 		world:addTagged("Skyport", V.new(10, 0, 10))
 		world:placeCharacter(player, V.new(0, 3, 0))
-		session.data.level = 12
+		session.data.level = 5
 		session.data.coins = 1e7
 		-- rebirth requirement met but guardian undefeated
 		session.data.rebirths = 1
-		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" }).ok, false)
+		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Mossveil" }).ok, false)
 		-- victory recorded
 		local seal, enc = fightBoss(world, svc, player)
 		svc.EncounterService.hit(enc, player, 1e12, {})
 		world:placeCharacter(player, V.new(0, 3, 0))
-		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" }).ok, true)
-		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Emberfang" }).ok, false, "one guardian opens one island")
+		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Mossveil" }).ok, true)
+		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" }).ok, false, "one guardian opens one island")
 		world:assertNoErrors()
 	end)
 

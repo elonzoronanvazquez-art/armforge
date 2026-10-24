@@ -132,30 +132,30 @@ return function(t, u)
 	t.test("travel and island unlock only work at a Skyport terminal", function()
 		local world, svc, player, session = setup()
 		world:placeCharacter(player, V.new(0, 3, 0))
-		t.eq(world:invoke(player, "Travel", { islandId = "Crystalfall" }).err, "not_at_skyport")
-		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" }).err, "not_at_skyport")
+		t.eq(world:invoke(player, "Travel", { islandId = "Mossveil" }).err, "not_at_skyport")
+		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Mossveil" }).err, "not_at_skyport")
 		world:addTagged("Skyport", V.new(10, 0, 10))
 		-- near a terminal but not yet qualified
-		local early = world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" })
+		local early = world:invoke(player, "UnlockIsland", { islandId = "Mossveil" })
 		t.eq(early.ok, false)
-		t.eq(session.data.islands.unlocked.Crystalfall, nil)
-		session.data.level = 12
+		t.eq(session.data.islands.unlocked.Mossveil, nil)
+		session.data.level = 5
 		session.data.coins = 1e6
-		local gated = world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" })
+		local gated = world:invoke(player, "UnlockIsland", { islandId = "Mossveil" })
 		t.eq(gated.ok, false, "level alone does not open the next island")
 		session.data.rebirths = 1
-		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" }).ok, false, "a rebirth alone does not either")
+		t.eq(world:invoke(player, "UnlockIsland", { islandId = "Mossveil" }).ok, false, "a rebirth alone does not either")
 		session.data.guardians.defeated.Forgeheart = true
-		local unlock = world:invoke(player, "UnlockIsland", { islandId = "Crystalfall" })
+		local unlock = world:invoke(player, "UnlockIsland", { islandId = "Mossveil" })
 		t.eq(unlock.ok, true, tostring(unlock.err))
 		local pos = player.Character.HumanoidRootPart.Position
-		local travel = world:invoke(player, "Travel", { islandId = "Crystalfall" })
+		local travel = world:invoke(player, "Travel", { islandId = "Mossveil" })
 		t.eq(travel.ok, true, tostring(travel.err))
-		t.eq(session.data.islands.current, "Crystalfall")
+		t.eq(session.data.islands.current, "Mossveil")
 		t.truthy((player.Character.HumanoidRootPart.Position - pos).Magnitude > 50, "moved to the arrival point")
 		-- a locked island cannot be travelled to even next to a terminal
-		t.eq(world:invoke(player, "Travel", { islandId = "Emberfang" }).ok, false)
-		t.eq(session.data.islands.current, "Crystalfall")
+		t.eq(world:invoke(player, "Travel", { islandId = "Crystalfall" }).ok, false)
+		t.eq(session.data.islands.current, "Mossveil")
 		world:assertNoErrors()
 	end)
 

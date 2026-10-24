@@ -77,15 +77,19 @@ end
 DataSchema.Migrations = {} :: { [number]: (any) -> any }
 
 -- v1 -> v2: guardians and island completion. Players who already reached an island under the old rules keep their progress: if
--- the island AFTER an island is unlocked, that island's guardian counts as beaten (they earned the access) and nothing else
--- changes. Arms, cosmetics, currency, levels, skills and training are untouched.
+-- any island LATER on the ladder is unlocked, the guardians before it count as beaten (they earned the access, even across islands
+-- added to the ladder since) and nothing else changes. Arms, cosmetics, currency, levels, skills and training are untouched.
 DataSchema.Migrations[1] = function(raw: any): any
 	local unlocked = if type(raw.islands) == "table" and type(raw.islands.unlocked) == "table" then raw.islands.unlocked else {}
 	local defeated: { [string]: boolean } = {}
 	for i, id in Islands.Order do
-		local nextId = Islands.Order[i + 1]
-		if nextId and Islands.Defs[id].guardian and unlocked[nextId] == true then
-			defeated[id] = true
+		if Islands.Defs[id].guardian then
+			for j = i + 1, #Islands.Order do
+				if unlocked[Islands.Order[j]] == true then
+					defeated[id] = true
+					break
+				end
+			end
 		end
 	end
 	raw.guardians = { defeated = defeated }

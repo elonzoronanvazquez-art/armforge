@@ -28,29 +28,34 @@ return function(t, u)
 		d.level = 40
 		d.coins = 1e12
 		d.rebirths = 10
-		t.deepEq(Islands.missing(d, "Crystalfall"), { "Defeat the guardian of Forgeheart Isle" })
-		t.eq(Islands.unlock(d, "Crystalfall").err, "requirements")
-		t.eq(d.islands.unlocked.Crystalfall, nil)
+		t.deepEq(Islands.missing(d, "Mossveil"), { "Defeat the guardian of Forgeheart Isle" })
+		t.eq(Islands.unlock(d, "Mossveil").err, "requirements")
+		t.eq(d.islands.unlocked.Mossveil, nil)
+		-- and the island behind it needs ITS predecessor's guardian, not the starter's
+		t.deepEq(Islands.missing(d, "Crystalfall"), { "Defeat the guardian of Mossveil Jungle" })
 	end)
 
 	t.test("a guardian victory alone never opens the next island", function()
 		local d = fresh()
 		d.level = 40
 		d.guardians.defeated.Forgeheart = true -- as if recorded some other way
-		t.deepEq(Islands.missing(d, "Crystalfall"), { "Rebirth 1" })
-		t.eq(Islands.unlock(d, "Crystalfall").err, "requirements")
+		t.deepEq(Islands.missing(d, "Mossveil"), { "Rebirth 1" })
+		t.eq(Islands.unlock(d, "Mossveil").err, "requirements")
 	end)
 
 	t.test("both conditions plus the island's own level open it, and only that island", function()
 		local d = fresh()
 		d.rebirths = 1
 		d.guardians.defeated.Forgeheart = true
-		d.level = 11
-		t.deepEq(Islands.missing(d, "Crystalfall"), { "Level 12" })
-		d.level = 12
-		t.deepEq(Islands.missing(d, "Crystalfall"), {})
-		t.truthy(Islands.unlock(d, "Crystalfall").ok)
-		-- Forgeheart's guardian does nothing for Emberfang
+		d.level = 4
+		t.deepEq(Islands.missing(d, "Mossveil"), { "Level 5" })
+		d.level = 5
+		t.deepEq(Islands.missing(d, "Mossveil"), {})
+		t.truthy(Islands.unlock(d, "Mossveil").ok)
+		-- Forgeheart's guardian does nothing for the islands further up the ladder
+		t.truthy(#Islands.missing(d, "Crystalfall") >= 2)
+		d.level = 40
+		d.coins = 1e12
 		d.level = 40
 		d.coins = 1e12
 		t.truthy(#Islands.missing(d, "Emberfang") >= 2)
@@ -143,13 +148,14 @@ return function(t, u)
 		d.level = 3
 		g = gate(d, "Forgeheart")
 		t.eq(g.state, "defeated")
+		t.eq(g.next, "Mossveil")
 		t.eq(g.nextState, "locked")
-		t.deepEq(g.nextMissing, { "Level 12" })
+		t.deepEq(g.nextMissing, { "Level 5" })
 		-- 4: everything satisfied, the next island can be unlocked
-		d.level = 12
+		d.level = 5
 		g = gate(d, "Forgeheart")
 		t.eq(g.nextState, "available")
-		Islands.unlock(d, "Crystalfall")
+		Islands.unlock(d, "Mossveil")
 		t.eq(gate(d, "Forgeheart").nextState, "unlocked")
 	end)
 
@@ -157,11 +163,60 @@ return function(t, u)
 		local d = fresh()
 		d.rebirths = 9
 		d.level = 40
-		d.islands.unlocked.Crystalfall = true
-		d.islands.unlocked.Emberfang = true
-		Guardians.recordDefeat(d, "Emberfang")
+		d.islands.unlocked.Dustwake = true
+		Guardians.recordDefeat(d, "Dustwake")
+		t.eq(gate(d, "Dustwake").next, "Voidreach")
 		t.eq(Islands.unlock(d, "Voidreach").err, "coming_soon")
 		t.eq(gate(d, "Voidreach").state, "no_guardian")
+	end)
+
+	t.test("a coming-soon island without a guardian never blocks the ladder: the desert is gated by the volcano's guardian", function()
+		t.eq(IslandCfg.Defs.Cogspire.comingSoon, true)
+		t.eq(Islands.previousGuarded("Dustwake"), "Emberfang", "Cogspire is skipped")
+		t.eq(Islands.nextPlayable("Emberfang"), "Dustwake")
+		t.eq(Guardians.nextIsland("Emberfang"), "Dustwake")
+		local d = fresh()
+		d.level = 40
+		d.coins = 1e12
+		d.rebirths = 3
+		t.deepEq(Islands.missing(d, "Dustwake"), { "Rebirth 4", "Defeat the guardian of Emberfang Caldera" })
+		d.rebirths = 4
+		d.islands.unlocked.Emberfang = true
+		d.guardians.defeated.Emberfang = true
+		t.deepEq(Islands.missing(d, "Dustwake"), {})
+		t.truthy(Islands.unlock(d, "Dustwake").ok)
+		t.eq(Islands.unlock(d, "Cogspire").err, "coming_soon")
+	end)
+
+	t.test("the whole ladder follows the sketch: starter, jungle, mountain, volcano, steampunk, desert, then the teaser", function()
+		local biomes = {}
+		for _, id in IslandCfg.Order do
+			table.insert(biomes, IslandCfg.Defs[id].biome)
+		end
+		t.deepEq(biomes, { "starter", "jungle", "mountain", "volcano", "steampunk", "desert", "void" })
+		for i, id in IslandCfg.Order do
+			t.eq(IslandCfg.Defs[id].order, i, id .. " order matches its position")
+		end
+	end)
+
+	-- Per-biome boosts -------------------------------------------------------------------------------------------------------
+
+	t.test("only the volcano boosts rewards (+50% coins and XP); every other island pays the base rate", function()
+		local volcano = Islands.rewardBoost("Emberfang")
+		t.near(volcano.coins, 1.5, 1e-9)
+		t.near(volcano.xp, 1.5, 1e-9)
+		t.eq(Islands.boostText("Emberfang"), "+50% coins & XP")
+		for _, id in IslandCfg.Order do
+			if id ~= "Emberfang" then
+				local b = Islands.rewardBoost(id)
+				t.eq(b.coins, 1, id)
+				t.eq(b.xp, 1, id)
+				t.eq(Islands.boostText(id), nil, id)
+			end
+		end
+		local unknown = Islands.rewardBoost("Nowhere")
+		t.eq(unknown.coins, 1)
+		t.eq(unknown.xp, 1)
 	end)
 
 	-- Persistence and schema v2 -------------------------------------------------------------------------------------
@@ -256,7 +311,7 @@ return function(t, u)
 	end
 
 	t.test("every playable island has a guardian with a seal, a boss creature and ascending rebirth gates", function()
-		t.eq(#playable, 3)
+		t.eq(#playable, 5)
 		local lastRebirths = 0
 		for _, id in playable do
 			local g = IslandCfg.Defs[id].guardian
@@ -272,6 +327,7 @@ return function(t, u)
 			lastRebirths = g.rebirths
 		end
 		t.eq(IslandCfg.Defs.Voidreach.guardian, nil, "the teaser island has none yet")
+		t.eq(IslandCfg.Defs.Cogspire.guardian, nil, "neither has the unbuilt steampunk island")
 		-- guardians are unique per island
 		local seen = {}
 		for _, id in playable do

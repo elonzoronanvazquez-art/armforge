@@ -306,14 +306,26 @@ return function(t, u)
 		{ "SlagBrute", { ChargedSmash = 1 }, 0, 5, "medium" },
 		{ "QuarryColossus", { ChargedSmash = 2, CriticalFocus = 1 }, 0, 10, "elite" },
 		{ "GromAnvilKing", { ChargedSmash = 2, CriticalFocus = 1 }, 1, 10, "boss" },
-		{ "Shardling", { ChargedSmash = 3, ShatterWave = 1, Overdrive = 1 }, 1, 12, "small" },
-		{ "AmethystWarden", { ChargedSmash = 3, ShatterWave = 1 }, 1, 14, "medium" },
-		{ "ChoirBehemoth", { ChargedSmash = 3, ShatterWave = 3 }, 1, 16, "elite" },
-		{ "LyraeFrozenChorus", { ChargedSmash = 3, ShatterWave = 3 }, 2, 14, "boss" },
-		{ "AshHound", { ChargedSmash = 4, ShatterWave = 3 }, 2, 25, "small" },
-		{ "MagmaGolem", { ChargedSmash = 4, ShatterWave = 3 }, 2, 26, "medium" },
-		{ "ObsidianExecutioner", { ChargedSmash = 4, ShatterWave = 3 }, 2, 28, "elite" },
-		{ "CinderjawSovereign", { ChargedSmash = 4, ShatterWave = 3 }, 3, 28, "boss" },
+		-- Mossveil: reached after the first rebirth (the Forgeheart guardian's gate); its guardian wants the second
+		{ "MossbackCrawler", { ChargedSmash = 1 }, 1, 6, "small" },
+		{ "RootbornBrute", { ChargedSmash = 2 }, 1, 8, "medium" },
+		{ "CanopyElder", { ChargedSmash = 3, CriticalFocus = 1 }, 1, 11, "elite" },
+		{ "YmiraRootmother", { ChargedSmash = 3, CriticalFocus = 1, ShatterWave = 1 }, 2, 12, "boss" },
+		-- Crystalfall (second rebirth to enter, third for its guardian)
+		{ "Shardling", { ChargedSmash = 3, ShatterWave = 1, Overdrive = 1 }, 2, 12, "small" },
+		{ "AmethystWarden", { ChargedSmash = 3, ShatterWave = 1 }, 2, 14, "medium" },
+		{ "ChoirBehemoth", { ChargedSmash = 3, ShatterWave = 3 }, 2, 16, "elite" },
+		{ "LyraeFrozenChorus", { ChargedSmash = 3, ShatterWave = 3 }, 3, 14, "boss" },
+		-- Emberfang (third rebirth to enter, fourth for its guardian)
+		{ "AshHound", { ChargedSmash = 4, ShatterWave = 3 }, 3, 25, "small" },
+		{ "MagmaGolem", { ChargedSmash = 4, ShatterWave = 3 }, 3, 26, "medium" },
+		{ "ObsidianExecutioner", { ChargedSmash = 4, ShatterWave = 3 }, 3, 28, "elite" },
+		{ "CinderjawSovereign", { ChargedSmash = 4, ShatterWave = 3 }, 4, 28, "boss" },
+		-- Dustwake (fourth rebirth to enter, fifth for its guardian)
+		{ "DuneSkitterer", { ChargedSmash = 4, ShatterWave = 3 }, 4, 28, "small" },
+		{ "HuskSentinel", { ChargedSmash = 4, ShatterWave = 3 }, 4, 28, "medium" },
+		{ "TombColossus", { ChargedSmash = 4, ShatterWave = 3 }, 4, 30, "elite" },
+		{ "OszarakBuriedSovereign", { ChargedSmash = 4, ShatterWave = 3 }, 5, 30, "boss" },
 	}
 	for _, entry in PLAN do
 		local def = Creatures.Defs[entry[1]]

@@ -69,7 +69,8 @@ function ProgressService.addXp(player: Player, amount: number)
 	Sync.mark(player)
 end
 
--- Called by RockService once per contributor when a rock is destroyed.
+-- Called by RockService once per contributor when a rock is destroyed. `entry.island` selects the biome's coin / XP boost
+-- (Config/Islands.boost), so a reward is boosted by where the rock stands, not by where the player happens to be.
 function ProgressService.rockReward(player: Player, reward: any, entry: any)
 	local s = Sessions.ready(player)
 	if not s then
@@ -77,8 +78,9 @@ function ProgressService.rockReward(player: Player, reward: any, entry: any)
 	end
 	local data = s.data
 	local mult = devMultiplier()
-	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult)
-	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult)
+	local boost = Islands.rewardBoost(entry.island)
+	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult * boost.coins)
+	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult * boost.xp)
 	local shards = reward.shards
 	if coins <= 0 and xp <= 0 and shards <= 0 then
 		return
@@ -111,8 +113,9 @@ function ProgressService.creatureReward(player: Player, reward: { coins: number,
 	end
 	local data = s.data
 	local mult = devMultiplier()
-	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult)
-	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult)
+	local boost = Islands.rewardBoost(entry.island)
+	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult * boost.coins)
+	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult * boost.xp)
 	local shards = reward.shards
 	data.coins += coins
 	data.shards += shards

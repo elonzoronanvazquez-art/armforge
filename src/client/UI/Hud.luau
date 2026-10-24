@@ -113,6 +113,8 @@ local function buildStatusCard(root: Frame)
 	refs.coins.root.Parent = row
 	refs.shards = W.currency("shard", 22)
 	refs.shards.root.Parent = row
+	-- where the player is, and that biome's reward boost
+	refs.islandText = W.text({ Position = UDim2.fromOffset(0, 82), Size = UDim2.new(1, 0, 0, 16), TextSize = 12, Font = Theme.fontBold, TextColor3 = C.sub, Text = "", Parent = card })
 	-- booster chips under the card
 	refs.boosterRow = W.frame({ Name = "Boosters", Position = UDim2.fromOffset(14, 126), Size = UDim2.fromOffset(300, 22), Parent = root })
 	W.list(Enum.FillDirection.Horizontal, 6).Parent = refs.boosterRow
@@ -360,6 +362,12 @@ local function refreshStatus()
 	refs.nameText.Text = if d.rebirths > 0 then "Reforged Master" else "Forgemaster"
 	refs.rebirthPill.Visible = d.rebirths > 0
 	refs.rebirthPill.Text = `REBIRTH {d.rebirths}`
+	local here = IslandConfig.Defs[d.islands.current]
+	if here then
+		local boost = Islands.boostText(here.id)
+		refs.islandText.Text = if boost then `{string.upper(here.name)}  ·  {boost}` else string.upper(here.name)
+		refs.islandText.TextColor3 = if boost then C.good else C.sub
+	end
 
 	local arm = Arms.Defs[d.arms.equipped]
 	refs.armName.Text = arm.name

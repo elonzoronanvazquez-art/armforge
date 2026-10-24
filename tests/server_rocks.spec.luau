@@ -344,4 +344,48 @@ return function(t, u)
 		t.eq(entry.state.hp, hp)
 		world:assertNoErrors()
 	end)
+
+	-- Per-biome boosts ------------------------------------------------------------------------------------------
+
+	local function lastReward(world, player): any
+		local found
+		for _, args in world:sent("Notify", player) do
+			if args[1] == "Reward" then
+				found = args[2]
+			end
+		end
+		return found
+	end
+
+	t.test("a rock pays the boost of the island it stands on: the volcano pays 50% more coins and XP, the jungle the base rate", function()
+		local world, svc, plain = setup()
+		local player = join(world, svc, 340, V.new(0, 3, 30))
+		kill(svc, plain, player)
+		local base = lastReward(world, player)
+		local jungle = svc.RockService.spawnAt("Granite", V.new(60, 0, 40), "Mossveil")
+		kill(svc, jungle, player)
+		local unboosted = lastReward(world, player)
+		t.eq(unboosted.coins, base.coins, "no boost on the jungle")
+		t.eq(unboosted.xp, base.xp)
+		local volcano = svc.RockService.spawnAt("Granite", V.new(120, 0, 40), "Emberfang")
+		kill(svc, volcano, player)
+		local boosted = lastReward(world, player)
+		t.near(boosted.coins, base.coins * 1.5, 1.01)
+		t.near(boosted.xp, base.xp * 1.5, 1.01)
+		t.truthy(boosted.coins > base.coins and boosted.xp > base.xp)
+		world:assertNoErrors()
+	end)
+
+	t.test("the boost belongs to the rock's island, not to where the player is standing", function()
+		local world, svc, plain = setup()
+		local player, session = join(world, svc, 341, V.new(0, 3, 30))
+		session.data.islands.current = "Emberfang"
+		kill(svc, plain, player)
+		local base = lastReward(world, player)
+		local ref = svc.RockService.spawnAt("Granite", V.new(60, 0, 40), "Forgeheart")
+		session.data.islands.current = "Forgeheart"
+		kill(svc, ref, player)
+		t.eq(lastReward(world, player).coins, base.coins, "a Forgeheart rock pays the same whichever island the player is registered on")
+		world:assertNoErrors()
+	end)
 end
