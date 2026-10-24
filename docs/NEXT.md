@@ -25,6 +25,27 @@
 * There is no on-screen button for panel opening on very small screens other than the menu column; tablets and phones were
   only checked in the emulator.
 
+## Biome sketch: built and deferred
+
+Built (see GAME_DESIGN.md "Biomes"): the island ladder, per-biome reward boosts (Emberfang +50% coins and XP, HUD and Islands panel), the
+fishing dock and more trees on the starter island, the Mossveil jungle and the Dustwake desert ruins end to end (terrain, props, rocks,
+creatures, guardians, balance simulation, live guardian runs in Studio), and a Cogspire teaser. Not built:
+
+* **Mountain** (the sketch's huge mountain with snowy trees and snow rocks, an aerial tramway, a summit boss and three mini bosses, a
+  climbing mechanic, +50% XP and ~7% coins boosts while climbing / riding) and **Volcano** (lava, molten rock, trees): Crystalfall and
+  Emberfang keep their atoll / caldera look and ids; rebuild them as the sketch's biomes. The Volcano's +50% boost already works.
+* **Steampunk world** (Cogspire): data and a teaser only. It needs terrain, rocks, creatures, a guardian and a builder; when it gets a guardian
+  the gate chain absorbs it automatically.
+* **Fishing on the dock** (10% chance to travel to "The Atlantic Sea", +25% XP and coins), **the Atlantic Sea zone**, and the **vine
+  teleport** (2%; the sketch's text was cut off) are scenery or absent. The dock has rods and bobbers but no interaction.
+* Mossveil and Dustwake creatures use the generic procedural bodies (tinted crawler, brute and titan templates) and the guardians have no
+  generated rigs yet. AI meshes and segmented rigs (`scripts/gen_rigs.py`) are the polish step; Studio's `generate_mesh` was not used this
+  sprint.
+* Jungle and desert ambience beds reuse existing loops (placeholders); no new audio was sourced.
+* The jungle trees are stylised primitives with umbrella canopies; the desert ruins are blocks and cylinders. Authored meshes (a proper
+  jungle tree, hieroglyph decals, a real colossus) would lift both.
+* The sketch's text for Mountain and Jungle boosts was partly cut off; only the clearly legible numbers were recorded.
+
 ## Creature / guardian system: known issues
 
 * **Animation is procedural.** Every rigged creature swings real limbs (arms, legs, head, tail), but the motions are generic poses driven from the

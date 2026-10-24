@@ -49,14 +49,20 @@ respawn with a freshly generated layout.
 | Granite Boulder | Forgeheart | stone | 60 | 0% | 12 | 8 | the first rock; glowing copper heart |
 | Ironvein Outcrop | Forgeheart | ore | 280 | 8% | 60 | 32 | dense slab, rusty mid layer |
 | Prism Geode (rare) | Forgeheart | crystal | 900 | 15% | 260 | 110 | 1-2 Forge Shards; AI crystal heart |
+| Mossy Boulder | Mossveil | stone | 1,300 | 5% | 150 | 70 | moss-furred boulder, green heart |
+| Rootbound Stone | Mossveil | stone | 4,800 | 10% | 480 | 210 | stone strangled by roots |
+| Jadeheart Geode (rare) | Mossveil | crystal | 16,000 | 20% | 2,000 | 800 | 2-4 shards |
 | Quartz Spire | Crystalfall | crystal | 2,600 | 10% | 520 | 230 | tall spire |
 | Amethyst Cluster | Crystalfall | crystal | 9,500 | 15% | 1,900 | 760 | |
 | Heartstone Geode (rare) | Crystalfall | crystal | 34,000 | 25% | 7,200 | 2,600 | 3-6 shards |
 | Basalt Slab | Emberfang | stone | 62,000 | 20% | 11,000 | 4,200 | |
 | Magma Core | Emberfang | magma | 230,000 | 25% | 40,000 | 14,000 | |
 | Obsidian Heart (rare) | Emberfang | magma | 780,000 | 35% | 135,000 | 48,000 | 8-16 shards |
+| Ruin Sandblock | Dustwake | stone | 260,000 | 25% | 46,000 | 17,000 | fallen temple block |
+| Buried Relic | Dustwake | ore | 950,000 | 30% | 170,000 | 60,000 | gold-banded, cyan glyphs |
+| Sunstone Geode (rare) | Dustwake | crystal | 3,200,000 | 40% | 580,000 | 200,000 | 14-26 shards |
 | Forgestone Monolith (rare) | Forgeheart | stone | 2,200 | 5% | 420 | 180 | large rock: releases the Quarry Colossus |
-| Anvil / Choir / Caldera Seal | each island | ore / crystal / magma | 3,600 / 52,000 / 1.15M | 5% | small | small | guardian seals (rebirth-gated); mining pays only 10% |
+| Anvil / Root / Choir / Caldera / Sunken Seal | each island | ore / stone / crystal / magma / ore | 3,600 / 14,000 / 52,000 / 1.15M / 4M | 5% | small | small | guardian seals (rebirth-gated); mining pays only 10% |
 
 Mining pays only a share of these coins / XP once a rock holds a creature (50% small and medium, 40% large); the creature pays the rest.
 
@@ -87,8 +93,37 @@ rebirths, so neither a rebirth nor a victory alone opens it. Full rules, numbers
   KEEPS: arm ownership and the equipped arm, cosmetics, Forge Shards, unlocked islands, boosters, rebirth count,
   settings and tutorial progress. GAINS (permanent, per rebirth): +25% coins, +20% XP, +10% damage, +15% training,
   plus a Knowledge Surge and a Coin Surge. The rules are data (`Config/Progression.Rebirth.resets`) and tested.
-* **Islands** (unlock requires level/rebirth AND standing at a Skyport; the server re-checks on every rock hit):
-  Forgeheart (start), Crystalfall (Lv 12), Emberfang (Lv 25 + Rebirth 1), Voidreach (Lv 30 + Rebirth 3, teaser only).
+* **Islands** (unlock requires level AND the previous guarded island's guardian victory AND that guardian's rebirths, at a Skyport;
+  the server re-checks on every rock hit). The ladder follows the biome sketch, see "Biomes" below.
+
+## Biomes
+
+The world is a ladder of themed islands (`Config/Islands`, ids are internal; names are what players see):
+
+| # | Island (id) | Biome | Unlock | Guardian (rebirths to fight it) | Boost | Status |
+|---|---|---|---|---|---|---|
+| 1 | Forgeheart Isle (Forgeheart) | starter: forge, plaza, training, armory, **fishing dock**, trees and palms | open | Grom, the Anvil-King (1) | none | built |
+| 2 | Mossveil Jungle (Mossveil) | jungle: big lake, waterfall off a rock cliff, giant and small trees, bushes, ferns, mossy rocks, vines, Rootmother's glade | Lv 5 | Ymira, the Rootmother (2) | none | built |
+| 3 | Crystalfall Atoll (Crystalfall) | the sketch's mountain: snow / crystal rocks | Lv 12 | Lyrae, the Frozen Chorus (3) | none yet | atoll, rework pending |
+| 4 | Emberfang Caldera (Emberfang) | the sketch's volcano: lava, basalt, molten rock | Lv 25 | Cinderjaw Sovereign (4) | **+50% coins and XP** | caldera, rework pending |
+| 5 | Cogspire Foundry (Cogspire) | steampunk | Lv 28 | none yet | none yet | teaser platform, coming soon |
+| 6 | Dustwake Ruins (Dustwake) | forgotten desert: dunes, semi-exposed and buried temple, colossus, pyramid, obelisks | Lv 28 | Oszarak, the Buried Sovereign (5) | none | built |
+| 7 | Voidreach | void | Lv 34 | none yet | none yet | teaser, coming soon |
+
+* **The gate skips unbuilt islands.** An island needs the nearest *earlier island that has a guardian* beaten, so Dustwake is gated by
+  Emberfang's guardian while Cogspire is still coming soon (`Logic/Islands.previousGuarded`). When Cogspire gets a guardian it slots in
+  between automatically (and Dustwake then needs Cogspire's).
+* **Per-biome boosts** (`IslandDef.boost`, `Logic/Islands.rewardBoost`) multiply the coins and XP of everything *earned on that island*
+  (rock mining and creature fights), chosen by the island the rock stands on, never by where the player says they are. Shards are not
+  boosted. The HUD status card and the Islands panel show the boost. Today only Emberfang has one (sketch: "50% increase in everything").
+* Existing saves keep every unlock. Players who already own Crystalfall or Emberfang can still travel there; Mossveil is a new, optional step
+  for them. A v1 save is migrated so that any guardian *before* an unlocked island counts as beaten.
+
+### Sketch features not built yet
+
+Fishing rewards (10% chance to sail to "The Atlantic Sea", +25% XP and coins) and the dock's Atlantic zone, the jungle vine teleport (2%),
+the mountain's climbing mechanic, aerial tramway, summit boss and three mini bosses, and the 50% / 7% climbing boosts, and the
+mountain / volcano / steampunk rebuilds. They are listed in [NEXT.md](NEXT.md).
 
 ## Economy targets (from the balance simulation)
 

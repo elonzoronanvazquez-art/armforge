@@ -99,6 +99,13 @@ states are shown with a fill highlight (gold pulse for the core, ember for broke
 
 Everything has a fallback and the generated meshes belong to the account that ran Studio (same licensing note as above).
 
+## Biome sprint: nothing AI-generated
+
+The jungle (Mossveil), desert (Dustwake), fishing dock and Cogspire teaser are built entirely from primitives (`World/Flora`, the island
+modules): trees, palms, vines, ruins, the colossus head, pyramid and ribcage are parts, not meshes. The eight new creatures use the procedural
+crawler / brute / titan bodies tinted from `visual`. No `generate_mesh` or audio search was run; the two new ambience beds reuse existing
+loop ids at their own volumes (placeholders).
+
 ## Sounds
 
 All 36 sound slots in `Config/Assets.Sounds` use free **ProSoundEffects** library assets found with Studio's

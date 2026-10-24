@@ -35,12 +35,20 @@ whole-body mesh). See [CREATURES.md](CREATURES.md).
 
 ## A new island
 
-1. `Config/Islands.luau`: def with `requires`, `center`, `arrival`, `fields`, theme colours (and `comingSoon = true`
-   until it is built; those cannot be unlocked or entered).
+1. `Config/Islands.luau`: def with `biome`, `order`, `requires`, `center`, `arrival`, `fields`, theme colours (and `comingSoon = true`
+   until it is built; those cannot be unlocked or entered), an optional `boost = { coins, xp }` for the whole biome, and a position in
+   `Islands.Order`. Keep every structure within ~140 studs of the centre: the terrain falls below sea level beyond ~75% of the radius.
 2. `server/World/Islands/<Name>.luau`: `features()` (terrain shaping) and `build(folder, ctx)` (spawn registered with
-   `ctx.spawn(id, spawn)`, a return Skyport via `Forgeheart.skyport`, landmarks). Add it to `WorldBuilder.terrainSpec` and
-   `build`.
-3. `AtmosphereController.THEMES` for its lighting; unique terrain materials give it a unique palette.
+   `ctx.spawn(id, spawn)`, a return Skyport via `Forgeheart.skyport`, landmarks). Add it to `WorldBuilder.terrainSpec` (terrain
+   materials) and `build` (and to the terrain list), and extend `IslandTerrain.fillSea` if it lies outside the sea rectangle. Use
+   `World/Flora` for trees, palms, bushes, ferns, vines, cacti and mossy rocks and `Flora.scatter` to place them on ground while avoiding
+   zones; anything "buried" is just geometry placed below `Build.groundY`. `Mossveil.luau` (lake, waterfall, flora) and `Dustwake.luau`
+   (half-buried ruins) are the worked examples; `Cogspire.luau` is a teaser platform.
+3. `AtmosphereController.THEMES` for its lighting, `Assets.Ambience` for its bed; unique terrain materials give it a unique palette.
+
+Guardian gates skip islands without a guardian (`Logic/Islands.previousGuarded`), so a coming-soon island in the middle of the ladder
+never blocks the ones behind it. Add a guardian to it later and it becomes part of the chain; update `tests/encounter_balance.spec`'s PLAN with
+the new creatures and the rebirth counts at which they are met.
 
 For a guardian: add a seal rock (`size = "seal"`) and the island's `guardian = { creature, seal, position, rebirths }`; the next island's
 requirements pick up the guardian gate automatically (`Logic/Islands.requirements`).

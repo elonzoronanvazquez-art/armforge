@@ -1,12 +1,14 @@
 --!strict
 -- FORGEHEART ISLE: the starting island. Plaza and spawn, the Great Forge landmark, the Starter Field and Deep Quarry,
--- the Training Yard (four stations), the Armory (arm gallery), the Reforge Core (rebirth) and the Skyport (islands).
+-- the Training Yard (four stations), the Armory (arm gallery), the Reforge Core (rebirth), the Skyport (islands), the fishing dock
+-- and the trees that soften the forge island.
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local Arms = require(Shared.Config.Arms)
 local ArmBuilder = require(Shared.Runtime.ArmBuilder)
 local Build = require(script.Parent.Parent.Build)
 local IslandTerrain = require(script.Parent.Parent.IslandTerrain)
+local Flora = require(script.Parent.Parent.Flora)
 
 local Forgeheart = {}
 
@@ -478,6 +480,138 @@ local function buildLandmarks(parent: Instance)
 	end
 end
 
+-- Fishing dock and island flora ---------------------------------------------------------------------------------------------------
+-- The dock is the sketch's "fishing on the dock" spot. It is scenery for now: the fishing rewards and the Atlantic Sea trip are
+-- not implemented (docs/NEXT.md).
+
+local DOCK_X = -52
+local DOCK_WOOD = Color3.fromRGB(128, 94, 62)
+local DOCK_WOOD2 = Color3.fromRGB(110, 80, 54)
+
+local function buildDock(parent: Instance)
+	local m = Build.model(parent, "FishingDock")
+	-- walk south along the dock axis until the ground gives way to water
+	local shoreZ = 200
+	for z = 140, 290, 2 do
+		local y = Build.groundY(DOCK_X, z)
+		if y == nil or y < -0.6 then
+			shoreZ = z
+			break
+		end
+	end
+	local z0 = shoreZ - 16
+	local z1 = shoreZ + 58
+	local deckY = 1.5
+	local width = 7
+	local n = 0
+	for z = z0, z1, 2.4 do
+		n += 1
+		Build.part(m, { name = "Plank", size = V3(width, 0.5, 2.2), cf = CF(DOCK_X, deckY, z), color = if n % 2 == 0 then DOCK_WOOD else DOCK_WOOD2, material = Enum.Material.WoodPlanks, collide = true })
+	end
+	-- the T-shaped end where people fish
+	for z = z1 + 2.4, z1 + 12, 2.4 do
+		for k = -1, 1 do
+			Build.part(m, { name = "Plank", size = V3(7, 0.5, 2.2), cf = CF(DOCK_X + k * 7, deckY, z), color = if (n + k) % 2 == 0 then DOCK_WOOD else DOCK_WOOD2, material = Enum.Material.WoodPlanks, collide = true })
+		end
+		n += 1
+	end
+	for _, dx in { -width / 2 + 0.5, width / 2 - 0.5 } do
+		Build.part(m, { name = "Stringer", size = V3(0.7, 0.6, z1 - z0 + 2), cf = CF(DOCK_X + dx, deckY - 0.55, (z0 + z1) / 2), color = DOCK_WOOD2, material = Enum.Material.Wood })
+		for z = z0 + 2, z1, 8 do
+			Build.pillar(m, "Post", V3(DOCK_X + dx, -9, z), 0.9, deckY + 1.5 + 9, { color = Color3.fromRGB(86, 62, 44), material = Enum.Material.Wood, collide = true })
+			Build.part(m, { name = "RailPost", size = V3(0.5, 2.6, 0.5), cf = CF(DOCK_X + dx, deckY + 1.55, z), color = DOCK_WOOD2, material = Enum.Material.Wood })
+		end
+		Build.part(m, { name = "Rail", size = V3(0.35, 0.35, z1 - z0), cf = CF(DOCK_X + dx, deckY + 2.5, (z0 + z1) / 2), color = DOCK_WOOD, material = Enum.Material.Wood })
+	end
+	-- pilings under the T
+	for _, dx in { -10, 0, 10 } do
+		for _, dz in { z1 + 4, z1 + 11 } do
+			Build.pillar(m, "Post", V3(DOCK_X + dx, -9, dz), 0.9, deckY + 1 + 9, { color = Color3.fromRGB(86, 62, 44), material = Enum.Material.Wood, collide = true })
+		end
+	end
+	-- fishing spot: two rods propped at the end, lines in the water, and a lantern
+	for k, dx in { -6, 6 } do
+		local at = V3(DOCK_X + dx, deckY + 0.25, z1 + 12)
+		Build.part(m, { name = "RodStand", size = V3(0.3, 2.4, 0.3), cf = CF(at + V3(0, 1.2, 0)), color = Color3.fromRGB(60, 44, 34), material = Enum.Material.Wood })
+		Build.part(m, { name = "Rod", size = V3(0.18, 0.18, 9), cf = CF(at + V3(0, 3.2, 3.6)) * ANG(math.rad(-26), 0, 0), color = Color3.fromRGB(170, 150, 100), material = Enum.Material.Wood })
+		local tip = at + V3(0, 3.2 + 4.5 * math.sin(math.rad(26)), 3.6 + 4.5 * math.cos(math.rad(26)))
+		local lineLen = tip.Y + 1.4
+		Build.part(m, { name = "Line", size = V3(0.05, lineLen, 0.05), cf = CF(tip.X, tip.Y - lineLen / 2, tip.Z), color = Color3.fromRGB(230, 230, 230) })
+		Build.part(m, { name = "Bobber", size = V3(0.8, 0.8, 0.8), cf = CF(tip.X, -1.5, tip.Z), color = if k == 1 then Color3.fromRGB(230, 60, 50) else Color3.fromRGB(250, 220, 70), material = Enum.Material.SmoothPlastic, shape = "Ball" })
+	end
+	Build.pillar(m, "LanternPost", V3(DOCK_X, deckY + 0.25, z1 + 14), 0.5, 6, { color = DOCK_WOOD2, material = Enum.Material.Wood })
+	local lantern = Build.part(m, { name = "Lantern", size = V3(1.3, 1.6, 1.3), cf = CF(DOCK_X, deckY + 6.9, z1 + 14), color = GLOW, neon = true })
+	Build.light(lantern, GLOW, 1.3, 26)
+	-- cargo
+	crate(m, V3(DOCK_X + 2.4, deckY + 0.25, z0 + 10), 2.2, 0.3)
+	crate(m, V3(DOCK_X - 2.2, deckY + 0.25, z0 + 11), 1.8, 0.9)
+	Build.pillar(m, "Barrel", V3(DOCK_X + 2.4, deckY + 0.25, z0 + 14), 1.8, 2.4, { color = Color3.fromRGB(104, 76, 52), material = Enum.Material.Wood, collide = true })
+	-- a moored rowboat alongside
+	local boat = Build.model(m, "Rowboat")
+	local bz = z0 + 40
+	Build.part(boat, { name = "Hull", size = V3(4.2, 1.2, 9), cf = CF(DOCK_X + 8.5, -1.2, bz), color = Color3.fromRGB(122, 86, 58), material = Enum.Material.WoodPlanks })
+	Build.part(boat, { name = "Bow", size = V3(4.2, 1.2, 3), cf = CF(DOCK_X + 8.5, -1.2, bz + 6) * ANG(0, math.pi, 0), color = Color3.fromRGB(122, 86, 58), material = Enum.Material.WoodPlanks, shape = "Wedge" })
+	Build.part(boat, { name = "Stern", size = V3(4.2, 1.2, 3), cf = CF(DOCK_X + 8.5, -1.2, bz - 6), color = Color3.fromRGB(122, 86, 58), material = Enum.Material.WoodPlanks, shape = "Wedge" })
+	Build.part(boat, { name = "Seat", size = V3(3.6, 0.3, 0.9), cf = CF(DOCK_X + 8.5, -0.4, bz), color = DOCK_WOOD2, material = Enum.Material.Wood })
+	Build.part(boat, { name = "Rope", size = V3(0.2, 0.2, 5.6), cf = CF(DOCK_X + 5.6, 0.2, bz - 3.8) * ANG(0, math.rad(40), 0), color = Color3.fromRGB(190, 170, 120) })
+	-- signs
+	Build.sign(m, "FISHING DOCK", CF(DOCK_X + 8, deckY + 5.5, z0 - 2), V3(12, 2.4, 0.4), Color3.fromRGB(34, 32, 38), CREAM)
+	Build.part(m, { name = "SignPostL", size = V3(0.6, 6, 0.6), cf = CF(DOCK_X + 2.4, deckY + 3.2, z0 - 2), color = IRON, material = Enum.Material.Metal })
+	Build.part(m, { name = "SignPostR", size = V3(0.6, 6, 0.6), cf = CF(DOCK_X + 13.6, deckY + 3.2, z0 - 2), color = IRON, material = Enum.Material.Metal })
+	-- a path of lamps to the dock
+	for z = z0 - 50, z0 - 10, 20 do
+		local gy = Build.groundY(DOCK_X - 6.5, z)
+		if gy then
+			lamp(m, V3(DOCK_X - 6.5, gy, z), 7, true)
+		end
+	end
+end
+
+local TREE_LEAVES = { Color3.fromRGB(78, 122, 60), Color3.fromRGB(96, 142, 66), Color3.fromRGB(66, 108, 62) }
+local TREE_OPTS: Flora.TreeOpts = { trunk = Color3.fromRGB(104, 76, 54), leaves = TREE_LEAVES }
+
+local function buildTrees(parent: Instance)
+	local m = Build.model(parent, "Flora")
+	local avoid: { Flora.Zone } = {
+		{ pos = PLAZA, radius = 80 },
+		{ pos = FORGE, radius = 58 },
+		{ pos = TRAIN, radius = 66 },
+		{ pos = ARMORY, radius = 62 },
+		{ pos = V3(ARMORY.X, 0, ARMORY.Z + 20), radius = 62 },
+		{ pos = ALTAR, radius = 42 },
+		{ pos = SKYPORT, radius = 56 },
+		{ pos = V3(-6, 0, -118), radius = 70 },
+		{ pos = V3(128, 0, -138), radius = 64 },
+		{ pos = V3(-150, 0, -70), radius = 36 },
+		{ pos = V3(DOCK_X, 0, 160), radius = 34 },
+		{ pos = V3(DOCK_X, 0, 205), radius = 30 },
+	}
+	-- broadleaf trees and bushes on the grassy ground between the landmarks
+	Flora.scatter({
+		center = V3(0, 0, 0), radius = 236, count = 120, seed = 101, minY = 0.2, maxY = 16, avoid = avoid, spacing = 9,
+		make = function(pos, i, rnd)
+			Flora.broadleaf(m, pos, 11 + rnd * 9, i, TREE_OPTS)
+		end,
+	})
+	Flora.scatter({
+		center = V3(0, 0, 0), radius = 236, count = 100, seed = 202, minY = 0.2, maxY = 16, avoid = avoid, spacing = 5,
+		make = function(pos, i, rnd)
+			Flora.bush(m, pos, 2.4 + rnd * 1.6, i, TREE_LEAVES, if i % 3 == 0 then Color3.fromRGB(255, 190, 90) else nil)
+		end,
+	})
+	-- palms along the beaches
+	local inland: { Flora.Zone } = { { pos = V3(0, 0, 0), radius = 176 } }
+	for _, z in avoid do
+		table.insert(inland, z)
+	end
+	Flora.scatter({
+		center = V3(0, 0, 0), radius = 268, count = 26, seed = 303, minY = -0.4, maxY = 2.2, avoid = inland, spacing = 14, tries = 40,
+		make = function(pos, i, rnd)
+			Flora.palm(m, pos, 11 + rnd * 5, i)
+		end,
+	})
+end
+
 function Forgeheart.build(folder: Folder, ctx: any)
 	buildForge(folder)
 	buildHalo(folder)
@@ -488,6 +622,8 @@ function Forgeheart.build(folder: Folder, ctx: any)
 	buildAltar(folder)
 	Forgeheart.skyport(folder, SKYPORT, "SKYPORT", Color3.fromRGB(110, 210, 255), math.rad(200))
 	buildLandmarks(folder)
+	buildDock(folder)
+	buildTrees(folder)
 end
 
 return Forgeheart

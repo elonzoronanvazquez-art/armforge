@@ -114,6 +114,16 @@ function DevTools.rebirths(player: Player?, n: number)
 	end
 end
 
+-- Marks an (unlocked) island as the player's current one, as Travel would, without moving them (HUD / boost checks).
+function DevTools.setIsland(player: Player?, id: string)
+	local s = session(player)
+	if s and player and Islands.Defs[id] then
+		s.data.islands.unlocked[id] = true
+		s.data.islands.current = id
+		Sync.now(player)
+	end
+end
+
 function DevTools.booster(player: Player?, id: string, count: number?)
 	local s = session(player)
 	if s and player and BoosterConfig.Defs[id] then
@@ -330,6 +340,10 @@ local COMMANDS: { [string]: (...any) -> any } = {
 	end,
 	booster = function(id: string, n: number?)
 		DevTools.booster(DevTools.player(), id, n)
+		return "ok"
+	end,
+	island = function(id: string)
+		DevTools.setIsland(DevTools.player(), id)
 		return "ok"
 	end,
 	tpToRock = function(defId: string?, island: string?)

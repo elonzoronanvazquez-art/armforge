@@ -74,7 +74,9 @@ class Client:
             result = self.req("tools/call", {"name": "list_roblox_studios", "arguments": {}})
             studios = json.loads(result["result"]["content"][0]["text"])["studios"]
             if studios:
-                self.sid = studios[0]["id"]
+                # a Studio on its start page has no place name and rejects every call: prefer one with a place open
+                named = [s for s in studios if s.get("name")]
+                self.sid = (named or studios)[0]["id"]
                 return self.sid
             time.sleep(0.5)
         sys.exit("no Studio connected")

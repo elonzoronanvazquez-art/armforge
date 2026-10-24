@@ -73,6 +73,9 @@ Assets.Ambience = {
 	Forgeheart = { id = "rbxassetid://9112823199", volume = 0.05 },
 	Crystalfall = { id = "rbxassetid://9125602386", volume = 0.18 },
 	Emberfang = { id = "rbxassetid://9112823199", volume = 0.3 },
+	-- placeholders: no jungle / desert loops have been sourced yet, so these reuse the existing beds at their own volumes
+	Mossveil = { id = "rbxassetid://9125602386", volume = 0.07 },
+	Dustwake = { id = "rbxassetid://9112823199", volume = 0.1 },
 	Voidreach = { id = "rbxassetid://9125602386", volume = 0.1 },
 } :: { [string]: { id: string, volume: number } }
 

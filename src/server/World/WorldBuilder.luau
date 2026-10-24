@@ -11,6 +11,9 @@ local Build = require(script.Parent.Build)
 local Forgeheart = require(script.Parent.Islands.Forgeheart)
 local Crystalfall = require(script.Parent.Islands.Crystalfall)
 local Emberfang = require(script.Parent.Islands.Emberfang)
+local Mossveil = require(script.Parent.Islands.Mossveil)
+local Dustwake = require(script.Parent.Islands.Dustwake)
+local Cogspire = require(script.Parent.Islands.Cogspire)
 local Voidreach = require(script.Parent.Islands.Voidreach)
 
 local WorldBuilder = {}
@@ -82,7 +85,10 @@ local function setupTerrain()
 	t:SetMaterialColor(Enum.Material.Pavement, Color3.fromRGB(138, 130, 124))
 	t:SetMaterialColor(Enum.Material.Rock, Color3.fromRGB(98, 88, 86))
 	t:SetMaterialColor(Enum.Material.Basalt, Color3.fromRGB(72, 62, 66))
-	t:SetMaterialColor(Enum.Material.Sand, Color3.fromRGB(196, 172, 134))
+	t:SetMaterialColor(Enum.Material.Sand, Color3.fromRGB(216, 186, 130))
+	t:SetMaterialColor(Enum.Material.Sandstone, Color3.fromRGB(196, 150, 100))
+	t:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(78, 122, 62))
+	t:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(62, 106, 56))
 	t:SetMaterialColor(Enum.Material.Concrete, Color3.fromRGB(120, 116, 112))
 	t:SetMaterialColor(Enum.Material.Glacier, Color3.fromRGB(96, 142, 196))
 	t:SetMaterialColor(Enum.Material.Limestone, Color3.fromRGB(118, 110, 150))
@@ -94,7 +100,12 @@ end
 
 local function terrainSpec(id: string): IslandTerrain.Spec
 	local def = IslandConfig.Defs[id]
-	local feats = if id == "Forgeheart" then Forgeheart.features() elseif id == "Crystalfall" then Crystalfall.features() elseif id == "Emberfang" then Emberfang.features() else {}
+	local feats = if id == "Forgeheart" then Forgeheart.features()
+		elseif id == "Crystalfall" then Crystalfall.features()
+		elseif id == "Emberfang" then Emberfang.features()
+		elseif id == "Mossveil" then Mossveil.features()
+		elseif id == "Dustwake" then Dustwake.features()
+		else {}
 	local spec: IslandTerrain.Spec = {
 		center = def.center,
 		radius = def.radius,
@@ -127,6 +138,22 @@ local function terrainSpec(id: string): IslandTerrain.Spec
 		spec.shore = Enum.Material.Mud
 		spec.deep = Enum.Material.Basalt
 		spec.noiseAmp = 3.4
+	elseif id == "Mossveil" then
+		spec.ground = Enum.Material.Grass
+		spec.ground2 = Enum.Material.LeafyGrass
+		spec.rock = Enum.Material.Rock
+		spec.shore = Enum.Material.Ground
+		spec.deep = Enum.Material.Basalt
+		spec.noiseScale = 58
+		spec.noiseAmp = 3.4
+	elseif id == "Dustwake" then
+		spec.ground = Enum.Material.Sand
+		spec.ground2 = Enum.Material.Sand
+		spec.rock = Enum.Material.Sandstone
+		spec.shore = Enum.Material.Sand
+		spec.deep = Enum.Material.Sandstone
+		spec.noiseScale = 90
+		spec.noiseAmp = 2.6
 	end
 	return spec
 end
@@ -144,9 +171,9 @@ function WorldBuilder.build(onSpawn: (string, SpawnLocation) -> ()): Folder
 	setupLighting()
 	setupTerrain()
 
-	IslandTerrain.fillSea(-1400, 1400, -1500, 520, SEA_LEVEL)
+	IslandTerrain.fillSea(-1400, 1400, -1500, 1300, SEA_LEVEL)
 	task.wait()
-	for _, id in { "Forgeheart", "Crystalfall", "Emberfang" } do
+	for _, id in { "Forgeheart", "Crystalfall", "Emberfang", "Mossveil", "Dustwake" } do
 		IslandTerrain.build(terrainSpec(id))
 	end
 
@@ -157,6 +184,12 @@ function WorldBuilder.build(onSpawn: (string, SpawnLocation) -> ()): Folder
 	Crystalfall.build(Build.folder(root, "Crystalfall"), ctx)
 	task.wait()
 	Emberfang.build(Build.folder(root, "Emberfang"), ctx)
+	task.wait()
+	Mossveil.build(Build.folder(root, "Mossveil"), ctx)
+	task.wait()
+	Dustwake.build(Build.folder(root, "Dustwake"), ctx)
+	task.wait()
+	Cogspire.build(Build.folder(root, "Cogspire"), ctx)
 	task.wait()
 	Voidreach.build(Build.folder(root, "Voidreach"), ctx)
 

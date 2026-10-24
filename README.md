@@ -27,7 +27,7 @@ Requirements already used by this repo: Rojo 7.7, Lune 0.11, luau-lsp, Roblox St
 # build a place file and open it in Studio
 rojo build default.project.json -o build/armforge.rbxl
 
-# tests (298: pure logic, a creature fight simulation and the real server services on a fake Roblox server, under Lune) and strict typecheck (both Luau solvers)
+# tests (305: pure logic, a creature fight simulation and the real server services on a fake Roblox server, under Lune) and strict typecheck (both Luau solvers)
 lune run tests/run
 powershell -ExecutionPolicy Bypass -File scripts/typecheck.ps1     # or: bash scripts/tc.sh
 

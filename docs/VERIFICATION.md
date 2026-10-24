@@ -4,7 +4,7 @@ What is actually verified, where, and what is not. "Studio" below means a single
 Roblox Studio driven through the Studio MCP server (execute_luau on Server/Client, real mouse and keyboard input, screenshots,
 console output). Nothing is claimed that was not observed.
 
-## Automated (Lune, `lune run tests/run`): 298 tests, 0 failing
+## Automated (Lune, `lune run tests/run`): 305 tests, 0 failing
 
 The first block is pure logic; the second block runs the REAL server services (`src/server/Services`) against a fake Roblox server
 (`tests/support/ServerWorld.luau`: virtual clock and scheduler, Instance tree, Players/DataStore/CollectionService fakes with latency
@@ -72,6 +72,26 @@ colour and finish and did not change power, and charged exactly the price.
 Performance (Studio on a development PC, not a phone): server holds ~2,800 parts (1,758 in rocks, 1,472 MeshParts), 43 lights,
 26 emitters; a client streams ~1,100 parts; idle 60 fps; a burst of 240 rock hits in 3 seconds across 8 rocks held 60 fps (worst
 frame 22 ms) with at most 142 effect instances alive.
+
+## Biome sprint (jungle, desert ruins, ladder rebuild, per-biome boosts)
+
+Automated (305 tests, strict typecheck clean under both solvers): the new ladder order and biome sequence, gate shifts (rebirths 1 to 5),
+the guardian chain skipping the coming-soon Cogspire (Dustwake needs Emberfang's guardian and 4 rebirths), the v1 migration crediting
+guardians before any unlocked island, the Volcano-only +50% boost (and its absence everywhere else), the server paying a rock by the boost of
+the island it stands on (not where the player is registered), and fight simulations for the 8 new creatures (all 8/8 wins, bands respected,
+punching alone is no shortcut). The creature, rock and island content rules in `guardians.spec` / `config.spec` cover the new ids.
+
+Studio (single client, Rojo-built place, screenshots read back): the world builds in ~9 s with 112 rocks (about 9,000 world instances plus
+the rock chunks). Seen: the fishing dock with rods, lantern and rowboat; trees and palms on Forgeheart; the Mossveil gate, torch path,
+lake with lily pads and reeds, waterfall, giant tree on the horizon, Fern Hollow rocks, the Rootmother's glade; the Dustwake gate,
+half-buried temple with the glowing sealed door, seal ring, colossus head in the dune, pyramid top, obelisks, arches, cacti, ribcage in
+the distance; the Cogspire teaser; all eight new creatures via the dev showcase; the HUD island line with "+50% coins & XP" on Emberfang;
+the Islands panel with seven scrolling cards (boost line, requirements, guardian states). Live runs: the guardian flow itself was played for both new guardians through the dev bridge (rebirths set, seal broken, boss fought, defeat recorded in
+`guardians.defeated`: Ymira 68,896 HP, Oszarak 2,858,375 HP).
+
+Not verified: fights against the new creatures by a human (only the scripted bot); a second client; the real DataStore with the migrated
+ladder; the HUD boost line after a real `Travel` (the dev `island` command set it); the jungle ambience (placeholder loop); performance on a
+phone with roughly 4,000 added world instances. Studio's MCP connection also flaps occasionally ("Place is not open"); retrying works.
 
 ## Creature / guardian sprint
 
