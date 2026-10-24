@@ -136,10 +136,10 @@ Islands.Defs = {
 	},
 	Emberfang = {
 		id = "Emberfang",
-		name = "Emberfang Caldera",
+		name = "Emberfang Volcano",
 		biome = "volcano",
 		tagline = "The furnace beneath the world",
-		description = "A volcanic caldera of black basalt and living magma. Only reforged arms survive the heat, and it pays 50% more of everything.",
+		description = "A smoking volcano of black basalt and living magma: lava rivers, molten rocks, scorched trees and a crater where the Sovereign sleeps. It pays 50% more of everything.",
 		order = 4,
 		requires = { level = 25 },
 		boost = { coins = 1.5, xp = 1.5 },
@@ -149,18 +149,18 @@ Islands.Defs = {
 		fields = {
 			{
 				name = "Basalt Flats",
-				center = Vector3.new(-820, 0, -50),
-				radius = 58,
+				center = Vector3.new(-920, 0, 10),
+				radius = 54,
 				rocks = { { rock = "Basalt", count = 8 }, { rock = "MagmaCore", count = 3 } },
 			},
 			{
-				name = "Caldera Rim",
-				center = Vector3.new(-904, 0, -96),
-				radius = 44,
+				name = "Cinder Terrace",
+				center = Vector3.new(-732, 0, -35),
+				radius = 30,
 				rocks = { { rock = "MagmaCore", count = 5 }, { rock = "Basalt", count = 3 }, { rock = "Obsidian", count = 2 } },
 			},
 		},
-		guardian = { creature = "CinderjawSovereign", seal = "CalderaSeal", position = Vector3.new(-740, 0, -40), rebirths = 4 },
+		guardian = { creature = "CinderjawSovereign", seal = "CalderaSeal", position = Vector3.new(-828, 0, -35), rebirths = 4 },
 		accent = Color3.fromRGB(255, 96, 40),
 		sky = Color3.fromRGB(110, 54, 52),
 		fog = Color3.fromRGB(120, 60, 50),
@@ -241,7 +241,7 @@ Islands.Defs = {
 Islands.Order = { "Forgeheart", "Mossveil", "Crystalfall", "Emberfang", "Cogspire", "Dustwake", "Voidreach" }
 Islands.Start = "Forgeheart"
 
--- Crystalfall is now the Mountain (internal id kept; the guardian seal stands on the summit) and Emberfang (the Volcano) keeps its
--- internal id until its rework. Cogspire (steampunk) and Voidreach are teasers without guardians yet.
+-- Crystalfall is now the Mountain (guardian seal on the summit) and Emberfang the Volcano (seal on the crater floor); both keep their
+-- internal ids. Cogspire (steampunk) and Voidreach are teasers without guardians yet.
 
 return Islands

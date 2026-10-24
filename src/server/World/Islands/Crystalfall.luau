@@ -8,6 +8,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local IslandConfig = require(Shared.Config.Islands)
 local Build = require(script.Parent.Parent.Build)
 local Flora = require(script.Parent.Parent.Flora)
+local Road = require(script.Parent.Parent.Road)
 local IslandTerrain = require(script.Parent.Parent.IslandTerrain)
 local Forgeheart = require(script.Parent.Forgeheart)
 
@@ -94,12 +95,6 @@ local function crystalCluster(parent: Instance, pos: Vector3, scale: number, see
 	return m
 end
 
--- A strip of material laid along the terrain between two points (the road, the cable).
-local function strip(parent: Instance, name: string, a: Vector3, b: Vector3, width: number, thick: number, color: Color3, material: Enum.Material, collide: boolean?): BasePart
-	local len = (b - a).Magnitude + 0.5
-	return Build.part(parent, { name = name, size = V3(width, thick, len), cf = CFrame.lookAt((a + b) / 2, b), color = color, material = material, collide = collide })
-end
-
 -- Entrance: the singing arch ------------------------------------------------------------------------------------------------------------
 
 local function buildArch(parent: Instance)
@@ -147,27 +142,17 @@ end
 
 local function buildRoad(parent: Instance): { Vector3 }
 	local m = Build.model(parent, "SummitRoad")
-	local steps = 120
-	local turns = 2.2
-	local pts: { Vector3 } = {}
-	for i = 0, steps do
-		local s = i / steps
-		local r = (MOUNTAIN_RADIUS - 6) - (MOUNTAIN_RADIUS - 6 - 16) * s
-		local theta = math.pi / 2 - math.pi * 2 * turns * s
-		local x, z = MOUNTAIN.X + math.cos(theta) * r, MOUNTAIN.Z + math.sin(theta) * r
-		table.insert(pts, V3(x, groundAt(x, z) + 0.35, z))
-	end
-	for i = 1, #pts - 1 do
-		local a, b = pts[i], pts[i + 1]
-		strip(m, "RoadSlab", a, b, 6, 0.5, if i % 2 == 0 then Color3.fromRGB(104, 112, 130) else Color3.fromRGB(94, 102, 120), Enum.Material.Slate)
-		if i % 6 == 0 then
-			local side = (b - a).Unit:Cross(Vector3.yAxis).Unit * 3.8
-			local base = a + side
-			Build.part(m, { name = "LampPost", size = V3(0.5, 5, 0.5), cf = CF(base + V3(0, 2.5, 0)), color = STEEL, material = Enum.Material.Metal })
-			local lamp = Build.part(m, { name = "Lamp", size = V3(1.1, 1.1, 1.1), cf = CF(base + V3(0, 5.4, 0)), color = Color3.fromRGB(150, 220, 255), neon = true, shape = "Ball" })
-			Build.light(lamp, Color3.fromRGB(150, 220, 255), 1, 20)
-		end
-	end
+	local pts = Road.spiral(m, {
+		center = MOUNTAIN,
+		outer = MOUNTAIN_RADIUS - 6,
+		inner = 16,
+		turns = 2.2,
+		steps = 120,
+		theta0 = math.pi / 2,
+		colors = { Color3.fromRGB(94, 102, 120), Color3.fromRGB(104, 112, 130) },
+		material = Enum.Material.Slate,
+		lampColor = Color3.fromRGB(150, 220, 255),
+	})
 	-- trailhead sign and a distance board every quarter
 	local start = pts[1]
 	Build.sign(m, "SUMMIT ROAD  ·  THE FROZEN CHORUS", CF(start + V3(-9, 6, 4)) * ANG(0, math.pi, 0), V3(20, 2.4, 0.5), DARK, Color3.fromRGB(200, 235, 255))
@@ -241,7 +226,7 @@ local function buildTramway(parent: Instance)
 	local b = V3(SUMMIT_STATION.X, topB, SUMMIT_STATION.Z)
 	local across = (b - a).Unit:Cross(Vector3.yAxis).Unit * 1.6
 	for _, off in { across, -across } do
-		strip(m, "Cable", a + off, b + off, 0.3, 0.3, Color3.fromRGB(40, 40, 46), Enum.Material.Metal)
+		Road.strip(m, "Cable", a + off, b + off, 0.3, 0.3, Color3.fromRGB(40, 40, 46), Enum.Material.Metal)
 	end
 	-- two towers holding the cable up
 	for _, f in { 0.34, 0.68 } do

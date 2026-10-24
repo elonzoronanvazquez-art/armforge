@@ -93,6 +93,13 @@ Not verified: fights against the new creatures by a human (only the scripted bot
 ladder; the HUD boost line after a real `Travel` (the dev `island` command set it); the jungle ambience (placeholder loop); performance on a
 phone with roughly 4,000 added world instances. Studio's MCP connection also flaps occasionally ("Place is not open"); retrying works.
 
+## Volcano rebuild (Emberfang)
+
+Automated: 305 passing, strict typecheck clean. Studio (screenshots read back): the cone from the sea with its smoke plume and four lava rivers,
+the fang gate and ember-road trailhead, the crater from above (lava lake, glowing floor, ring of fangs), the HUD line "+50% coins & XP". All
+112 rocks placed with no warnings; the Cinderjaw fight was played through the dev bridge (seal on the crater floor, 370,352 HP creature,
+defeat recorded). Not verified: walking the ember road and the crater wall, performance with the plume, ash and ember emitters on a phone.
+
 ## Mountain rebuild (Frostpeak, ex Crystalfall Atoll)
 
 Automated: unchanged at 305 passing (the island id, rock ids, creatures and gates are the same); strict typecheck clean under both solvers.

@@ -139,7 +139,8 @@ local function terrainSpec(id: string): IslandTerrain.Spec
 		spec.rock = Enum.Material.Basalt
 		spec.shore = Enum.Material.Mud
 		spec.deep = Enum.Material.Basalt
-		spec.noiseAmp = 3.4
+		spec.noiseAmp = 3
+		spec.layers = 26
 	elseif id == "Mossveil" then
 		spec.ground = Enum.Material.Grass
 		spec.ground2 = Enum.Material.LeafyGrass

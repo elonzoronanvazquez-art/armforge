@@ -179,7 +179,7 @@ return function(t, u)
 		d.level = 40
 		d.coins = 1e12
 		d.rebirths = 3
-		t.deepEq(Islands.missing(d, "Dustwake"), { "Rebirth 4", "Defeat the guardian of Emberfang Caldera" })
+		t.deepEq(Islands.missing(d, "Dustwake"), { "Rebirth 4", "Defeat the guardian of Emberfang Volcano" })
 		d.rebirths = 4
 		d.islands.unlocked.Emberfang = true
 		d.guardians.defeated.Emberfang = true

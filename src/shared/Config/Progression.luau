@@ -25,7 +25,7 @@ Progression.LevelRewards = {
 	[12] = { text = "Shatter Wave can be learned. Frostpeak Mountain can be unlocked!", boosters = { CoinSurge = 1, FocusSurge = 1 } },
 	[14] = { text = "Crystal Arms available (Frostpeak)" },
 	[20] = { text = "You are a true Forgemaster.", boosters = { PowerSurge = 2, KnowledgeSurge = 1 } },
-	[25] = { text = "Emberfang Caldera needs one Rebirth", boosters = { CoinSurge = 2 } },
+	[25] = { text = "Emberfang Volcano needs Frostpeak's guardian and three Rebirths", boosters = { CoinSurge = 2 } },
 	[30] = { text = "You can REBIRTH now!", boosters = { TrainingSurge = 2, PowerSurge = 1 } },
 } :: { [number]: { text: string, boosters: { [string]: number }?, skillNote: boolean? } }
 

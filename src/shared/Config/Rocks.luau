@@ -485,7 +485,7 @@ Rocks.Defs = {
 		materials = { shell = Enum.Material.Basalt, mid = Enum.Material.CrackedLava, core = Enum.Material.Neon },
 		glowCore = true,
 		sound = "Obsidian",
-		blurb = "The mouth of the caldera, sealed in black glass. It only yields to a reborn Forgemaster.",
+		blurb = "The mouth of the crater, sealed in black glass beside the lava lake. It only yields to a reborn Forgemaster.",
 	},
 	RootSeal = {
 		id = "RootSeal",

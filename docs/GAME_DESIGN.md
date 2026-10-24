@@ -105,7 +105,7 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 | 1 | Forgeheart Isle (Forgeheart) | starter: forge, plaza, training, armory, **fishing dock**, trees and palms | open | Grom, the Anvil-King (1) | none | built |
 | 2 | Mossveil Jungle (Mossveil) | jungle: big lake, waterfall off a rock cliff, giant and small trees, bushes, ferns, mossy rocks, vines, Rootmother's glade | Lv 5 | Ymira, the Rootmother (2) | none | built |
 | 3 | Frostpeak Mountain (Crystalfall) | mountain: a 95-stud flat-topped snow mountain, snowy pines, snow-capped crystal rocks, a spiral summit road, scenery tramway, summit guardian | Lv 12 | Lyrae, the Frozen Chorus (3), on the summit | none yet | built (climbing and tramway rides pending) |
-| 4 | Emberfang Caldera (Emberfang) | volcano: lava, basalt, molten rock | Lv 25 | Cinderjaw Sovereign (4) | **+50% coins and XP** | caldera, rework pending |
+| 4 | Emberfang Volcano (Emberfang) | volcano: a 65-stud cone with a crater lava lake and the seal on its floor, lava rivers and pools, molten rocks, scorched trees, ember road | Lv 25 | Cinderjaw Sovereign (4), in the crater | **+50% coins and XP** | built |
 | 5 | Cogspire Foundry (Cogspire) | steampunk | Lv 28 | none yet | none yet | teaser platform, coming soon |
 | 6 | Dustwake Ruins (Dustwake) | forgotten desert: dunes, semi-exposed and buried temple, colossus, pyramid, obelisks | Lv 28 | Oszarak, the Buried Sovereign (5) | none | built |
 | 7 | Voidreach | void | Lv 34 | none yet | none yet | teaser, coming soon |
@@ -123,7 +123,7 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 
 Fishing rewards (10% chance to sail to "The Atlantic Sea", +25% XP and coins) and the dock's Atlantic zone, the jungle vine teleport (2%),
 the mountain's climbing mechanic, working aerial tramway, three mini bosses and the 50% / 7% climbing boosts, and the
-volcano / steampunk rebuilds. They are listed in [NEXT.md](NEXT.md).
+steampunk build. They are listed in [NEXT.md](NEXT.md).
 
 ## Economy targets (from the balance simulation)
 

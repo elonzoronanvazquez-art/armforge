@@ -298,6 +298,39 @@ function Flora.pine(parent: Instance, pos: Vector3, height: number, seed: number
 	Build.part(parent, { name = "Tip", size = V3(height * 0.16, height * 0.16, height * 0.16), cf = CF(pos + V3(0, trunkH * 0.75 + 3 * height * 0.17 + height * 0.14, 0)), color = if snow then Color3.fromRGB(240, 246, 252) else green, material = if snow then Enum.Material.Snow else Enum.Material.LeafyGrass, shape = "Ball" })
 end
 
+-- Burnt trunk with a few snapped branches and glowing embers at the tips (volcano).
+function Flora.charTree(parent: Instance, pos: Vector3, height: number, seed: number)
+	local char = Color3.fromRGB(26, 22, 24)
+	local yaw = Build.hash(seed, 2) * math.pi * 2
+	local lean = (Build.hash(seed, 3) - 0.5) * 0.25
+	local base = CF(pos + V3(0, -0.4, 0)) * ANG(0, yaw, lean)
+	Build.part(parent, { name = "Trunk", size = V3(height, 1.2, 1.2), cf = base * CF(0, height / 2, 0) * ANG(0, 0, math.pi / 2), color = char, material = Enum.Material.Slate, shape = "Cylinder", collide = true })
+	for k = 1, 3 do
+		local y = height * (0.4 + 0.18 * k)
+		local len = height * (0.34 - 0.06 * k)
+		local side = if k % 2 == 0 then 1 else -1
+		local bcf = base * CF(0, y, 0) * ANG(0, k * 1.7, side * 0.9)
+		Build.part(parent, { name = "Branch", size = V3(len, 0.5, 0.5), cf = bcf * CF(len / 2, 0, 0), color = char, material = Enum.Material.Slate, shape = "Cylinder" })
+		if Build.hash(seed, 10 + k) > 0.4 then
+			Build.part(parent, { name = "Ember", size = V3(0.7, 0.7, 0.7), cf = bcf * CF(len, 0, 0), color = Color3.fromRGB(255, 120, 40), neon = true, shape = "Ball" })
+		end
+	end
+end
+
+-- Dark boulder cracked open by glowing seams (volcano).
+function Flora.moltenRock(parent: Instance, pos: Vector3, size: number, seed: number)
+	local yaw = Build.hash(seed, 1) * math.pi * 2
+	local cf = CF(pos + V3(0, size * 0.2, 0)) * ANG(0.1, yaw, 0.1)
+	Build.part(parent, { name = "Boulder", size = V3(size, size * 0.75, size * 0.9), cf = cf, color = Color3.fromRGB(34, 30, 34), material = Enum.Material.Basalt, shape = "Ball", collide = true })
+	for k = 1, 3 do
+		local a = Build.hash(seed, 10 + k) * math.pi * 2
+		local seam = Build.part(parent, { name = "Seam", size = V3(size * 0.08, size * 0.5, size * 0.3), cf = cf * ANG(0, a, 0) * CF(size * 0.42, size * 0.1, 0) * ANG(0, 0, (Build.hash(seed, 20 + k) - 0.5) * 0.8), color = Color3.fromRGB(255, 110, 40), neon = true })
+		if k == 1 and size > 5 then
+			Build.light(seam, Color3.fromRGB(255, 120, 50), 0.8, 16)
+		end
+	end
+end
+
 -- Saguaro-style cactus with up to two arms.
 function Flora.cactus(parent: Instance, pos: Vector3, height: number, seed: number)
 	local green = lerpColor(Color3.fromRGB(86, 120, 70), Color3.fromRGB(104, 138, 80), Build.hash(seed, 1))

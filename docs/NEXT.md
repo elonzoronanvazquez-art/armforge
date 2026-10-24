@@ -35,8 +35,8 @@ creatures, guardians, balance simulation, live guardian runs in Studio), and a C
   summit, tramway scenery). Still missing from the sketch: the climbing mechanic and its +50% XP / ~7% coins boost, a tramway that actually
   carries players (and its boost), and the three mini bosses. The summit is reached on foot by a 1,100-stud spiral road (median 6 degrees,
   p90 11 degrees, and two cliff-edge segments of 37 and 62 degrees where it crosses the ledge bench; the humanoid slope limit is 89).
-* **Volcano** (lava, molten rock, trees): Emberfang keeps its caldera look and id; rebuild it as the sketch's volcano. The +50% boost
-  already works.
+* **Volcano** is built as Emberfang Volcano (cone, crater lake, lava rivers and pools, molten rocks, scorched trees) with its +50% boost.
+  Lava is decorative: it does not hurt, and the rivers are glowing strips, not terrain water.
 * **Steampunk world** (Cogspire): data and a teaser only. It needs terrain, rocks, creatures, a guardian and a builder; when it gets a guardian
   the gate chain absorbs it automatically.
 * **Fishing on the dock** (10% chance to travel to "The Atlantic Sea", +25% XP and coins), **the Atlantic Sea zone**, and the **vine
