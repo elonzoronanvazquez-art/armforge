@@ -4,7 +4,7 @@ What is actually verified, where, and what is not. "Studio" below means a single
 Roblox Studio driven through the Studio MCP server (execute_luau on Server/Client, real mouse and keyboard input, screenshots,
 console output). Nothing is claimed that was not observed.
 
-## Automated (Lune, `lune run tests/run`): 305 tests, 0 failing
+## Automated (Lune, `lune run tests/run`): 322 tests, 0 failing
 
 The first block is pure logic; the second block runs the REAL server services (`src/server/Services`) against a fake Roblox server
 (`tests/support/ServerWorld.luau`: virtual clock and scheduler, Instance tree, Players/DataStore/CollectionService fakes with latency
@@ -92,6 +92,24 @@ the Islands panel with seven scrolling cards (boost line, requirements, guardian
 Not verified: fights against the new creatures by a human (only the scripted bot); a second client; the real DataStore with the migrated
 ladder; the HUD boost line after a real `Travel` (the dev `island` command set it); the jungle ambience (placeholder loop); performance on a
 phone with roughly 4,000 added world instances. Studio's MCP connection also flaps occasionally ("Place is not open"); retrying works.
+
+## Mountain mechanics (climbing, tramway, mini bosses, Summit Momentum)
+
+Automated (322 passing, strict typecheck clean): `mountain.spec` covers Momentum (grant, expiry, refresh, island scoping, never saved), Climb
+(honest climb completes, teleports and too-fast climbs never pay, falling off resets, spacing of the routes), the tram schedule (both cabins dock
+together, monotonic smooth travel, periodic, boarding rules), the mini boss config and eligibility, and on the fake server: rock rewards on
+Frostpeak boosted by momentum only while active and only there, a mini boss opening only for eligible players, paying the same twice and
+completing nothing, and momentum multiplying mini boss rewards. The fight simulation passes for the three mini bosses (8/8, 51 / 92 / 67 s).
+
+Studio (real play): the character walked straight up the cone to Base Camp and stopped at the crown wall (the slope limit works); it climbed the
+Frostline truss to the rim by holding W and `ClimbService` granted momentum (262 s left a few seconds later); the tram boarded through
+`TramService.board` while docked, carried the rider to the summit station and set them down there with momentum granted and the HUD chip
+"SUMMIT MOMENTUM +50% XP, +7% coins 4:34" showing; a mini boss was fought through the dev bridge (Hoarfang: seal, fight, no guardian completion).
+All 135 rocks and the four Frostpeak seals placed at their configured positions. The 110-slab road has median slope 2.1 degrees and a 9.5 degree maximum;
+the cable clears the terrain by at least 7.6 studs.
+
+Not verified: two players sharing a cabin or a climb; ProximityPrompt boarding by a real key press (the dev bridge calls the same server function);
+the other two routes by climbing (only Frostline was climbed); the steppy look of the ride on a high-latency client; phone performance.
 
 ## Steampunk build (Cogspire Foundry)
 

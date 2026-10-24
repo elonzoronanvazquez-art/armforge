@@ -14,6 +14,7 @@ local Formulas = require(Shared.Logic.Formulas)
 local Equipment = require(Shared.Logic.Equipment)
 local Progression = require(Shared.Logic.Progression)
 local Islands = require(Shared.Logic.Islands)
+local Momentum = require(Shared.Logic.Momentum)
 local IslandConfig = require(Shared.Config.Islands)
 local Format = require(Shared.Util.Format)
 local Store = require(script.Parent.Parent.Store)
@@ -394,6 +395,7 @@ local function refreshStatus()
 end
 
 local chips: { [string]: Frame } = {}
+local momentumChip: Frame? = nil
 
 local function refreshDynamic()
 	local d = Store.data
@@ -442,6 +444,25 @@ local function refreshDynamic()
 			end
 			;(chip:FindFirstChild("T") :: TextLabel).Text = `{string.upper(def.stat)} +{math.floor(def.bonus * 100)}%  {Format.clock(left)}`
 		end
+	end
+	-- Summit Momentum (Frostpeak): a timed island boost from the server snapshot, counted down locally
+	local momentum = Store.live.momentum
+	local momentumLeft = if momentum then (momentum.remaining :: number) - (os.clock() - Store.receivedAt) else 0
+	if momentum and momentumLeft > 0 then
+		local chip: Frame
+		if momentumChip then
+			chip = momentumChip
+		else
+			chip = W.frame({ Size = UDim2.fromOffset(0, 22), AutomaticSize = Enum.AutomaticSize.X, BackgroundColor3 = Color3.fromRGB(150, 235, 255), BackgroundTransparency = 0.1, Parent = refs.boosterRow })
+			W.corner(UDim.new(1, 0)).Parent = chip
+			W.padding(8, 0).Parent = chip
+			W.text({ Name = "T", Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, Font = Theme.fontBold, TextSize = 11, TextColor3 = C.black, Text = "", Parent = chip })
+			momentumChip = chip
+		end
+		;(chip:FindFirstChild("T") :: TextLabel).Text = `SUMMIT MOMENTUM {Momentum.text(momentum.island :: string) or ""}  {Format.clock(momentumLeft)}`
+	elseif momentumChip then
+		momentumChip:Destroy()
+		momentumChip = nil
 	end
 	for id, chip in chips do
 		if not d.boosters.active[id] or Store.boosterRemaining(id) <= 0 then

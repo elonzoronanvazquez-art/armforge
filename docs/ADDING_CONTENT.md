@@ -51,6 +51,13 @@ Guardian gates skip islands without a guardian (`Logic/Islands.previousGuarded`)
 never blocks the ones behind it. Add a guardian to it later and it becomes part of the chain; update `tests/encounter_balance.spec`'s PLAN with
 the new creatures and the rebirth counts at which they are met.
 
+A mini boss: add a boss-tier creature with `mini = true`, a seal rock for it, and an entry in the island's `miniBosses` (creature, seal, position,
+rebirths). `RockService.populate` places it; nothing else is needed.
+
+Island mechanics (`Config/Mountain`, `Logic/Climb`, `Logic/Tram`, `Logic/Momentum`; `ClimbService`, `TramService`): the builder tags what the
+services read (`ClimbRoute` trusses, a `Tramway` model with `CableA` / `CableB`, `TramCabin` models, `TramStation` parts with a ProximityPrompt).
+A timed island boost is `momentum = { coins, xp, seconds }` on the island def; `ProgressService` multiplies rewards earned on that island.
+
 For a guardian: add a seal rock (`size = "seal"`) and the island's `guardian = { creature, seal, position, rebirths }`; the next island's
 requirements pick up the guardian gate automatically (`Logic/Islands.requirements`).
 

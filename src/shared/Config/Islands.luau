@@ -16,6 +16,18 @@ export type GuardianDef = {
 	rebirths: number,
 }
 
+-- An optional extra boss on an island: sealed in its own seal rock, fought like a guardian (rebirth gate, phases) but it gates nothing and
+-- can be fought again after its seal re-forms.
+export type MiniBossDef = {
+	creature: string,
+	seal: string,
+	position: Vector3,
+	rebirths: number,
+}
+
+-- A timed boost an island grants for a feat (Config/Mountain: finishing a climb route or riding the tramway up). Logic/Momentum.
+export type Momentum = { coins: number, xp: number, seconds: number }
+
 -- Per-biome reward multipliers: everything earned on the island (rock mining and creature fights) is multiplied by these.
 export type Boost = { coins: number, xp: number }
 
@@ -28,6 +40,8 @@ export type IslandDef = {
 	order: number,
 	requires: { level: number?, rebirths: number?, coins: number? },
 	boost: Boost?, -- nil = no boost
+	momentum: Momentum?, -- timed boost for climbing / riding (Frostpeak)
+	miniBosses: { MiniBossDef }?,
 	guardian: GuardianDef?, -- nil while the island is not playable yet
 	comingSoon: boolean?,
 	center: Vector3,
@@ -108,7 +122,7 @@ Islands.Defs = {
 		name = "Frostpeak Mountain",
 		biome = "mountain",
 		tagline = "The mountain that sings",
-		description = "A huge snowbound mountain. Snow-capped quartz, amethyst and Heartstone rocks line a switchback road to a frozen summit, where the Choir waits.",
+		description = "A huge snowbound mountain. Snow-capped rocks and three mini bosses ring Base Camp; climb the crown or ride the tram to the summit, where the Choir waits. Summit feats grant +50% XP and +7% coins for a while.",
 		order = 3,
 		requires = { level = 12 },
 		center = Vector3.new(820, 0, 0),
@@ -123,12 +137,18 @@ Islands.Defs = {
 			},
 			{
 				name = "Crystal Ledge",
-				center = Vector3.new(742, 0, -30),
-				radius = 30,
-				rocks = { { rock = "Amethyst", count = 5 }, { rock = "Quartz", count = 3 }, { rock = "Heartstone", count = 2 } },
+				center = Vector3.new(871, 0, -68),
+				radius = 20,
+				rocks = { { rock = "Amethyst", count = 3 }, { rock = "Quartz", count = 3 }, { rock = "Heartstone", count = 2 } },
 			},
 		},
-		guardian = { creature = "LyraeFrozenChorus", seal = "ChoirSeal", position = Vector3.new(830, 0, -30), rebirths = 3 },
+		guardian = { creature = "LyraeFrozenChorus", seal = "ChoirSeal", position = Vector3.new(820, 0, -50), rebirths = 3 },
+		momentum = { coins = 1.07, xp = 1.5, seconds = 300 },
+		miniBosses = {
+			{ creature = "HoarfangYeti", seal = "HoarSeal", position = Vector3.new(872, 0, -31), rebirths = 2 },
+			{ creature = "GlaciermawWyrm", seal = "RimeSeal", position = Vector3.new(768, 0, -31), rebirths = 2 },
+			{ creature = "AvalancheTitan", seal = "AvalancheSeal", position = Vector3.new(801, 0, -102), rebirths = 2 },
+		},
 		accent = Color3.fromRGB(110, 220, 255),
 		sky = Color3.fromRGB(170, 190, 255),
 		fog = Color3.fromRGB(190, 200, 255),

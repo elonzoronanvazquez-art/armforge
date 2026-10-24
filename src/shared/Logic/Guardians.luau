@@ -65,6 +65,32 @@ function Guardians.canChallenge(data: any, islandId: string): { ok: boolean, err
 	return { ok = true, missing = missing }
 end
 
+-- May this player fight a mini boss right now? Island access plus the mini boss's own rebirth count; it never completes anything.
+function Guardians.canChallengeMini(data: any, islandId: string, creatureId: string): { ok: boolean, err: string?, missing: { string } }
+	local missing: { string } = {}
+	local def = IslandConfig.Defs[islandId]
+	local mini: IslandConfig.MiniBossDef? = nil
+	local list: { IslandConfig.MiniBossDef } = if def and def.miniBosses then def.miniBosses else {}
+	for _, m in list do
+		if m.creature == creatureId then
+			mini = m
+		end
+	end
+	if not mini then
+		return { ok = false, err = "no_mini_boss", missing = missing }
+	end
+	if not data.islands.unlocked[islandId] then
+		table.insert(missing, "Access to the island")
+	end
+	if data.rebirths < mini.rebirths then
+		table.insert(missing, `Rebirth {mini.rebirths}`)
+	end
+	if #missing > 0 then
+		return { ok = false, err = "requirements", missing = missing }
+	end
+	return { ok = true, missing = missing }
+end
+
 -- Records a victory over this island's guardian. Re-validates eligibility itself, so a caller can never complete an island
 -- the player was not allowed to fight. first = true only for the first victory (the completion event).
 function Guardians.recordDefeat(data: any, islandId: string): { ok: boolean, first: boolean, err: string? }

@@ -31,10 +31,11 @@ Built (see GAME_DESIGN.md "Biomes"): the island ladder, per-biome reward boosts 
 fishing dock and more trees on the starter island, the Mossveil jungle and the Dustwake desert ruins end to end (terrain, props, rocks,
 creatures, guardians, balance simulation, live guardian runs in Studio). Not built:
 
-* **Mountain** is built as Frostpeak Mountain (huge flat-topped snow mountain, snowy pines, snow-capped rocks, summit road, guardian on the
-  summit, tramway scenery). Still missing from the sketch: the climbing mechanic and its +50% XP / ~7% coins boost, a tramway that actually
-  carries players (and its boost), and the three mini bosses. The summit is reached on foot by a 1,100-stud spiral road (median 6 degrees,
-  p90 11 degrees, and two cliff-edge segments of 37 and 62 degrees where it crosses the ledge bench; the humanoid slope limit is 89).
+* **Mountain** is built as Frostpeak Mountain, including the climbing mechanic, a working tramway, three mini bosses and the Summit Momentum
+  boost. Caveats: the climb is judged from client-reported positions (plausibility checks only, like every other proximity check here); the
+  tram carries riders by anchoring their characters and moving them each frame, which looks steppy at network rate; the cabins are simple
+  boxes; the mini bosses use the generic procedural bodies; the sketch's boost wording ("climb/tram boost 50% exp and ~7% dollars") was
+  interpreted as a timed island boost earned by finishing a climb or riding up.
 * **Volcano** is built as Emberfang Volcano (cone, crater lake, lava rivers and pools, molten rocks, scorched trees) with its +50% boost.
   Lava is decorative: it does not hurt, and the rivers are glowing strips, not terrain water.
 * **Steampunk** is built as Cogspire Foundry (gear gate, Great Clock and engine room, spinning gears, pipes, airships, four rocks and creatures,

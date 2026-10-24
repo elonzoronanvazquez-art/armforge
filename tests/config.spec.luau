@@ -90,9 +90,14 @@ return function(t, u)
 		end
 		for id, def in Rocks.Defs do
 			if def.size == "seal" then
-				-- a guardian seal is placed by its island's guardian entry, not by a field
-				local g = Islands.Defs[def.island].guardian
-				t.truthy(g and g.seal == id, id .. " is its island's guardian seal")
+				-- a seal is placed by its island's guardian or mini boss entry, not by a field
+				local isl = Islands.Defs[def.island]
+				local placed = isl.guardian ~= nil and isl.guardian.seal == id
+				local minis = isl.miniBosses or {}
+				for _, mini in minis do
+					placed = placed or mini.seal == id
+				end
+				t.truthy(placed, id .. " is its island's guardian seal or a mini boss seal")
 			else
 				t.truthy(used[id], id .. " is placed on an island")
 			end

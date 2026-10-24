@@ -4,6 +4,7 @@
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local Combat = require(Shared.Logic.Combat)
+local Momentum = require(Shared.Logic.Momentum)
 
 local Sessions = {}
 
@@ -20,6 +21,7 @@ export type Session = {
 	joinedAt: number,
 	saveFailures: number,
 	flags: { [string]: any },
+	momentum: Momentum.State?, -- Summit Momentum (Logic/Momentum), transient
 }
 
 local byPlayer: { [Player]: Session } = {}
@@ -38,6 +40,7 @@ function Sessions.create(player: Player): Session
 		joinedAt = os.clock(),
 		saveFailures = 0,
 		flags = {},
+		momentum = nil,
 	}
 	byPlayer[player] = session
 	return session

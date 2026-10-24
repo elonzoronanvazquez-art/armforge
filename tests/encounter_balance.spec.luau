@@ -316,6 +316,10 @@ return function(t, u)
 		{ "AmethystWarden", { ChargedSmash = 3, ShatterWave = 1 }, 2, 14, "medium" },
 		{ "ChoirBehemoth", { ChargedSmash = 3, ShatterWave = 3 }, 2, 16, "elite" },
 		{ "LyraeFrozenChorus", { ChargedSmash = 3, ShatterWave = 3 }, 3, 14, "boss" },
+		-- Frostpeak mini bosses (any time after entering; the guardian above is the gate)
+		{ "HoarfangYeti", { ChargedSmash = 3, ShatterWave = 3 }, 2, 14, "mini" },
+		{ "GlaciermawWyrm", { ChargedSmash = 3, ShatterWave = 3 }, 2, 14, "mini" },
+		{ "AvalancheTitan", { ChargedSmash = 3, ShatterWave = 3 }, 2, 14, "mini" },
 		-- Emberfang (third rebirth to enter, fourth for its guardian)
 		{ "AshHound", { ChargedSmash = 4, ShatterWave = 3 }, 3, 25, "small" },
 		{ "MagmaGolem", { ChargedSmash = 4, ShatterWave = 3 }, 3, 26, "medium" },
@@ -336,7 +340,7 @@ return function(t, u)
 		local def = Creatures.Defs[entry[1]]
 		entry[6] = profile({ arm = def.fight.arm, armLevel = def.fight.level, level = entry[4], rebirths = entry[3], skills = entry[2] })
 	end
-	local BANDS = { small = { 6, 40 }, medium = { 15, 70 }, elite = { 35, 130 }, boss = { 80, 320 } }
+	local BANDS = { small = { 6, 40 }, medium = { 15, 70 }, elite = { 35, 130 }, mini = { 45, 200 }, boss = { 80, 320 } }
 
 	t.test("every creature is a fair, appropriately long fight for a player with the matching arm and skills", function()
 		local problems = {}

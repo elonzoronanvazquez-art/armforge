@@ -22,6 +22,9 @@ local DataService = require(script.Parent.Parent.Services.DataService)
 local ProgressService = require(script.Parent.Parent.Services.ProgressService)
 local RockService = require(script.Parent.Parent.Services.RockService)
 local EncounterService = require(script.Parent.Parent.Services.EncounterService)
+local TramService = require(script.Parent.Parent.Services.TramService)
+local Tram = require(Shared.Logic.Tram)
+local Momentum = require(Shared.Logic.Momentum)
 local CreatureSim = require(Shared.Logic.CreatureSim)
 local CreatureConfig = require(Shared.Config.Creatures)
 local CreatureBuilder = require(script.Parent.Parent.World.CreatureBuilder)
@@ -341,6 +344,22 @@ local COMMANDS: { [string]: (...any) -> any } = {
 	booster = function(id: string, n: number?)
 		DevTools.booster(DevTools.player(), id, n)
 		return "ok"
+	end,
+	-- Presses a tram station's prompt for the local player ("base" | "summit").
+	ride = function(station: string)
+		local player = DevTools.player()
+		if not player then
+			return "no player"
+		end
+		return TramService.board(player, station, Tram.state(workspace:GetServerTimeNow()))
+	end,
+	tramState = function()
+		local st = Tram.state(workspace:GetServerTimeNow())
+		return { docked = st.docked, leg = st.leg, cabin1 = st.cabin1, cabin2 = st.cabin2, departsIn = st.departsIn, riders = TramService.riderCount() }
+	end,
+	momentum = function()
+		local s = session(DevTools.player())
+		return if s then Momentum.remaining(s, os.clock()) else -1
 	end,
 	island = function(id: string)
 		DevTools.setIsland(DevTools.player(), id)

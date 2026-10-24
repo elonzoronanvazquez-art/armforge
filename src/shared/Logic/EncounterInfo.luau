@@ -23,7 +23,7 @@ export type Info = {
 -- Skulls: normal creatures 1-2 (armored ones are the harder 2), elites 4, guardians 5.
 function EncounterInfo.danger(c: Creatures.CreatureDef): number
 	if c.tier == "boss" then
-		return 5
+		return if c.mini then 4 else 5
 	elseif c.tier == "elite" then
 		return 4
 	end
@@ -33,8 +33,18 @@ end
 function EncounterInfo.forCreature(c: Creatures.CreatureDef, size: string, island: string): Info
 	local gate = 0
 	if c.tier == "boss" then
-		local g = Islands.Defs[island].guardian
-		gate = if g then g.rebirths else 0
+		local def = Islands.Defs[island]
+		if c.mini then
+			local minis: { Islands.MiniBossDef } = def.miniBosses or {}
+			for _, m in minis do
+				if m.creature == c.id then
+					gate = m.rebirths
+				end
+			end
+		else
+			local g = def.guardian
+			gate = if g then g.rebirths else 0
+		end
 	end
 	return {
 		Contains = c.name,

@@ -54,6 +54,7 @@ Size changes geometry, fracture detail, the creature's scale and the kind of cha
 | Forgeheart | Granite -> **Cairn Crawler** (lunge) ; Prism (rare) -> **Prism Wisp** (kites, beam) | Ironvein -> **Slag Brute** (armor, slam, sweep) | Forgestone Monolith -> **Quarry Colossus** | Anvil Seal -> **Grom, the Anvil-King** |
 | Mossveil | MossStone -> **Mossback Crawler** (pounce) | Rootstone -> **Rootborn Brute** (armor, root slam, thorn sweep) | Jadeheart -> **Canopy Elder** | Root Seal -> **Ymira, the Rootmother** |
 | Crystalfall | Quartz -> **Shardling** (fast skewer) | Amethyst -> **Amethyst Warden** (shell, resonance pulse) | Heartstone -> **Choir Behemoth** | Choir Seal -> **Lyrae, the Frozen Chorus** |
+| Frostpeak mini bosses | (sealed around Base Camp) | | | HoarSeal -> **Hoarfang the Yeti**, RimeSeal -> **Glaciermaw**, AvalancheSeal -> **Avalanche Titan** |
 | Emberfang | Basalt -> **Ash Hound** (long dash) | MagmaCore -> **Magma Golem** (crust, slam, lava line) | Obsidian -> **Obsidian Executioner** | Caldera Seal -> **Cinderjaw Sovereign** |
 | Cogspire | Cogstone -> **Cog Scuttler** (spring lunge) | Boilerplate -> **Boiler Brute** (plating, piston slam, steam blast) | Aetherglass -> **Brass Behemoth** | Valve Seal -> **Cogheart, the Foundry Engine** |
 | Dustwake | Sandblock -> **Dune Skitterer** (burrow dash) | Relic -> **Husk Sentinel** (gilded crust, spear drop, sand sweep) | Sunstone -> **Tomb Colossus** | Sunken Seal -> **Oszarak, the Buried Sovereign** |
@@ -116,6 +117,9 @@ matching loadout (8 seeds each, bot reaction 0.35 s):
 | Magma Golem | normal (crust) | Magma L3 | 8/8 | 19 s |
 | Obsidian Executioner | elite | Magma L6 | 8/8 | 38 s (4/8 in 410 s punching only) |
 | Cinderjaw Sovereign | guardian | Magma L4 after four rebirths | 8/8 | 90 s (0/8 punching only) |
+| Hoarfang the Yeti | mini boss | Crystal L5 after two rebirths | 8/8 | 51 s |
+| Glaciermaw | mini boss | Crystal L6, Shatter Wave | 8/8 | 92 s |
+| Avalanche Titan | mini boss | Crystal L7 | 8/8 | 67 s (0/8 punching only) |
 | Cog Scuttler | normal | Magma L8 after four rebirths | 8/8 | 13 s |
 | Boiler Brute | normal (plating) | Magma L10, Shatter Wave | 8/8 | 26 s |
 | Brass Behemoth | elite | Magma L13, Shatter Wave 3 | 8/8 | 51 s (0/8 punching only) |
@@ -131,6 +135,13 @@ slow (4/8 in 443 s) rather than impossible.
 
 The same bot standing still beats the first creature (new players can win by punching) but loses every elite and guardian.
 The bot dodges perfectly once it reacts; a person will take more hits, which is what the 100 health points are for.
+
+## 3b. Mini bosses
+
+An island can list `miniBosses` (`Config/Islands`): extra seals with a boss-tier creature flagged `mini = true` (today only Frostpeak has three).
+`Guardians.canChallengeMini` needs island access and the mini boss's own rebirth count (2); `EncounterService` treats it like a guardian for
+presentation and eligibility, but never calls `Guardians.recordDefeat`, never raises the guardian notification, and pays the same full reward every
+time (momentum and island boosts apply). The seal respawns after `guardianRespawn` seconds. Danger shows as 4 skulls (guardians 5).
 
 ## 4. Guardians and the island gate
 

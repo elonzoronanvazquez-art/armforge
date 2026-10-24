@@ -571,6 +571,17 @@ function RockService.populate(): number
 				warn(`[ARMFORGE] could not place the {islandId} guardian seal near {guardian.position}`)
 			end
 		end
+		local minis: { IslandConfig.MiniBossDef } = island.miniBosses or {}
+		for mi, mini in minis do
+			local spot = sealSpot(mini.position)
+			if spot then
+				spawnRock(RockConfig.Defs[mini.seal], islandId, spot, 8000 + mi * 31 + #islandId * 13)
+				table.insert(taken, spot)
+				total += 1
+			else
+				warn(`[ARMFORGE] could not place the {islandId} mini boss seal {mini.seal} near {mini.position}`)
+			end
+		end
 		for fi, field in island.fields do
 			for ri, entry in field.rocks do
 				local def = RockConfig.Defs[entry.rock]

@@ -11,6 +11,7 @@ local Formulas = require(Shared.Logic.Formulas)
 local Progression = require(Shared.Logic.Progression)
 local Guardians = require(Shared.Logic.Guardians)
 local Islands = require(Shared.Logic.Islands)
+local Momentum = require(Shared.Logic.Momentum)
 local IslandConfig = require(Shared.Config.Islands)
 local Sessions = require(script.Parent.Sessions)
 local Sync = require(script.Parent.Sync)
@@ -79,8 +80,9 @@ function ProgressService.rockReward(player: Player, reward: any, entry: any)
 	local data = s.data
 	local mult = devMultiplier()
 	local boost = Islands.rewardBoost(entry.island)
-	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult * boost.coins)
-	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult * boost.xp)
+	local momentum = Momentum.multipliers(s, entry.island, os.clock())
+	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult * boost.coins * momentum.coins)
+	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult * boost.xp * momentum.xp)
 	local shards = reward.shards
 	if coins <= 0 and xp <= 0 and shards <= 0 then
 		return
@@ -114,8 +116,9 @@ function ProgressService.creatureReward(player: Player, reward: { coins: number,
 	local data = s.data
 	local mult = devMultiplier()
 	local boost = Islands.rewardBoost(entry.island)
-	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult * boost.coins)
-	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult * boost.xp)
+	local momentum = Momentum.multipliers(s, entry.island, os.clock())
+	local coins = math.floor(reward.coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult * boost.coins * momentum.coins)
+	local xp = math.floor(reward.xp * Formulas.xpMultiplier(data) * mult * boost.xp * momentum.xp)
 	local shards = reward.shards
 	data.coins += coins
 	data.shards += shards

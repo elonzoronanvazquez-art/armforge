@@ -107,7 +107,7 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 |---|---|---|---|---|---|---|
 | 1 | Forgeheart Isle (Forgeheart) | starter: forge, plaza, training, armory, **fishing dock**, trees and palms | open | Grom, the Anvil-King (1) | none | built |
 | 2 | Mossveil Jungle (Mossveil) | jungle: big lake, waterfall off a rock cliff, giant and small trees, bushes, ferns, mossy rocks, vines, Rootmother's glade | Lv 5 | Ymira, the Rootmother (2) | none | built |
-| 3 | Frostpeak Mountain (Crystalfall) | mountain: a 95-stud flat-topped snow mountain, snowy pines, snow-capped crystal rocks, a spiral summit road, scenery tramway, summit guardian | Lv 12 | Lyrae, the Frozen Chorus (3), on the summit | none yet | built (climbing and tramway rides pending) |
+| 3 | Frostpeak Mountain (Crystalfall) | mountain: a two-stage snow mountain (walkable cone with a spiral road up to Base Camp, then a sheer 46-stud crown wall to the summit), snowy pines, snow-capped rocks, **3 climbing routes, a working aerial tramway, 3 mini bosses**, summit guardian | Lv 12 | Lyrae, the Frozen Chorus (3), on the summit | **Summit Momentum +50% XP, +7% coins for 5 min** (climb or ride up) | built |
 | 4 | Emberfang Volcano (Emberfang) | volcano: a 65-stud cone with a crater lava lake and the seal on its floor, lava rivers and pools, molten rocks, scorched trees, ember road | Lv 25 | Cinderjaw Sovereign (4), in the crater | **+50% coins and XP** | built |
 | 5 | Cogspire Foundry (Cogspire) | steampunk: brass-and-brick foundry city, gear gate, Great Clock with the sealed engine room, spinning gears, pipework, smoking chimneys, airships | Lv 28 | Cogheart, the Foundry Engine (5), at the clock's foot | none | built |
 | 6 | Dustwake Ruins (Dustwake) | forgotten desert: dunes, semi-exposed and buried temple, colossus, pyramid, obelisks | Lv 30 | Oszarak, the Buried Sovereign (6) | none | built |
@@ -120,13 +120,21 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 * **Per-biome boosts** (`IslandDef.boost`, `Logic/Islands.rewardBoost`) multiply the coins and XP of everything *earned on that island*
   (rock mining and creature fights), chosen by the island the rock stands on, never by where the player says they are. Shards are not
   boosted. The HUD status card and the Islands panel show the boost. Today only Emberfang has one (sketch: "50% increase in everything").
+* **Frostpeak mechanics.** Characters on the mountain cannot walk up slopes steeper than 70 degrees (`Config/Mountain.SlopeLimit`, set per
+  character by `ClimbService`), which makes the crown wall a real wall. Two ways up: the **climbing routes** (Frostline, The Chimney, Icefall:
+  native truss lines with rest ledges) and the **aerial tramway** (two cabins swap ends on a 28 s schedule; board with the station prompt,
+  up to 6 riders per cabin). Finishing a climb (`Logic/Climb` checks a start at the foot, staying on the line, no teleports, a minimum
+  honest time) or arriving at the summit by tram grants **Summit Momentum**: +50% XP and +7% coins for five minutes on everything earned
+  on Frostpeak (rocks, mini bosses, the guardian). It is transient session state shown as a HUD chip; it refreshes and never stacks.
+* **Mini bosses.** Three sealed mini bosses stand around Base Camp (Hoarfang the Yeti, Glaciermaw, Avalanche Titan). They fight like
+  guardians (rebirth gate 2, phases, armor, core) but gate nothing, record no completion, and pay the same every time (3 to 3.5x a Heartstone
+  geode's coins and XP, a few shards), returning when their seal re-forms (4 minutes).
 * Existing saves keep every unlock. Players who already own Crystalfall or Emberfang can still travel there; Mossveil is a new, optional step
   for them. A v1 save is migrated so that any guardian *before* an unlocked island counts as beaten.
 
 ### Sketch features not built yet
 
-Fishing rewards (10% chance to sail to "The Atlantic Sea", +25% XP and coins) and the dock's Atlantic zone, the jungle vine teleport (2%),
-the mountain's climbing mechanic, working aerial tramway, three mini bosses and the 50% / 7% climbing boosts.
+Fishing rewards (10% chance to sail to "The Atlantic Sea", +25% XP and coins) and the dock's Atlantic zone, and the jungle vine teleport (2%).
 They are listed in [NEXT.md](NEXT.md).
 
 ## Economy targets (from the balance simulation)

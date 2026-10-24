@@ -93,15 +93,22 @@ local function warnPlayer(player: Player, text: string)
 end
 
 -- May this session fight this creature? (guardians need the rebirths; the island must be unlocked)
-local function eligible(session: Sessions.Session, island: string, tier: string): (boolean, string?)
+local function eligible(session: Sessions.Session, island: string, def: CreatureConfig.CreatureDef): (boolean, string?)
 	local data = session.data
 	if not data.islands.unlocked[island] then
 		return false, "This island is still locked."
 	end
-	if tier == "boss" then
-		local check = Guardians.canChallenge(data, island)
-		if not check.ok then
-			return false, `The guardian is sealed. Requires: {table.concat(check.missing, ", ")}.`
+	if def.tier == "boss" then
+		if def.mini then
+			local check = Guardians.canChallengeMini(data, island, def.id)
+			if not check.ok then
+				return false, `The seal will not open yet. Requires: {table.concat(check.missing, ", ")}.`
+			end
+		else
+			local check = Guardians.canChallenge(data, island)
+			if not check.ok then
+				return false, `The guardian is sealed. Requires: {table.concat(check.missing, ", ")}.`
+			end
 		end
 	end
 	return true, nil
@@ -150,7 +157,7 @@ local function playersFor(enc: Enc): { CreatureSim.Player }
 				userId = player.UserId,
 				pos = hrp.Position,
 				alive = hum ~= nil and hum.Health > 0,
-				canFight = session ~= nil and (eligible(session, enc.entry.island, enc.def.tier)),
+				canFight = session ~= nil and (eligible(session, enc.entry.island, enc.def)),
 			})
 		end
 	end
@@ -203,7 +210,7 @@ local function onKilled(enc: Enc, killer: Player?)
 				data.stats.creaturesDefeated += 1
 				local mult = 1
 				local first = false
-				if boss then
+				if boss and not def.mini then
 					-- the completion is re-validated by Guardians.recordDefeat itself (rebirths + island access)
 					local rec = Guardians.recordDefeat(data, island)
 					if rec.ok then
@@ -219,8 +226,8 @@ local function onKilled(enc: Enc, killer: Player?)
 					coins = math.floor(reward.coins * mult),
 					xp = math.floor(reward.xp * mult),
 					shards = math.floor(reward.shards * mult),
-				}, enc.def, enc.entry, { killer = reward.killer, first = first, boss = boss, victory = boss and mult > 0 })
-				if boss and first then
+				}, enc.def, enc.entry, { killer = reward.killer, first = first, boss = boss, victory = boss and not def.mini and mult > 0 })
+				if boss and not def.mini and first then
 					ProgressService.guardianVictory(player, island)
 				end
 			end
@@ -384,7 +391,8 @@ local function canDamage(entry: RockService.Entry, userId: number): boolean
 	if not (player and session) then
 		return false
 	end
-	local ok, reason = eligible(session, entry.island, "boss")
+	local creature = CreatureConfig.Defs[entry.def.encounter]
+	local ok, reason = eligible(session, entry.island, creature)
 	if not ok and reason then
 		warnPlayer(player, reason)
 	end
@@ -454,7 +462,7 @@ function EncounterService.inReach(enc: Enc, pos: Vector3, reach: number, extra: 
 end
 
 function EncounterService.eligible(session: Sessions.Session, enc: Enc): (boolean, string?)
-	return eligible(session, enc.entry.island, enc.def.tier)
+	return eligible(session, enc.entry.island, enc.def)
 end
 
 -- Applies a player's strike to the creature. amount comes from Combat.resolveHit. Returns the sim result (nil if refused).
@@ -464,7 +472,7 @@ function EncounterService.hit(enc: Enc, player: Player, amount: number, opts: { 
 	if not (sim and session) or enc.sm.state ~= "COMBAT" then
 		return nil
 	end
-	local ok, reason = eligible(session, enc.entry.island, enc.def.tier)
+	local ok, reason = eligible(session, enc.entry.island, enc.def)
 	if not ok then
 		if reason then
 			warnPlayer(player, reason)
