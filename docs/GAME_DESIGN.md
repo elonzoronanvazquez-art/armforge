@@ -53,8 +53,8 @@ respawn with a freshly generated layout.
 | Rootbound Stone | Mossveil | stone | 4,800 | 10% | 480 | 210 | stone strangled by roots |
 | Jadeheart Geode (rare) | Mossveil | crystal | 16,000 | 20% | 2,000 | 800 | 2-4 shards |
 | Quartz Spire | Crystalfall | crystal | 2,600 | 10% | 520 | 230 | tall spire |
-| Amethyst Cluster | Crystalfall | crystal | 9,500 | 15% | 1,900 | 760 | |
-| Heartstone Geode (rare) | Crystalfall | crystal | 34,000 | 25% | 7,200 | 2,600 | 3-6 shards |
+| Snow-capped Amethyst Cluster | Crystalfall | crystal | 9,500 | 15% | 1,900 | 760 | |
+| Glacier Heartstone Geode (rare) | Crystalfall | crystal | 34,000 | 25% | 7,200 | 2,600 | 3-6 shards |
 | Basalt Slab | Emberfang | stone | 62,000 | 20% | 11,000 | 4,200 | |
 | Magma Core | Emberfang | magma | 230,000 | 25% | 40,000 | 14,000 | |
 | Obsidian Heart (rare) | Emberfang | magma | 780,000 | 35% | 135,000 | 48,000 | 8-16 shards |
@@ -104,8 +104,8 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 |---|---|---|---|---|---|---|
 | 1 | Forgeheart Isle (Forgeheart) | starter: forge, plaza, training, armory, **fishing dock**, trees and palms | open | Grom, the Anvil-King (1) | none | built |
 | 2 | Mossveil Jungle (Mossveil) | jungle: big lake, waterfall off a rock cliff, giant and small trees, bushes, ferns, mossy rocks, vines, Rootmother's glade | Lv 5 | Ymira, the Rootmother (2) | none | built |
-| 3 | Crystalfall Atoll (Crystalfall) | the sketch's mountain: snow / crystal rocks | Lv 12 | Lyrae, the Frozen Chorus (3) | none yet | atoll, rework pending |
-| 4 | Emberfang Caldera (Emberfang) | the sketch's volcano: lava, basalt, molten rock | Lv 25 | Cinderjaw Sovereign (4) | **+50% coins and XP** | caldera, rework pending |
+| 3 | Frostpeak Mountain (Crystalfall) | mountain: a 95-stud flat-topped snow mountain, snowy pines, snow-capped crystal rocks, a spiral summit road, scenery tramway, summit guardian | Lv 12 | Lyrae, the Frozen Chorus (3), on the summit | none yet | built (climbing and tramway rides pending) |
+| 4 | Emberfang Caldera (Emberfang) | volcano: lava, basalt, molten rock | Lv 25 | Cinderjaw Sovereign (4) | **+50% coins and XP** | caldera, rework pending |
 | 5 | Cogspire Foundry (Cogspire) | steampunk | Lv 28 | none yet | none yet | teaser platform, coming soon |
 | 6 | Dustwake Ruins (Dustwake) | forgotten desert: dunes, semi-exposed and buried temple, colossus, pyramid, obelisks | Lv 28 | Oszarak, the Buried Sovereign (5) | none | built |
 | 7 | Voidreach | void | Lv 34 | none yet | none yet | teaser, coming soon |
@@ -122,8 +122,8 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 ### Sketch features not built yet
 
 Fishing rewards (10% chance to sail to "The Atlantic Sea", +25% XP and coins) and the dock's Atlantic zone, the jungle vine teleport (2%),
-the mountain's climbing mechanic, aerial tramway, summit boss and three mini bosses, and the 50% / 7% climbing boosts, and the
-mountain / volcano / steampunk rebuilds. They are listed in [NEXT.md](NEXT.md).
+the mountain's climbing mechanic, working aerial tramway, three mini bosses and the 50% / 7% climbing boosts, and the
+volcano / steampunk rebuilds. They are listed in [NEXT.md](NEXT.md).
 
 ## Economy targets (from the balance simulation)
 

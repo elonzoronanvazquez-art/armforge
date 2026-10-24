@@ -31,9 +31,12 @@ Built (see GAME_DESIGN.md "Biomes"): the island ladder, per-biome reward boosts 
 fishing dock and more trees on the starter island, the Mossveil jungle and the Dustwake desert ruins end to end (terrain, props, rocks,
 creatures, guardians, balance simulation, live guardian runs in Studio), and a Cogspire teaser. Not built:
 
-* **Mountain** (the sketch's huge mountain with snowy trees and snow rocks, an aerial tramway, a summit boss and three mini bosses, a
-  climbing mechanic, +50% XP and ~7% coins boosts while climbing / riding) and **Volcano** (lava, molten rock, trees): Crystalfall and
-  Emberfang keep their atoll / caldera look and ids; rebuild them as the sketch's biomes. The Volcano's +50% boost already works.
+* **Mountain** is built as Frostpeak Mountain (huge flat-topped snow mountain, snowy pines, snow-capped rocks, summit road, guardian on the
+  summit, tramway scenery). Still missing from the sketch: the climbing mechanic and its +50% XP / ~7% coins boost, a tramway that actually
+  carries players (and its boost), and the three mini bosses. The summit is reached on foot by a 1,100-stud spiral road (median 6 degrees,
+  p90 11 degrees, and two cliff-edge segments of 37 and 62 degrees where it crosses the ledge bench; the humanoid slope limit is 89).
+* **Volcano** (lava, molten rock, trees): Emberfang keeps its caldera look and id; rebuild it as the sketch's volcano. The +50% boost
+  already works.
 * **Steampunk world** (Cogspire): data and a teaser only. It needs terrain, rocks, creatures, a guardian and a builder; when it gets a guardian
   the gate chain absorbs it automatically.
 * **Fishing on the dock** (10% chance to travel to "The Atlantic Sea", +25% XP and coins), **the Atlantic Sea zone**, and the **vine

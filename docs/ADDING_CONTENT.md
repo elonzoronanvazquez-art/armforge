@@ -42,7 +42,8 @@ whole-body mesh). See [CREATURES.md](CREATURES.md).
    `ctx.spawn(id, spawn)`, a return Skyport via `Forgeheart.skyport`, landmarks). Add it to `WorldBuilder.terrainSpec` (terrain
    materials) and `build` (and to the terrain list), and extend `IslandTerrain.fillSea` if it lies outside the sea rectangle. Use
    `World/Flora` for trees, palms, bushes, ferns, vines, cacti and mossy rocks and `Flora.scatter` to place them on ground while avoiding
-   zones; anything "buried" is just geometry placed below `Build.groundY`. `Mossveil.luau` (lake, waterfall, flora) and `Dustwake.luau`
+   zones (`Flora.pine` for snowy conifers); tall terrain: the `mound` feature (flat top radius in `length`) plus `spec.layers` (each layer is 4
+   studs above -28), see `Crystalfall.luau`; anything "buried" is just geometry placed below `Build.groundY`. `Mossveil.luau` (lake, waterfall, flora) and `Dustwake.luau`
    (half-buried ruins) are the worked examples; `Cogspire.luau` is a teaser platform.
 3. `AtmosphereController.THEMES` for its lighting, `Assets.Ambience` for its bed; unique terrain materials give it a unique palette.
 

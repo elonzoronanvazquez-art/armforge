@@ -105,10 +105,10 @@ Islands.Defs = {
 	},
 	Crystalfall = {
 		id = "Crystalfall",
-		name = "Crystalfall Atoll",
+		name = "Frostpeak Mountain",
 		biome = "mountain",
-		tagline = "The island that sings",
-		description = "Frozen waterfalls of crystal. Quartz spires, amethyst clusters and golden Heartstone geodes.",
+		tagline = "The mountain that sings",
+		description = "A huge snowbound mountain. Snow-capped quartz, amethyst and Heartstone rocks line a switchback road to a frozen summit, where the Choir waits.",
 		order = 3,
 		requires = { level = 12 },
 		center = Vector3.new(820, 0, 0),
@@ -116,19 +116,19 @@ Islands.Defs = {
 		arrival = Vector3.new(820, 4, 96),
 		fields = {
 			{
-				name = "Quartz Meadow",
-				center = Vector3.new(820, 0, -50),
-				radius = 58,
+				name = "Snowdrift Meadow",
+				center = Vector3.new(730, 0, 68),
+				radius = 48,
 				rocks = { { rock = "Quartz", count = 8 }, { rock = "Amethyst", count = 3 } },
 			},
 			{
-				name = "Geode Basin",
-				center = Vector3.new(904, 0, -96),
-				radius = 44,
+				name = "Crystal Ledge",
+				center = Vector3.new(742, 0, -30),
+				radius = 30,
 				rocks = { { rock = "Amethyst", count = 5 }, { rock = "Quartz", count = 3 }, { rock = "Heartstone", count = 2 } },
 			},
 		},
-		guardian = { creature = "LyraeFrozenChorus", seal = "ChoirSeal", position = Vector3.new(740, 0, -40), rebirths = 3 },
+		guardian = { creature = "LyraeFrozenChorus", seal = "ChoirSeal", position = Vector3.new(830, 0, -30), rebirths = 3 },
 		accent = Color3.fromRGB(110, 220, 255),
 		sky = Color3.fromRGB(170, 190, 255),
 		fog = Color3.fromRGB(190, 200, 255),
@@ -241,7 +241,7 @@ Islands.Defs = {
 Islands.Order = { "Forgeheart", "Mossveil", "Crystalfall", "Emberfang", "Cogspire", "Dustwake", "Voidreach" }
 Islands.Start = "Forgeheart"
 
--- Crystalfall (the Mountain) and Emberfang (the Volcano) keep their internal ids; their reworks into the sketch's mountain and
--- volcano follow. Cogspire (steampunk) and Voidreach are teasers without guardians yet.
+-- Crystalfall is now the Mountain (internal id kept; the guardian seal stands on the summit) and Emberfang (the Volcano) keeps its
+-- internal id until its rework. Cogspire (steampunk) and Voidreach are teasers without guardians yet.
 
 return Islands

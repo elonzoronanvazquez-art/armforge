@@ -93,6 +93,19 @@ Not verified: fights against the new creatures by a human (only the scripted bot
 ladder; the HUD boost line after a real `Travel` (the dev `island` command set it); the jungle ambience (placeholder loop); performance on a
 phone with roughly 4,000 added world instances. Studio's MCP connection also flaps occasionally ("Place is not open"); retrying works.
 
+## Mountain rebuild (Frostpeak, ex Crystalfall Atoll)
+
+Automated: unchanged at 305 passing (the island id, rock ids, creatures and gates are the same); strict typecheck clean under both solvers.
+Studio (screenshots read back): the mountain from the sea and from above, the singing arch and trailhead, snowy pines and snow-capped rocks
+on the lower slopes, Snowdrift Meadow, the quarry-bench Crystal Ledge, the summit with its crystal pylons, light beams and station, and
+snowfall. Numerics: all 112 rocks placed with no warnings; the guardian seal stands on the summit (y ~ 101); the tramway cable clears the
+terrain by at least 4 studs along its whole length; the 120-slab road has median slope 6.4 degrees and p90 10.7 degrees, with two
+cliff-edge segments (37 and 62 degrees) where it crosses the Crystal Ledge bench. The Lyrae fight was played through the dev bridge
+(seal broken, 103,897 HP creature, defeat recorded as `guardians.defeated.Crystalfall`).
+
+Not verified: a person walking the summit road (the humanoid slope limit is 89 degrees, but the steep segments have not been walked),
+the tramway (scenery only), performance on a phone with the added snow, pines and snowfall emitter.
+
 ## Creature / guardian sprint
 
 Implemented, tested and (where stated) verified in a single-client Studio playtest. See [CREATURES.md](CREATURES.md) for the design.

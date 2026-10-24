@@ -7,14 +7,14 @@ local Terrain = workspace.Terrain
 local IslandTerrain = {}
 
 export type Feature = {
-	kind: string, -- hill | flat | pit | ridge
+	kind: string, -- hill | mound | flat | pit | ridge
 	pos: Vector3,
 	radius: number,
-	height: number?, -- hill: peak height; pit: depth
+	height: number?, -- hill / mound: peak height; pit: depth
 	target: number?, -- flat: height to flatten toward
 	material: Enum.Material?, -- surface material override inside the feature
 	angle: number?, -- ridge direction (radians)
-	length: number?, -- ridge half length
+	length: number?, -- ridge half length; mound: radius of the flat top
 }
 
 export type Spec = {
@@ -28,6 +28,7 @@ export type Spec = {
 	noiseAmp: number,
 	coastWobble: number,
 	seed: number,
+	layers: number?, -- vertical voxel layers (default 18: -28 .. 44 studs); tall islands need more
 	features: { Feature },
 	ground: Enum.Material,
 	ground2: Enum.Material,
@@ -69,6 +70,9 @@ local function heightAt(spec: Spec, x: number, z: number): number
 		if f.kind == "hill" then
 			local k = smooth(1 - d / f.radius)
 			h += (f.height or 8) * k * k
+		elseif f.kind == "mound" then
+			-- a flat-topped mountain: full height inside `length`, easing down to nothing at `radius`
+			h += (f.height or 10) * smooth((f.radius - d) / math.max(1, f.radius - (f.length or 0)))
 		elseif f.kind == "pit" then
 			local k = smooth(1 - d / f.radius)
 			h -= (f.height or 6) * k
@@ -121,7 +125,7 @@ function IslandTerrain.build(spec: Spec)
 		end
 	end
 
-	local ySlices = Y_LAYERS
+	local ySlices = spec.layers or Y_LAYERS
 	for ti = 0, math.ceil(nx / TILE) - 1 do
 		for tj = 0, math.ceil(nz / TILE) - 1 do
 			local i0, j0 = ti * TILE, tj * TILE

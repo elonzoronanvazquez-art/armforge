@@ -90,10 +90,10 @@ local function setupTerrain()
 	t:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(78, 122, 62))
 	t:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(62, 106, 56))
 	t:SetMaterialColor(Enum.Material.Concrete, Color3.fromRGB(120, 116, 112))
-	t:SetMaterialColor(Enum.Material.Glacier, Color3.fromRGB(96, 142, 196))
-	t:SetMaterialColor(Enum.Material.Limestone, Color3.fromRGB(118, 110, 150))
-	t:SetMaterialColor(Enum.Material.Snow, Color3.fromRGB(138, 156, 200))
-	t:SetMaterialColor(Enum.Material.Ice, Color3.fromRGB(110, 170, 220))
+	t:SetMaterialColor(Enum.Material.Glacier, Color3.fromRGB(150, 194, 228))
+	t:SetMaterialColor(Enum.Material.Limestone, Color3.fromRGB(166, 168, 180))
+	t:SetMaterialColor(Enum.Material.Snow, Color3.fromRGB(232, 238, 248))
+	t:SetMaterialColor(Enum.Material.Ice, Color3.fromRGB(176, 218, 240))
 	t:SetMaterialColor(Enum.Material.CrackedLava, Color3.fromRGB(255, 96, 40))
 	t:SetMaterialColor(Enum.Material.Mud, Color3.fromRGB(70, 56, 54))
 end
@@ -125,12 +125,14 @@ local function terrainSpec(id: string): IslandTerrain.Spec
 		deep = Enum.Material.Basalt,
 	}
 	if id == "Crystalfall" then
-		spec.ground = Enum.Material.Limestone
+		-- the snow mountain: snow with pale limestone crags on the steep faces; tall enough to need extra layers
+		spec.ground = Enum.Material.Snow
 		spec.ground2 = Enum.Material.Snow
-		spec.rock = Enum.Material.Glacier
+		spec.rock = Enum.Material.Limestone
 		spec.shore = Enum.Material.Ice
 		spec.deep = Enum.Material.Glacier
-		spec.noiseAmp = 3
+		spec.noiseAmp = 2.4
+		spec.layers = 32
 	elseif id == "Emberfang" then
 		spec.ground = Enum.Material.Basalt
 		spec.ground2 = Enum.Material.Slate

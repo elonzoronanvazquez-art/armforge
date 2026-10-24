@@ -218,11 +218,11 @@ Rocks.Defs = {
 		respawn = 14,
 		weight = 6,
 		shape = { kind = "Geode", radius = 5.0, height = 5.8, chunks = 28, core = 5 },
-		colors = { shell = rgb(78, 62, 104), mid = rgb(150, 90, 220), core = rgb(235, 160, 255), glow = rgb(190, 110, 255) },
-		materials = { shell = Enum.Material.Slate, mid = Enum.Material.Glass, core = Enum.Material.Neon },
+		colors = { shell = rgb(226, 234, 246), mid = rgb(150, 90, 220), core = rgb(235, 160, 255), glow = rgb(190, 110, 255) },
+		materials = { shell = Enum.Material.Snow, mid = Enum.Material.Glass, core = Enum.Material.Neon },
 		glowCore = true,
 		sound = "Crystal",
-		blurb = "Deep violet crystal clusters. Heavier than they look.",
+		blurb = "Deep violet crystal clusters under a coat of snow. Heavier than they look.",
 	},
 	Heartstone = {
 		id = "Heartstone",
@@ -242,11 +242,11 @@ Rocks.Defs = {
 		respawn = 28,
 		weight = 1.1,
 		shape = { kind = "Geode", radius = 7.0, height = 9.0, chunks = 40, core = 7 },
-		colors = { shell = rgb(40, 52, 96), mid = rgb(82, 150, 255), core = rgb(255, 214, 90), glow = rgb(255, 220, 110) },
-		materials = { shell = Enum.Material.Basalt, mid = Enum.Material.Glass, core = Enum.Material.Neon },
+		colors = { shell = rgb(150, 198, 234), mid = rgb(82, 150, 255), core = rgb(255, 214, 90), glow = rgb(255, 220, 110) },
+		materials = { shell = Enum.Material.Glacier, mid = Enum.Material.Glass, core = Enum.Material.Neon },
 		glowCore = true,
 		sound = "Crystal",
-		blurb = "A deep-sea geode with a golden heart. Drops plentiful Forge Shards.",
+		blurb = "A glacier-sheathed geode with a golden heart. Drops plentiful Forge Shards.",
 	},
 	-- ISLAND 4: EMBERFANG --------------------------------------------------------------------------------
 	Basalt = {
@@ -461,7 +461,7 @@ Rocks.Defs = {
 		materials = { shell = Enum.Material.Ice, mid = Enum.Material.Glass, core = Enum.Material.Neon },
 		glowCore = true,
 		sound = "Crystal",
-		blurb = "A frozen waterfall of crystal, still singing. It only yields to a reborn Forgemaster.",
+		blurb = "A frozen waterfall of crystal on the summit, still singing. It only yields to a reborn Forgemaster.",
 	},
 	CalderaSeal = {
 		id = "CalderaSeal",

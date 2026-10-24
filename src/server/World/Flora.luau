@@ -268,17 +268,34 @@ function Flora.vine(parent: Instance, from: Vector3, length: number, seed: numbe
 end
 
 -- Mossy rock: a grey boulder cluster with a green moss cap.
-function Flora.mossRock(parent: Instance, pos: Vector3, size: number, seed: number, stone: Color3?, moss: Color3?)
+function Flora.mossRock(parent: Instance, pos: Vector3, size: number, seed: number, stone: Color3?, moss: Color3?, capMaterial: Enum.Material?)
 	local grey = stone or Color3.fromRGB(104, 106, 100)
 	local green = moss or Color3.fromRGB(72, 116, 60)
+	local cap = capMaterial or Enum.Material.Grass
 	local yaw = Build.hash(seed, 1) * math.pi * 2
 	Build.part(parent, { name = "Boulder", size = V3(size, size * 0.7, size * 0.9), cf = CF(pos + V3(0, size * 0.22, 0)) * ANG(0.1, yaw, 0.08), color = grey, material = Enum.Material.Rock, shape = "Ball", collide = true })
-	Build.part(parent, { name = "Moss", size = V3(size * 0.92, size * 0.34, size * 0.8), cf = CF(pos + V3(0, size * 0.5, 0)) * ANG(0.1, yaw, 0.08), color = green, material = Enum.Material.Grass, shape = "Ball" })
+	Build.part(parent, { name = "Moss", size = V3(size * 0.92, size * 0.34, size * 0.8), cf = CF(pos + V3(0, size * 0.5, 0)) * ANG(0.1, yaw, 0.08), color = green, material = cap, shape = "Ball" })
 	if Build.hash(seed, 2) > 0.4 then
 		local s2 = size * 0.5
 		Build.part(parent, { name = "Boulder", size = V3(s2, s2 * 0.8, s2), cf = CF(pos + V3(size * 0.6, s2 * 0.2, size * 0.25)) * ANG(0, yaw, 0), color = grey, material = Enum.Material.Rock, shape = "Ball", collide = true })
-		Build.part(parent, { name = "Moss", size = V3(s2 * 0.9, s2 * 0.3, s2 * 0.8), cf = CF(pos + V3(size * 0.6, s2 * 0.5, size * 0.25)), color = green, material = Enum.Material.Grass, shape = "Ball" })
+		Build.part(parent, { name = "Moss", size = V3(s2 * 0.9, s2 * 0.3, s2 * 0.8), cf = CF(pos + V3(size * 0.6, s2 * 0.5, size * 0.25)), color = green, material = cap, shape = "Ball" })
 	end
+end
+
+-- Conifer: a trunk and four tiers of flat discs shrinking upward, each capped with snow when `snow` is set.
+function Flora.pine(parent: Instance, pos: Vector3, height: number, seed: number, snow: boolean)
+	local trunkH = height * 0.4
+	Build.part(parent, { name = "Trunk", size = V3(trunkH + 0.4, math.clamp(height * 0.07, 0.6, 1.6), math.clamp(height * 0.07, 0.6, 1.6)), cf = CF(pos + V3(0, trunkH / 2 - 0.2, 0)) * ANG(0, 0, math.pi / 2), color = Color3.fromRGB(88, 64, 46), material = Enum.Material.Wood, shape = "Cylinder", collide = true })
+	local green = lerpColor(Color3.fromRGB(38, 84, 62), Color3.fromRGB(52, 106, 72), Build.hash(seed, 1))
+	for k = 0, 3 do
+		local y = trunkH * 0.75 + k * height * 0.17
+		local d = height * 0.62 * (1 - k * 0.22)
+		Build.part(parent, { name = "Tier", size = V3(height * 0.12, d, d), cf = CF(pos + V3(0, y, 0)) * ANG(0, 0, math.pi / 2), color = green, material = Enum.Material.LeafyGrass, shape = "Cylinder" })
+		if snow then
+			Build.part(parent, { name = "SnowCap", size = V3(height * 0.05, d * 0.9, d * 0.9), cf = CF(pos + V3(0, y + height * 0.08, 0)) * ANG(0, 0, math.pi / 2), color = Color3.fromRGB(240, 246, 252), material = Enum.Material.Snow, shape = "Cylinder" })
+		end
+	end
+	Build.part(parent, { name = "Tip", size = V3(height * 0.16, height * 0.16, height * 0.16), cf = CF(pos + V3(0, trunkH * 0.75 + 3 * height * 0.17 + height * 0.14, 0)), color = if snow then Color3.fromRGB(240, 246, 252) else green, material = if snow then Enum.Material.Snow else Enum.Material.LeafyGrass, shape = "Ball" })
 end
 
 -- Saguaro-style cactus with up to two arms.
