@@ -10,6 +10,7 @@ local DataSchema = require(Shared.Logic.DataSchema)
 local Combat = require(Shared.Logic.Combat)
 local Momentum = require(Shared.Logic.Momentum)
 local Sessions = require(script.Parent.Sessions)
+local DevAccess = require(script.Parent.DevAccess)
 
 local Sync = {}
 
@@ -44,6 +45,7 @@ local function snapshot(session: Sessions.Session): any
 		critChance = stats.critChance,
 		reach = stats.reach,
 		momentum = if session.momentum and Momentum.remaining(session, now) > 0 then { island = session.momentum.island, remaining = Momentum.remaining(session, now) } else nil,
+		dev = DevAccess.allowed(session.player),
 		serverTime = workspace:GetServerTimeNow(),
 	}
 	return snap

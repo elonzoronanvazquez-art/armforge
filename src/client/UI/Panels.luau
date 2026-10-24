@@ -5,7 +5,7 @@ local Panels = {}
 
 function Panels.list(): { any }
 	local list = {}
-	for _, name in { "ArmsPanel", "SkillsPanel", "BoostersPanel", "IslandsPanel", "RebirthPanel", "SettingsPanel", "TrainingPanel" } do
+	for _, name in { "ArmsPanel", "SkillsPanel", "BoostersPanel", "IslandsPanel", "RebirthPanel", "SettingsPanel", "TrainingPanel", "DevPanel" } do
 		local module = script.Parent:FindFirstChild(name)
 		if module then
 			local ok, panel = pcall(require, module)

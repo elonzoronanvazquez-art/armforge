@@ -17,6 +17,7 @@ and keep going: every island ends with a guardian that, together with a rebirth,
 * Creatures in rocks, combat mechanics, guardians and the island gate: [docs/CREATURES.md](docs/CREATURES.md)
 * Adding an arm, rock, island, skill or booster: [docs/ADDING_CONTENT.md](docs/ADDING_CONTENT.md)
 * AI-generated assets, sounds, limitations: [docs/ASSETS.md](docs/ASSETS.md)
+* Developer mode (skip the grind: coins, XP, islands, teleports, god mode): [docs/DEV_MODE.md](docs/DEV_MODE.md)
 * Known issues and next priorities: [docs/NEXT.md](docs/NEXT.md)
 
 ## Quick start (Windows)
@@ -27,7 +28,7 @@ Requirements already used by this repo: Rojo 7.7, Lune 0.11, luau-lsp, Roblox St
 # build a place file and open it in Studio
 rojo build default.project.json -o build/armforge.rbxl
 
-# tests (322: pure logic, a creature fight simulation and the real server services on a fake Roblox server, under Lune) and strict typecheck (both Luau solvers)
+# tests (340: pure logic, a creature fight simulation and the real server services on a fake Roblox server, under Lune) and strict typecheck (both Luau solvers)
 lune run tests/run
 powershell -ExecutionPolicy Bypass -File scripts/typecheck.ps1     # or: bash scripts/tc.sh
 

@@ -283,7 +283,8 @@ local function applyEvents(enc: Enc, events: { CreatureSim.Event })
 			local player = Players:GetPlayerByUserId(e.userId)
 			local char = player and player.Character
 			local hum = char and char:FindFirstChildOfClass("Humanoid")
-			if player and hum and hum.Health > 0 then
+			local victim = if player then Sessions.get(player) else nil
+			if player and hum and hum.Health > 0 and not (victim and victim.flags.devGod) then -- devGod: developer mode only
 				hum:TakeDamage(e.damage)
 				remotes.Fx:FireClient(player, "Hurt", { dmg = e.damage, id = enc.id, attack = e.attack })
 			end
@@ -479,6 +480,7 @@ function EncounterService.hit(enc: Enc, player: Player, amount: number, opts: { 
 		end
 		return nil
 	end
+	amount *= Sessions.devPower(player) -- developer mode only; 1 for everyone else
 	local result = CreatureSim.applyDamage(sim, player.UserId, amount, { skill = opts.skill, crit = opts.crit }, now())
 	if result.ignored then
 		return nil

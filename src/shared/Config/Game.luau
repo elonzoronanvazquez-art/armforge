@@ -70,10 +70,16 @@ Game.Budgets = {
 	impactLightsMax = 3,
 }
 
--- Studio-only development tools (ignored in live servers, see server/Dev) ------------------------------------
+-- Development tools ---------------------------------------------------------------------------------------------
+-- server/Dev is the Studio-only bridge for scripts and the MCP. Developer MODE (server/Services/DevMode + the DEV panel) is the in-game
+-- test kit: coins, XP, levels, islands, teleports, god mode... It works for everyone in Roblox Studio and, in a live server, ONLY for the
+-- UserIds below and (when allowCreatorInLive) the place's owner. Set allowCreatorInLive = false before a public launch if you do not want
+-- even the owner to have it. See docs/DEV_MODE.md.
 Game.Dev = {
 	enabledInStudioOnly = true,
 	progressionMultiplier = 1, -- multiplies coins and XP in Studio when > 1
+	allowedUserIds = {} :: { number }, -- extra developers / testers, e.g. { 123456789 }
+	allowCreatorInLive = true, -- the place's creator (user-owned) or group owner (rank 255) may use developer mode in a live server
 }
 
 -- Starting resources -----------------------------------------------------------------------------------

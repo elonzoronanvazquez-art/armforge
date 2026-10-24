@@ -19,6 +19,7 @@ local CreatureConfig = require(Shared.Config.Creatures)
 local EncounterInfo = require(Shared.Logic.EncounterInfo)
 local Rng = require(Shared.Util.Rng)
 local RockBuilder = require(script.Parent.Parent.World.RockBuilder)
+local Sessions = require(script.Parent.Sessions)
 
 local RockService = {}
 
@@ -406,6 +407,7 @@ function RockService.damage(entry: Entry, player: Player?, userId: number, amoun
 	if encounterHandler and not encounterHandler.canDamage(entry, userId) then
 		return nil
 	end
+	amount *= Sessions.devPower(player) -- developer mode only; 1 for everyone else
 	local hitDirWorld = opts.hitDir
 	local dirLocal: Vector3? = nil
 	if hitDirWorld then

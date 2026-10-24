@@ -4,7 +4,7 @@ What is actually verified, where, and what is not. "Studio" below means a single
 Roblox Studio driven through the Studio MCP server (execute_luau on Server/Client, real mouse and keyboard input, screenshots,
 console output). Nothing is claimed that was not observed.
 
-## Automated (Lune, `lune run tests/run`): 322 tests, 0 failing
+## Automated (Lune, `lune run tests/run`): 340 tests, 0 failing
 
 The first block is pure logic; the second block runs the REAL server services (`src/server/Services`) against a fake Roblox server
 (`tests/support/ServerWorld.luau`: virtual clock and scheduler, Instance tree, Players/DataStore/CollectionService fakes with latency
@@ -92,6 +92,17 @@ the Islands panel with seven scrolling cards (boost line, requirements, guardian
 Not verified: fights against the new creatures by a human (only the scripted bot); a second client; the real DataStore with the migrated
 ladder; the HUD boost line after a real `Travel` (the dev `island` command set it); the jungle ambience (placeholder loop); performance on a
 phone with roughly 4,000 added world instances. Studio's MCP connection also flaps occasionally ("Place is not open"); retrying works.
+
+## Developer mode
+
+Automated (`tests/devmode.spec`, 18 tests, 340 total passing, strict typecheck clean): the access rule for every case, the pure command kit and
+its refusals, a hostile or unauthorized client getting nothing and never being told developer mode exists, and the server path (Studio, a listed
+UserId, `goto`, `power`, `god`, `equip`, `reset confirm`, `momentum`). Studio (real play): backtick opened the window, the DEV button showed, and
+the `Dev` request called from the client's real remote ran `help`, `kit` (HUD became level 40, 1B coins, 500 shards, Rebirth 6), `goto Dustwake`
+(teleported and switched the HUD island), and refused `coins abc` and a bare `reset`.
+
+Not verified: clicking the panel's buttons with a synthetic mouse (the click did not land on the target, so the buttons were exercised through the
+same request, not by hand); the live-server paths (listed UserId, creator, group owner) beyond the pure rule and the fake server; the group-owner lookup.
 
 ## Mountain mechanics (climbing, tramway, mini bosses, Summit Momentum)
 

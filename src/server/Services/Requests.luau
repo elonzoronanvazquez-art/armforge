@@ -14,6 +14,7 @@ local Sessions = require(script.Parent.Sessions)
 local Sync = require(script.Parent.Sync)
 local ArmService = require(script.Parent.ArmService)
 local Services = require(script.Parent.ProgressionServices)
+local DevMode = require(script.Parent.DevMode)
 
 local Requests = {}
 
@@ -118,6 +119,11 @@ local handlers: { [string]: Handler } = {
 			return { ok = false, err = "bad_args" }
 		end
 		return { ok = true }
+	end,
+	-- Developer mode: a command line, authorized by DevMode on every call (see docs/DEV_MODE.md).
+	Dev = function(player, args)
+		local result = DevMode.run(player, args.line)
+		return { ok = result.ok, err = if result.ok then nil else "dev", msg = result.msg }
 	end,
 	TutorialAck = function(player)
 		local s = Sessions.ready(player)

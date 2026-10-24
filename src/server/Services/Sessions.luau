@@ -59,6 +59,13 @@ function Sessions.ready(player: Player): Session?
 	return nil
 end
 
+-- Developer mode's damage multiplier for this player (1 unless DevMode set it).
+function Sessions.devPower(player: Player?): number
+	local s = if player then byPlayer[player] else nil
+	local p = if s then s.flags.devPower else nil
+	return if type(p) == "number" then p else 1
+end
+
 function Sessions.remove(player: Player)
 	byPlayer[player] = nil
 end

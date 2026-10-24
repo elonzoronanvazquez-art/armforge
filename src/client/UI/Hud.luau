@@ -221,6 +221,23 @@ local function buildMenu(root: Frame)
 	end
 end
 
+-- A small DEV button for authorized developers (the server tells us in the snapshot; it still checks every command itself).
+local function buildDevButton(root: Frame)
+	refs.devButton = W.button({
+		Text = "DEV",
+		Size = UDim2.fromOffset(64, 28),
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -14, 0, 14),
+		textSize = 12,
+		style = "danger",
+		Visible = false,
+		onClick = function()
+			UI.toggle("Dev")
+		end,
+		Parent = root,
+	})
+end
+
 local function buildArmCard(root: Frame)
 	local card = W.card({
 		Name = "ArmCard",
@@ -363,6 +380,9 @@ local function refreshStatus()
 	refs.nameText.Text = if d.rebirths > 0 then "Reforged Master" else "Forgemaster"
 	refs.rebirthPill.Visible = d.rebirths > 0
 	refs.rebirthPill.Text = `REBIRTH {d.rebirths}`
+	if refs.devButton then
+		refs.devButton.Visible = Store.live.dev == true
+	end
 	local here = IslandConfig.Defs[d.islands.current]
 	if here then
 		local boost = Islands.boostText(here.id)
@@ -501,6 +521,7 @@ function Hud.build(root: Frame)
 	buildTargetCard(root)
 	buildTutorial(root)
 	buildMenu(root)
+	buildDevButton(root)
 	buildArmCard(root)
 	buildSkillBar(root)
 	buildPunchButton(root)

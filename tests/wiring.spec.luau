@@ -128,7 +128,7 @@ return function(t, u)
 				t.truthy(src:find(member, 1, true), `{name} defines {member}`)
 			end
 		end
-		t.eq(n, 7, "seven panels")
+		t.eq(n, 8, "seven player panels plus the developer panel")
 	end)
 
 	t.test("every prompt panel name used by the world is a registered panel", function()

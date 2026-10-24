@@ -7,6 +7,7 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
 local CombatController = require(script.Parent.CombatController)
+local Store = require(script.Parent.Parent.Store)
 local UI = require(script.Parent.Parent.UI.UI)
 local W = require(script.Parent.Parent.UI.Widgets)
 
@@ -61,6 +62,11 @@ function InputController.start()
 		local panel = PANEL_KEYS[input.KeyCode]
 		if panel then
 			UI.toggle(panel)
+			return
+		end
+		-- developer mode: backtick, only for players the server authorized (it re-checks every command)
+		if input.KeyCode == Enum.KeyCode.Backquote and Store.live.dev == true then
+			UI.toggle("Dev")
 			return
 		end
 		local slot = SKILL_KEYS[input.KeyCode]
