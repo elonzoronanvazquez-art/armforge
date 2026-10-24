@@ -46,6 +46,7 @@ local function snapshot(session: Sessions.Session): any
 		reach = stats.reach,
 		momentum = if session.momentum and Momentum.remaining(session, now) > 0 then { island = session.momentum.island, remaining = Momentum.remaining(session, now) } else nil,
 		dev = DevAccess.allowed(session.player),
+		zone = session.zone,
 		serverTime = workspace:GetServerTimeNow(),
 	}
 	return snap

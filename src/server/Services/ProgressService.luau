@@ -139,6 +139,26 @@ function ProgressService.creatureReward(player: Player, reward: { coins: number,
 	Sync.mark(player)
 end
 
+-- A flat reward from an event (a fish, a gift): `coins` / `xp` are base values; rebirth bonuses, boosters, the dev multiplier, the boost of the
+-- island or zone it happened on and Summit Momentum all apply, exactly as for a rock. Returns what the player actually received.
+function ProgressService.eventReward(player: Player, coins: number, xp: number, island: string): (number, number)
+	local s = Sessions.ready(player)
+	if not s then
+		return 0, 0
+	end
+	local data = s.data
+	local mult = devMultiplier()
+	local boost = Islands.rewardBoost(island)
+	local momentum = Momentum.multipliers(s, island, os.clock())
+	local gotCoins = math.floor(coins * Formulas.coinMultiplier(data, data.arms.equipped) * mult * boost.coins * momentum.coins)
+	local gotXp = math.floor(xp * Formulas.xpMultiplier(data) * mult * boost.xp * momentum.xp)
+	data.coins += gotCoins
+	local result = Progression.addXp(data, gotXp)
+	announceLevelUps(player, result)
+	Sync.mark(player)
+	return gotCoins, gotXp
+end
+
 -- First victory over an island's guardian: tell the client what it unlocks (the server already recorded the completion).
 function ProgressService.guardianVictory(player: Player, islandId: string)
 	local s = Sessions.ready(player)

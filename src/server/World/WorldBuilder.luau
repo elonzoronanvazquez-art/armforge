@@ -14,6 +14,9 @@ local Emberfang = require(script.Parent.Islands.Emberfang)
 local Mossveil = require(script.Parent.Islands.Mossveil)
 local Dustwake = require(script.Parent.Islands.Dustwake)
 local Cogspire = require(script.Parent.Islands.Cogspire)
+local AtlanticSea = require(script.Parent.Islands.AtlanticSea)
+local CanopyGrove = require(script.Parent.Islands.CanopyGrove)
+local ZoneConfig = require(Shared.Config.Zones)
 local Voidreach = require(script.Parent.Islands.Voidreach)
 
 local WorldBuilder = {}
@@ -100,13 +103,14 @@ local function setupTerrain()
 end
 
 local function terrainSpec(id: string): IslandTerrain.Spec
-	local def = IslandConfig.Defs[id]
+	local def: { center: Vector3, radius: number } = IslandConfig.Defs[id] or ZoneConfig.Defs[id]
 	local feats = if id == "Forgeheart" then Forgeheart.features()
 		elseif id == "Crystalfall" then Crystalfall.features()
 		elseif id == "Emberfang" then Emberfang.features()
 		elseif id == "Mossveil" then Mossveil.features()
 		elseif id == "Dustwake" then Dustwake.features()
 		elseif id == "Cogspire" then Cogspire.features()
+		elseif id == "AtlanticSea" then AtlanticSea.features()
 		else {}
 	local spec: IslandTerrain.Spec = {
 		center = def.center,
@@ -151,6 +155,14 @@ local function terrainSpec(id: string): IslandTerrain.Spec
 		spec.deep = Enum.Material.Basalt
 		spec.noiseScale = 58
 		spec.noiseAmp = 3.4
+	elseif id == "AtlanticSea" then
+		spec.ground = Enum.Material.Sand
+		spec.ground2 = Enum.Material.Sand
+		spec.rock = Enum.Material.Limestone
+		spec.shore = Enum.Material.Sand
+		spec.deep = Enum.Material.Limestone
+		spec.noiseScale = 70
+		spec.noiseAmp = 1.8
 	elseif id == "Cogspire" then
 		spec.ground = Enum.Material.Cobblestone
 		spec.ground2 = Enum.Material.Pavement
@@ -186,7 +198,7 @@ function WorldBuilder.build(onSpawn: (string, SpawnLocation) -> ()): Folder
 
 	IslandTerrain.fillSea(-1400, 1400, -1500, 1300, SEA_LEVEL)
 	task.wait()
-	for _, id in { "Forgeheart", "Crystalfall", "Emberfang", "Mossveil", "Dustwake", "Cogspire" } do
+	for _, id in { "Forgeheart", "Crystalfall", "Emberfang", "Mossveil", "Dustwake", "Cogspire", "AtlanticSea" } do
 		IslandTerrain.build(terrainSpec(id))
 	end
 
@@ -203,6 +215,9 @@ function WorldBuilder.build(onSpawn: (string, SpawnLocation) -> ()): Folder
 	Dustwake.build(Build.folder(root, "Dustwake"), ctx)
 	task.wait()
 	Cogspire.build(Build.folder(root, "Cogspire"), ctx)
+	task.wait()
+	AtlanticSea.build(Build.folder(root, "AtlanticSea"), ctx)
+	CanopyGrove.build(Build.folder(root, "CanopyGrove"), ctx)
 	task.wait()
 	Voidreach.build(Build.folder(root, "Voidreach"), ctx)
 

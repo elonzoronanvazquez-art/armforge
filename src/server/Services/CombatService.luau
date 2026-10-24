@@ -15,6 +15,7 @@ local Combat = require(Shared.Logic.Combat)
 local PoseMath = require(Shared.Logic.PoseMath)
 local Progression = require(Shared.Logic.Progression)
 local Skills = require(Shared.Logic.Skills)
+local Islands = require(Shared.Logic.Islands)
 local Validate = require(Shared.Util.Validate)
 local RateLimiter = require(Shared.Logic.RateLimiter)
 local Rng = require(Shared.Util.Rng)
@@ -48,7 +49,7 @@ end
 
 -- Whether the player may attack this rock right now (reach, alive, island unlocked).
 local function validTarget(session: Sessions.Session, hrp: BasePart, entry: RockService.Entry, reach: number): boolean
-	if not session.data.islands.unlocked[entry.island] then
+	if not Islands.open(session.data, entry.island) then
 		return false
 	end
 	return RockService.inReach(entry, hrp.Position, reach, Game.Combat.reachSlack)
@@ -121,7 +122,7 @@ local function applyStrike(
 			if count >= 2 then
 				break
 			end
-			if session.data.islands.unlocked[other.island] then
+			if Islands.open(session.data, other.island) then
 				count += 1
 				local dmg = Combat.mitigate(hit.raw * 0.3, other.def.resistance, stats.pierce)
 				RockService.damage(other, player, player.UserId, dmg, {
@@ -410,7 +411,7 @@ local function onSkill(player: Player, skillIdRaw: any, rockIdRaw: any)
 				if count >= effect.maxTargets then
 					break
 				end
-				if session.data.islands.unlocked[entry.island] then
+				if Islands.open(session.data, entry.island) then
 					count += 1
 					local dmg = Combat.mitigate(stats.power * effect.damageMult, entry.def.resistance, stats.pierce)
 					RockService.damage(entry, player, player.UserId, dmg, {

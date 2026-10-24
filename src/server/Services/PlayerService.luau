@@ -54,6 +54,7 @@ local function setupCharacter(player: Player, character: Model)
 	Sync.mark(player)
 
 	local island = session.data.islands.current
+	session.zone = nil -- a respawn always comes back to the ladder
 	hrp.CFrame = PlayerService.spawnCFrame(island)
 	humanoid.Died:Connect(function()
 		task.wait(Players.RespawnTime)

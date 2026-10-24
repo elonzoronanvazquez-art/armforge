@@ -132,10 +132,23 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 * Existing saves keep every unlock. Players who already own Crystalfall or Emberfang can still travel there; Mossveil is a new, optional step
   for them. A v1 save is migrated so that any guardian *before* an unlocked island counts as beaten.
 
-### Sketch features not built yet
+### Zones: fishing, The Atlantic Sea, swing vines and The Canopy Grove
 
-Fishing rewards (10% chance to sail to "The Atlantic Sea", +25% XP and coins) and the dock's Atlantic zone, and the jungle vine teleport (2%).
-They are listed in [NEXT.md](NEXT.md).
+Zones (`Config/Zones`) are places you get sent to rather than rungs of the island ladder: they are always open to whoever arrives, never touch
+`islands.unlocked` / `islands.current`, and are marked on the session (`session.zone`) so the HUD island line says where you are.
+
+* **Dock fishing.** The Forgeheart dock has a "Cast / reel" prompt (E). Cast, wait 2.5 to 6.5 s for the bite alert, then reel inside a 2.2 s
+  window (too early spooks the fish, too late loses it; 1.2 s between casts). Catches follow a weighted table (Sardine to a Sunken Crown) and
+  pay coins and XP that grow slowly with level. **One catch in ten is a lucky one: the tide pulls you out to The Atlantic Sea** (a banner and
+  a 1.4 s delay, then you stand on the atoll).
+* **The Atlantic Sea** is a coral atoll with a lighthouse (its door sails you home), a wreck, palms and two rock fields (Reef Shallows and
+  Pearl Bank: Brinerock, Coralstone and the rare Pearlheart, holding Reef Scuttlers, Tide Brutes and the Pearl Leviathan). **Everything you
+  earn there (rocks, creatures, fish) is +25% coins and XP.** The zone mark clears if you leave the atoll or die.
+* **Swing vines.** Twelve vines hang in Mossveil. Each swing has a **2% chance to fling you up to The Canopy Grove**, a small floating
+  platform in the sky above the jungle with a gift chest (the Rootmother's gift, 8 Rootstone rocks' worth of coins and XP, every 5 minutes) and
+  a rope down to the jungle. The sketch's text for the vine was cut off; the 2% and the sky destination are my reading of it (see NEXT.md).
+
+All rolls and rewards are server side; only the prompt press crosses the wire. Developer mode: `goto AtlanticSea`, `goto CanopyGrove`, `home`.
 
 ## Economy targets (from the balance simulation)
 

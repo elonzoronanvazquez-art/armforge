@@ -51,7 +51,8 @@ Numbers accept `1000`, `1e6`, `-500`. Anything out of range is refused with a us
 | `boosters [n]` | n of every booster (default 3) |
 | `unlockall` | islands + arms |
 | `kit` | level 40, 1B coins, 500 shards, 6 rebirths, every island, every arm maxed and the strongest worn, every skill, boosters |
-| `goto <island>` | teleport to an island's arrival point and open it (`goto Dustwake`, any capitalisation) |
+| `goto <island or zone>` | teleport to an island's arrival point and open it (`goto Dustwake`), or to a zone (`goto AtlanticSea`, `goto CanopyGrove`); any capitalisation |
+| `home` | leave a zone: back to the jungle from the grove, to your current island from the Atlantic Sea |
 | `seal [island]` | teleport next to an island's guardian seal (default: the current island) |
 | `god [on/off]` | creatures cannot hurt you |
 | `power <n>` | multiply the damage you deal to rocks and creatures (1 = normal) |

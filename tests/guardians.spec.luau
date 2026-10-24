@@ -483,7 +483,7 @@ return function(t, u)
 
 	t.test("island creatures stay on their island and normal creatures never need a skill that unlocks later than level 12", function()
 		for id, c in Creatures.Defs do
-			t.truthy(IslandCfg.Defs[c.island], id)
+			t.truthy(IslandCfg.Defs[c.island] or u:load("Config/Zones").Defs[c.island], id)
 			if c.tier == "normal" and c.island == "Forgeheart" then
 				for _, skill in c.recommended.skills do
 					t.truthy(SkillCfg.Defs[skill].unlockLevel <= 5, id .. " " .. skill)

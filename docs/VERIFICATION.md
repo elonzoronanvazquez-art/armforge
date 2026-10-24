@@ -4,7 +4,7 @@ What is actually verified, where, and what is not. "Studio" below means a single
 Roblox Studio driven through the Studio MCP server (execute_luau on Server/Client, real mouse and keyboard input, screenshots,
 console output). Nothing is claimed that was not observed.
 
-## Automated (Lune, `lune run tests/run`): 340 tests, 0 failing
+## Automated (Lune, `lune run tests/run`): 356 tests, 0 failing
 
 The first block is pure logic; the second block runs the REAL server services (`src/server/Services`) against a fake Roblox server
 (`tests/support/ServerWorld.luau`: virtual clock and scheduler, Instance tree, Players/DataStore/CollectionService fakes with latency
@@ -226,3 +226,21 @@ the Output log contained no errors or warnings other than the expected "DataStor
 * **Avatars.** R15 only (the arm system needs the R15 joints). R6 players would keep their own arms and skip the animation layer.
 * Teleport-style exploits move the character client-side, so the proximity checks for travel/rebirth/training (HRP distance) are
   weaker than the data checks; they cannot grant anything the data rules forbid, but a hardening pass is listed in NEXT.md.
+
+## Fishing, The Atlantic Sea, swing vines, The Canopy Grove
+
+Automated (`tests/fishing.spec`, 16 tests, 356 total passing, strict typecheck clean under both solvers): the pure rules (bite window bounds, early /
+in-window / late reels, the weighted catch table and a 10% sail rate over 40,000 seeded rolls, a 2% vine fling over 50,000), the zone config (the
++25% boost, zones stay out of the island ladder, every zone rock and creature exists and is placed on land), the server flow on the fake
+server with a stubbed roll (a catch pays, a lucky catch moves you to the atoll, a zone rock pays 1.25x the same rock elsewhere, early / missed /
+cooldown / too far), vine swings (rate limit, reach, fling to the grove), the gift (only inside the grove, once per cooldown) and dev `goto` /
+`home`. Fight balance (`encounter_balance.spec`): Reef Scuttler 15 s, Tide Brute 20 s, Pearl Leviathan 51 s.
+
+Studio (real play, scripted through the dev bridge): the dock prompt part and 12 vines exist; a cast then a reel paid a catch; a lucky cast and reel
+put the player on The Atlantic Sea at its arrival point with the HUD line "THE ATLANTIC SEA +25% coins & XP"; 16 zone rocks spawned; a vine swing
+did nothing at a normal roll and flung the player to the grove on a lucky one; the grove gift paid and then reported its cooldown; the console
+showed no errors. Screenshots looked right (atoll, lighthouse, palms, coral; the grove with its trees, chest and "Rope down" sign).
+
+Not verified: pressing the real ProximityPrompts by hand (the dock, vine, chest, rope and lighthouse prompts were exercised through the same
+service functions), the fish card and the sail banner on a real client, the swing vine's tween on a real model, a second client, fighting the
+Atlantic creatures by a human, and how the atoll looks at dusk or on a phone.

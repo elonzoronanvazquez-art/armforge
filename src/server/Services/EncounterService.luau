@@ -20,6 +20,7 @@ local CreatureSim = require(Shared.Logic.CreatureSim)
 local CreatureStats = require(Shared.Logic.CreatureStats)
 local EncounterSM = require(Shared.Logic.EncounterSM)
 local Guardians = require(Shared.Logic.Guardians)
+local Islands = require(Shared.Logic.Islands)
 local Rng = require(Shared.Util.Rng)
 local Sessions = require(script.Parent.Sessions)
 local RockService = require(script.Parent.RockService)
@@ -95,7 +96,7 @@ end
 -- May this session fight this creature? (guardians need the rebirths; the island must be unlocked)
 local function eligible(session: Sessions.Session, island: string, def: CreatureConfig.CreatureDef): (boolean, string?)
 	local data = session.data
-	if not data.islands.unlocked[island] then
+	if not Islands.open(data, island) then
 		return false, "This island is still locked."
 	end
 	if def.tier == "boss" then

@@ -23,6 +23,9 @@ local ProgressService = require(script.Parent.Parent.Services.ProgressService)
 local RockService = require(script.Parent.Parent.Services.RockService)
 local EncounterService = require(script.Parent.Parent.Services.EncounterService)
 local TramService = require(script.Parent.Parent.Services.TramService)
+local FishingService = require(script.Parent.Parent.Services.FishingService)
+local VineService = require(script.Parent.Parent.Services.VineService)
+local ZoneService = require(script.Parent.Parent.Services.ZoneService)
 local Tram = require(Shared.Logic.Tram)
 local Momentum = require(Shared.Logic.Momentum)
 local CreatureSim = require(Shared.Logic.CreatureSim)
@@ -356,6 +359,32 @@ local COMMANDS: { [string]: (...any) -> any } = {
 	tramState = function()
 		local st = Tram.state(workspace:GetServerTimeNow())
 		return { docked = st.docked, leg = st.leg, cabin1 = st.cabin1, cabin2 = st.cabin2, departsIn = st.departsIn, riders = TramService.riderCount() }
+	end,
+	-- Fishing / vines with a fixed roll (0 = the first fish and always lucky, 0.99 = never lucky), then the normal luck again.
+	fish = function(luck: number)
+		local player = DevTools.player()
+		if not player then
+			return "no player"
+		end
+		FishingService.setRng({ next = function() return luck end, range = function(_, lo: number) return lo end })
+		return FishingService.trigger(player, os.clock())
+	end,
+	vine = function(luck: number)
+		local player = DevTools.player()
+		local vine = game:GetService("CollectionService"):GetTagged("SwingVine")[1]
+		if not (player and vine and vine:IsA("BasePart")) then
+			return "no player or vine"
+		end
+		VineService.setRng({ next = function() return luck end, range = function(_, lo: number) return lo end })
+		return VineService.swing(player, vine, os.clock())
+	end,
+	gift = function()
+		local player = DevTools.player()
+		return if player then VineService.gift(player, os.clock()) else "no player"
+	end,
+	zone = function()
+		local player = DevTools.player()
+		return ZoneService.current(player :: Player) or "none"
 	end,
 	momentum = function()
 		local s = session(DevTools.player())

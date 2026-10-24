@@ -306,6 +306,10 @@ return function(t, u)
 		{ "SlagBrute", { ChargedSmash = 1 }, 0, 5, "medium" },
 		{ "QuarryColossus", { ChargedSmash = 2, CriticalFocus = 1 }, 0, 10, "elite" },
 		{ "GromAnvilKing", { ChargedSmash = 2, CriticalFocus = 1 }, 1, 10, "boss" },
+		-- The Atlantic Sea (a fishing event zone, reachable from the start)
+		{ "ReefScuttler", {}, 0, 3, "small" },
+		{ "TideBrute", { ChargedSmash = 1 }, 0, 5, "medium" },
+		{ "PearlLeviathan", { ChargedSmash = 2, CriticalFocus = 1 }, 0, 10, "elite" },
 		-- Mossveil: reached after the first rebirth (the Forgeheart guardian's gate); its guardian wants the second
 		{ "MossbackCrawler", { ChargedSmash = 1 }, 1, 6, "small" },
 		{ "RootbornBrute", { ChargedSmash = 2 }, 1, 8, "medium" },

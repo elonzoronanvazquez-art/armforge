@@ -20,6 +20,8 @@ local Validate = require(Shared.Util.Validate)
 local Sessions = require(script.Parent.Sessions)
 local Sync = require(script.Parent.Sync)
 local DevAccess = require(script.Parent.DevAccess)
+local ZoneService = require(script.Parent.ZoneService)
+local ZoneConfig = require(Shared.Config.Zones)
 local ProgressService = require(script.Parent.ProgressService)
 local ArmService = require(script.Parent.ArmService)
 local PlayerService = require(script.Parent.PlayerService)
@@ -99,6 +101,7 @@ local function resetProfile(player: Player, session: Sessions.Session): Result
 	session.combat = Combat.newState("Starter")
 	session.training = nil
 	session.momentum = nil
+	session.zone = nil
 	session.flags.devGod = nil
 	session.flags.devPower = nil
 	session.flags.devSpeed = nil
@@ -171,13 +174,23 @@ local SERVER_COMMANDS: { [string]: (Player, Sessions.Session, { string }) -> Res
 		if not id then
 			return fail("usage: goto <island>")
 		end
-		-- accept any capitalisation
+		-- zones (The Atlantic Sea, the Canopy Grove) first, then the ladder; any capitalisation
+		for zoneId, zone in ZoneConfig.Defs do
+			if string.lower(zoneId) == string.lower(id) then
+				local ok, why = ZoneService.enter(player, zoneId)
+				return if ok then done(`teleported to {zone.name}`) else fail(`could not enter {zone.name}: {tostring(why)}`)
+			end
+		end
 		for islandId in IslandConfig.Defs do
 			if string.lower(islandId) == string.lower(id) then
 				return goTo(player, session, islandId)
 			end
 		end
 		return goTo(player, session, id)
+	end,
+	home = function(player, session)
+		local ok, why = ZoneService.leave(player)
+		return if ok then done("back on the ladder") else fail(`could not leave: {tostring(why)}`)
 	end,
 	seal = function(player, session, args)
 		local island = Validate.id(args[1]) or session.data.islands.current

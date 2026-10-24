@@ -481,8 +481,8 @@ local function buildLandmarks(parent: Instance)
 end
 
 -- Fishing dock and island flora ---------------------------------------------------------------------------------------------------
--- The dock is the sketch's "fishing on the dock" spot. It is scenery for now: the fishing rewards and the Atlantic Sea trip are
--- not implemented (docs/NEXT.md).
+-- The dock is the sketch's "fishing on the dock" spot: the prompt at its end casts and reels (Services/FishingService). One catch in ten, the
+-- tide pulls the angler out to The Atlantic Sea (Config/Zones).
 
 local DOCK_X = -52
 local DOCK_WOOD = Color3.fromRGB(128, 94, 62)
@@ -539,6 +539,18 @@ local function buildDock(parent: Instance)
 		Build.part(m, { name = "Line", size = V3(0.05, lineLen, 0.05), cf = CF(tip.X, tip.Y - lineLen / 2, tip.Z), color = Color3.fromRGB(230, 230, 230) })
 		Build.part(m, { name = "Bobber", size = V3(0.8, 0.8, 0.8), cf = CF(tip.X, -1.5, tip.Z), color = if k == 1 then Color3.fromRGB(230, 60, 50) else Color3.fromRGB(250, 220, 70), material = Enum.Material.SmoothPlastic, shape = "Ball" })
 	end
+	-- the fishing spot: an invisible part at the end of the dock carrying the cast / reel prompt
+	local spot = Build.part(m, { name = "FishingSpot", size = V3(10, 1, 6), cf = CF(DOCK_X, deckY + 1, z1 + 9), transparency = 1 })
+	local fishPrompt = Instance.new("ProximityPrompt")
+	fishPrompt.ActionText = "Cast / reel"
+	fishPrompt.ObjectText = "Dock fishing"
+	fishPrompt.HoldDuration = 0
+	fishPrompt.MaxActivationDistance = 16
+	fishPrompt.RequiresLineOfSight = false
+	fishPrompt.KeyboardKeyCode = Enum.KeyCode.E
+	fishPrompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+	fishPrompt.Parent = spot
+	Build.tag(spot, "FishingSpot")
 	Build.pillar(m, "LanternPost", V3(DOCK_X, deckY + 0.25, z1 + 14), 0.5, 6, { color = DOCK_WOOD2, material = Enum.Material.Wood })
 	local lantern = Build.part(m, { name = "Lantern", size = V3(1.3, 1.6, 1.3), cf = CF(DOCK_X, deckY + 6.9, z1 + 14), color = GLOW, neon = true })
 	Build.light(lantern, GLOW, 1.3, 26)
@@ -555,7 +567,7 @@ local function buildDock(parent: Instance)
 	Build.part(boat, { name = "Seat", size = V3(3.6, 0.3, 0.9), cf = CF(DOCK_X + 8.5, -0.4, bz), color = DOCK_WOOD2, material = Enum.Material.Wood })
 	Build.part(boat, { name = "Rope", size = V3(0.2, 0.2, 5.6), cf = CF(DOCK_X + 5.6, 0.2, bz - 3.8) * ANG(0, math.rad(40), 0), color = Color3.fromRGB(190, 170, 120) })
 	-- signs
-	Build.sign(m, "FISHING DOCK", CF(DOCK_X + 8, deckY + 5.5, z0 - 2), V3(12, 2.4, 0.4), Color3.fromRGB(34, 32, 38), CREAM)
+	Build.sign(m, "FISHING DOCK  ·  cast at the end", CF(DOCK_X + 8, deckY + 5.5, z0 - 2), V3(16, 2.4, 0.4), Color3.fromRGB(34, 32, 38), CREAM)
 	Build.part(m, { name = "SignPostL", size = V3(0.6, 6, 0.6), cf = CF(DOCK_X + 2.4, deckY + 3.2, z0 - 2), color = IRON, material = Enum.Material.Metal })
 	Build.part(m, { name = "SignPostR", size = V3(0.6, 6, 0.6), cf = CF(DOCK_X + 13.6, deckY + 3.2, z0 - 2), color = IRON, material = Enum.Material.Metal })
 	-- a path of lamps to the dock

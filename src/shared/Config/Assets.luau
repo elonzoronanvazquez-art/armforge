@@ -77,6 +77,8 @@ Assets.Ambience = {
 	Mossveil = { id = "rbxassetid://9125602386", volume = 0.07 },
 	Dustwake = { id = "rbxassetid://9112823199", volume = 0.1 },
 	Cogspire = { id = "rbxassetid://9112823199", volume = 0.12 },
+	AtlanticSea = { id = "rbxassetid://9125602386", volume = 0.1 },
+	CanopyGrove = { id = "rbxassetid://9125602386", volume = 0.09 },
 	Voidreach = { id = "rbxassetid://9125602386", volume = 0.1 },
 } :: { [string]: { id: string, volume: number } }
 

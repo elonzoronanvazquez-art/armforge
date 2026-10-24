@@ -16,6 +16,7 @@ local Progression = require(Shared.Logic.Progression)
 local Islands = require(Shared.Logic.Islands)
 local Momentum = require(Shared.Logic.Momentum)
 local IslandConfig = require(Shared.Config.Islands)
+local ZoneConfig = require(Shared.Config.Zones)
 local Format = require(Shared.Util.Format)
 local Store = require(script.Parent.Parent.Store)
 local Theme = require(script.Parent.Theme)
@@ -383,8 +384,13 @@ local function refreshStatus()
 	if refs.devButton then
 		refs.devButton.Visible = Store.live.dev == true
 	end
+	local zone = if Store.live.zone then ZoneConfig.Defs[Store.live.zone :: string] else nil
 	local here = IslandConfig.Defs[d.islands.current]
-	if here then
+	if zone then
+		local boost = Islands.boostText(zone.id)
+		refs.islandText.Text = if boost then `{string.upper(zone.name)}  ·  {boost}` else string.upper(zone.name)
+		refs.islandText.TextColor3 = if boost then C.good else C.sub
+	elseif here then
 		local boost = Islands.boostText(here.id)
 		refs.islandText.Text = if boost then `{string.upper(here.name)}  ·  {boost}` else string.upper(here.name)
 		refs.islandText.TextColor3 = if boost then C.good else C.sub

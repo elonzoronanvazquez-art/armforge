@@ -10,6 +10,7 @@ local CollectionService = game:GetService("CollectionService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local IslandConfig = require(Shared.Config.Islands)
+local ZoneConfig = require(Shared.Config.Zones)
 local Assets = require(Shared.Config.Assets)
 local Store = require(script.Parent.Parent.Store)
 
@@ -22,6 +23,8 @@ local THEMES = {
 	Mossveil = { clock = 11.4, ambient = Color3.fromRGB(70, 104, 80), outdoor = Color3.fromRGB(108, 142, 100), atmoColor = Color3.fromRGB(176, 226, 170), decay = Color3.fromRGB(84, 134, 92), density = 0.38, tint = Color3.fromRGB(236, 255, 236), brightness = 2.3 },
 	Dustwake = { clock = 13.4, ambient = Color3.fromRGB(150, 122, 92), outdoor = Color3.fromRGB(190, 158, 118), atmoColor = Color3.fromRGB(240, 204, 150), decay = Color3.fromRGB(214, 160, 100), density = 0.3, tint = Color3.fromRGB(255, 240, 214), brightness = 3.0 },
 	Cogspire = { clock = 15.6, ambient = Color3.fromRGB(116, 96, 76), outdoor = Color3.fromRGB(160, 132, 100), atmoColor = Color3.fromRGB(214, 176, 124), decay = Color3.fromRGB(150, 110, 70), density = 0.42, tint = Color3.fromRGB(255, 236, 210), brightness = 2.4 },
+	AtlanticSea = { clock = 12.6, ambient = Color3.fromRGB(110, 150, 170), outdoor = Color3.fromRGB(150, 196, 214), atmoColor = Color3.fromRGB(190, 232, 245), decay = Color3.fromRGB(120, 180, 205), density = 0.3, tint = Color3.fromRGB(240, 255, 255), brightness = 2.8 },
+	CanopyGrove = { clock = 10.2, ambient = Color3.fromRGB(100, 140, 100), outdoor = Color3.fromRGB(150, 190, 140), atmoColor = Color3.fromRGB(200, 240, 190), decay = Color3.fromRGB(110, 160, 110), density = 0.34, tint = Color3.fromRGB(240, 255, 235), brightness = 2.6 },
 	Voidreach = { clock = 22.5, ambient = Color3.fromRGB(60, 44, 90), outdoor = Color3.fromRGB(80, 60, 120), atmoColor = Color3.fromRGB(140, 100, 220), decay = Color3.fromRGB(60, 40, 110), density = 0.4, tint = Color3.fromRGB(230, 220, 255), brightness = 1.6 },
 }
 
@@ -55,6 +58,13 @@ local function nearestIsland(pos: Vector3): string
 	local best, bestDist = "Forgeheart", math.huge
 	for id, def in IslandConfig.Defs do
 		local d = (Vector3.new(def.center.X, 0, def.center.Z) - Vector3.new(pos.X, 0, pos.Z)).Magnitude
+		if d < bestDist then
+			best, bestDist = id, d
+		end
+	end
+	-- zones count with their full 3D distance, so the sky grove only takes over when you are up there
+	for id, def in ZoneConfig.Defs do
+		local d = (def.center - pos).Magnitude
 		if d < bestDist then
 			best, bestDist = id, d
 		end

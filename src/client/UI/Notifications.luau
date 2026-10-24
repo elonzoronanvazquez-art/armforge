@@ -151,6 +151,71 @@ local function banner(title: string, subtitle: string, color: Color3)
 	tweenOut(card, 3.2, 0.6)
 end
 
+-- Dock fishing: a small card while a line is in the water (waiting, then the bite with a shrinking reel window) and toasts for the outcome.
+local fishCard: Frame? = nil
+local fishToken = 0
+
+local function hideFishCard()
+	fishToken += 1
+	if fishCard then
+		fishCard:Destroy()
+		fishCard = nil
+	end
+end
+
+local function showFishCard(title: string, text: string, color: Color3, window: number?)
+	hideFishCard()
+	local card = W.card({ AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 150), Size = UDim2.fromOffset(340, 64), ZIndex = 20, Parent = root })
+	local stroke = card:FindFirstChildOfClass("UIStroke") :: UIStroke
+	stroke.Color = color
+	stroke.Thickness = 2.5
+	W.text({ Size = UDim2.new(1, 0, 0, 28), Position = UDim2.fromOffset(0, 4), Font = Theme.fontBlack, TextSize = 22, TextColor3 = color, TextXAlignment = Enum.TextXAlignment.Center, Text = title, Parent = card })
+	W.text({ Size = UDim2.new(1, 0, 0, 18), Position = UDim2.fromOffset(0, 34), TextSize = 13, TextColor3 = C.sub, TextXAlignment = Enum.TextXAlignment.Center, Text = text, Parent = card })
+	fishCard = card
+	local token = fishToken
+	if window then
+		local bar = W.frame({ Size = UDim2.new(1, -16, 0, 5), Position = UDim2.new(0, 8, 1, -9), BackgroundColor3 = color, BackgroundTransparency = 0, Parent = card })
+		TweenService:Create(bar, TweenInfo.new(window, Enum.EasingStyle.Linear), { Size = UDim2.new(0, 0, 0, 5) }):Play()
+	end
+	task.delay(if window then window + 0.3 else 50, function()
+		if fishToken == token then
+			hideFishCard()
+		end
+	end)
+end
+
+local function onFishing(p: any)
+	local phase = p.phase
+	if phase == "cast" then
+		EffectsController.sound("Click", nil, 1, 0.8)
+		showFishCard("LINE CAST", "Wait for a bite...", C.sub, nil)
+	elseif phase == "bite" then
+		EffectsController.sound("Spawn", nil, 1, 1)
+		showFishCard("FISH ON!", "Press E / tap to reel it in!", C.warn, p.window)
+	elseif phase == "early" then
+		hideFishCard()
+		Notifications.toast("Too early! You spooked the fish.", "warn")
+	elseif phase == "missed" then
+		hideFishCard()
+		Notifications.toast("It got away...", "warn")
+	elseif phase == "catch" then
+		hideFishCard()
+		EffectsController.sound("Coin", nil, 1, 1)
+		Notifications.toast(`{p.name}! +{Format.compact(p.coins)} coins, +{Format.compact(p.xp)} XP`, "good")
+		if p.sail then
+			local flash = W.frame({ Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(150, 230, 250), BackgroundTransparency = 1, ZIndex = 40, Parent = root })
+			TweenService:Create(flash, TweenInfo.new(1.3), { BackgroundTransparency = 0.1 }):Play()
+			task.delay(2.2, function()
+				TweenService:Create(flash, TweenInfo.new(1.4), { BackgroundTransparency = 1 }):Play()
+				task.delay(1.5, function()
+					flash:Destroy()
+				end)
+			end)
+			banner("THE TIDE PULLS YOU OUT", "Hold on tight...", Color3.fromRGB(110, 220, 240))
+		end
+	end
+end
+
 local function onGuardianVictory(p: any)
 	local flash = W.frame({ Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(255, 232, 170), BackgroundTransparency = 0.35, ZIndex = 40, Parent = root })
 	TweenService:Create(flash, TweenInfo.new(1.2), { BackgroundTransparency = 1 }):Play()
@@ -198,6 +263,8 @@ function Notifications.start(uiRoot: Frame)
 			Notifications.toast(p.text, p.kind)
 		elseif kind == "Island" then
 			banner(string.upper(p.name), p.tagline, C.accent)
+		elseif kind == "Fishing" then
+			onFishing(p)
 		elseif kind == "Rebirth" then
 			onRebirth(p)
 		elseif kind == "CreatureReward" then

@@ -88,6 +88,17 @@ return function(t, u)
 				end
 			end
 		end
+		local Zones = u:load("Config/Zones")
+		for _, zoneId in Zones.Order do
+			for _, field in Zones.Defs[zoneId].fields do
+				for _, entry in field.rocks do
+					local rock = Rocks.Defs[entry.rock]
+					t.truthy(rock, "rock " .. entry.rock)
+					t.eq(rock.island, zoneId, entry.rock .. " zone")
+					used[entry.rock] = true
+				end
+			end
+		end
 		for id, def in Rocks.Defs do
 			if def.size == "seal" then
 				-- a seal is placed by its island's guardian or mini boss entry, not by a field

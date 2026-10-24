@@ -124,6 +124,9 @@ matching loadout (8 seeds each, bot reaction 0.35 s):
 | Boiler Brute | normal (plating) | Magma L10, Shatter Wave | 8/8 | 26 s |
 | Brass Behemoth | elite | Magma L13, Shatter Wave 3 | 8/8 | 51 s (0/8 punching only) |
 | Cogheart, the Foundry Engine | guardian | Magma L11 after five rebirths | 8/8 | 99 s (0/8 punching only) |
+| Reef Scuttler | normal | Starter L2 | 8/8 | 15 s |
+| Tide Brute | normal (armored) | Stonebreaker L2, Charged Smash | 8/8 | 20 s |
+| Pearl Leviathan | elite | Alloy L2 | 8/8 | 51 s |
 | Dune Skitterer | normal | Void L1 after five rebirths | 8/8 | 9 s |
 | Husk Sentinel | normal (crust) | Void L3, Shatter Wave | 8/8 | 22 s |
 | Tomb Colossus | elite | Void L5, Shatter Wave 3 | 8/8 | 44 s (4/8 in 443 s punching only) |

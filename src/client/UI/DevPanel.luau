@@ -157,6 +157,9 @@ function Panel.build(content: Frame)
 			table.insert(islands, { label = "Go: " .. def.name, cmd = "goto " .. id })
 		end
 	end
+	table.insert(islands, { label = "Go: The Atlantic Sea", cmd = "goto AtlanticSea" })
+	table.insert(islands, { label = "Go: The Canopy Grove", cmd = "goto CanopyGrove" })
+	table.insert(islands, { label = "Sail / climb home", cmd = "home" })
 	table.insert(islands, { label = "Go to this island's seal", cmd = "seal" })
 	section(scroll, 3, "TELEPORT (opens the island)", islands)
 	section(scroll, 4, "PLAYER", {

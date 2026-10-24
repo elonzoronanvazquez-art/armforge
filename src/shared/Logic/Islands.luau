@@ -2,6 +2,7 @@
 -- Island access. The server is authoritative; the UI uses the same function to show requirements.
 
 local IslandConfig = require(script.Parent.Parent.Config.Islands)
+local ZoneConfig = require(script.Parent.Parent.Config.Zones)
 
 local Islands = {}
 
@@ -43,7 +44,7 @@ end
 
 -- Reward multipliers for everything earned on this island (1 / 1 when the island has no boost).
 function Islands.rewardBoost(islandId: string): { coins: number, xp: number }
-	local def = IslandConfig.Defs[islandId]
+	local def: { boost: IslandConfig.Boost? }? = IslandConfig.Defs[islandId] or ZoneConfig.Defs[islandId]
 	local boost = def and def.boost
 	if boost then
 		return { coins = boost.coins, xp = boost.xp }
@@ -53,7 +54,7 @@ end
 
 -- A short label for the HUD / island cards ("+50% coins & XP"), nil without a boost.
 function Islands.boostText(islandId: string): string?
-	local def = IslandConfig.Defs[islandId]
+	local def: { boost: IslandConfig.Boost? }? = IslandConfig.Defs[islandId] or ZoneConfig.Defs[islandId]
 	local boost = def and def.boost
 	if not boost then
 		return nil
@@ -64,6 +65,15 @@ function Islands.boostText(islandId: string): string?
 		return `+{coins}% coins & XP`
 	end
 	return `+{coins}% coins, +{xp}% XP`
+end
+
+-- May the player earn on / fight at `islandId`? Ladder islands need to be unlocked; zones (The Atlantic Sea, the Canopy Grove) are open to
+-- anyone who got there, because getting there is the unlock.
+function Islands.open(data: any, islandId: string): boolean
+	if IslandConfig.Defs[islandId] == nil and ZoneConfig.Defs[islandId] ~= nil then
+		return true
+	end
+	return data.islands.unlocked[islandId] == true
 end
 
 -- Every requirement for entering this island with whether it is met. The guardian gate is TWO separate lines: the rebirths and

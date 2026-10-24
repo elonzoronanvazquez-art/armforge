@@ -11,6 +11,7 @@ local Net = require(Shared.Net)
 local Game = require(Shared.Config.Game)
 local RockConfig = require(Shared.Config.Rocks)
 local IslandConfig = require(Shared.Config.Islands)
+local ZoneConfig = require(Shared.Config.Zones)
 local Geometry = require(Shared.Logic.RockGeometry)
 local RockSim = require(Shared.Logic.RockSim)
 local RespawnGuard = require(Shared.Logic.RespawnGuard)
@@ -556,6 +557,28 @@ local function sealSpot(want: Vector3): Vector3?
 	return nil
 end
 
+-- Places every configured rock of a list of fields; returns the new running total (stops at the global cap).
+local function populateFields(islandId: string, fields: { IslandConfig.Field }, taken: { Vector3 }, total: number): number
+	for fi, field in fields do
+		for ri, entry in field.rocks do
+			local def = RockConfig.Defs[entry.rock]
+			local seed = (fi * 1000 + ri * 100) + #islandId * 7
+			local points = spawnPoints(islandId, field, entry.count, taken, seed)
+			for i, pos in points do
+				if total >= Game.Rocks.maxActive then
+					return total
+				end
+				spawnRock(def, islandId, pos, seed + i * 13)
+				total += 1
+			end
+			if #points < entry.count then
+				warn(`[ARMFORGE] only placed {#points}/{entry.count} {entry.rock} in {field.name}`)
+			end
+		end
+	end
+	return total
+end
+
 -- Spawns every configured rock and each island's guardian seal. Call after the island ground exists.
 function RockService.populate(): number
 	local total = 0
@@ -584,24 +607,16 @@ function RockService.populate(): number
 				warn(`[ARMFORGE] could not place the {islandId} mini boss seal {mini.seal} near {mini.position}`)
 			end
 		end
-		for fi, field in island.fields do
-			for ri, entry in field.rocks do
-				local def = RockConfig.Defs[entry.rock]
-				local seed = (fi * 1000 + ri * 100) + #islandId * 7
-				local points = spawnPoints(islandId, field, entry.count, taken, seed)
-				for i, pos in points do
-					if total >= Game.Rocks.maxActive then
-						warn("[ARMFORGE] rock cap reached")
-						return total
-					end
-					spawnRock(def, islandId, pos, seed + i * 13)
-					total += 1
-				end
-				if #points < entry.count then
-					warn(`[ARMFORGE] only placed {#points}/{entry.count} {entry.rock} in {field.name}`)
-				end
-			end
+		total = populateFields(islandId, island.fields, taken, total)
+		if total >= Game.Rocks.maxActive then
+			warn("[ARMFORGE] rock cap reached")
+			return total
 		end
+	end
+	-- zones (The Atlantic Sea): rocks only, no seals
+	for _, zoneId in ZoneConfig.Order do
+		local zone = ZoneConfig.Defs[zoneId]
+		total = populateFields(zoneId, zone.fields, {}, total)
 	end
 	task.spawn(burnLoop)
 	return total

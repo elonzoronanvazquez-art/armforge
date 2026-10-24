@@ -2,7 +2,7 @@
 -- MOSSVEIL JUNGLE (biome 2): a drowned-green jungle with a big lake, a waterfall off a rock cliff, giant and small trees, bushes and
 -- ferns, mossy rocks, hanging vines, a vine-curtained gate and the Rootmother's seal ringed by standing stones.
 --
--- Sketch notes not built yet: the 2% vine teleport (docs/NEXT.md).
+-- Swing vines: twelve of them hang round the jungle; each swing has a 2% chance to fling you to the Canopy Grove (Services/VineService).
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local IslandConfig = require(Shared.Config.Islands)
@@ -279,6 +279,57 @@ local function buildFlora(parent: Instance)
 	})
 end
 
+-- Swing vines: a pole, a branch and a rope you can swing on; the rope's model sways when used ------------------------------------------------------
+
+local function buildSwingVines(parent: Instance)
+	local m = Build.model(parent, "SwingVines")
+	local avoid: { Flora.Zone } = {
+		{ pos = SPAWN, radius = 70 },
+		{ pos = SKYPORT, radius = 40 },
+		{ pos = FERN, radius = 54 },
+		{ pos = TERRACE, radius = 46 },
+		{ pos = SEAL, radius = 44 },
+		{ pos = GATE, radius = 26 },
+		{ pos = CLIFF, radius = 24 },
+		{ pos = LAKE, radius = 56 },
+	}
+	Flora.scatter({
+		center = C, radius = 128, count = 12, seed = 6100, minY = 0.2, maxY = 8, avoid = avoid, spacing = 26,
+		make = function(pos, i, rnd)
+			local yaw = rnd * math.pi * 2
+			local top = pos + V3(0, 11, 0)
+			Build.pillar(m, "VinePole", pos + V3(0, -0.4, 0), 1.1, 11.4, { color = BARK, material = Enum.Material.Wood, collide = true })
+			local arm = CF(top) * ANG(0, yaw, 0)
+			Build.part(m, { name = "VineBranch", size = V3(7, 0.8, 0.8), cf = arm * CF(3.2, 0, 0), color = BARK, material = Enum.Material.Wood })
+			Flora.bush(m, top + V3(0, 0.6, 0), 4, i, LEAVES)
+			-- the rope is its own model, pivoting where it meets the branch, so the service can sway it
+			local rope = Build.model(m, "SwingVine")
+			local hinge = (arm * CF(6.4, 0, 0)).Position
+			local pivot = Build.part(rope, { name = "Hinge", size = V3(0.4, 0.4, 0.4), cf = CF(hinge), transparency = 1 })
+			rope.PrimaryPart = pivot
+			Build.part(rope, { name = "Rope", size = V3(0.35, 9, 0.35), cf = CF(hinge + V3(0, -4.5, 0)), color = Color3.fromRGB(74, 122, 60), material = Enum.Material.Grass })
+			Build.part(rope, { name = "Knot", size = V3(1, 1, 1), cf = CF(hinge + V3(0, -9.2, 0)), color = Color3.fromRGB(110, 170, 80), material = Enum.Material.Grass, shape = "Ball" })
+			for k = 1, 4 do
+				Build.part(rope, { name = "VineLeaf", size = V3(1.6, 0.12, 1.1), cf = CF(hinge + V3(0, -1.4 - k * 1.8, 0)) * ANG(0, k * 1.3, 0.5 * (if k % 2 == 0 then 1 else -1)), color = Color3.fromRGB(110, 170, 80), material = Enum.Material.LeafyGrass })
+			end
+			local grip = Build.part(rope, { name = "Grip", size = V3(2.4, 2, 2.4), cf = CF(hinge + V3(0, -8.4, 0)), transparency = 1 })
+			local p = Instance.new("ProximityPrompt")
+			p.ActionText = "Swing"
+			p.ObjectText = "Jungle vine"
+			p.HoldDuration = 0
+			p.MaxActivationDistance = 14
+			p.RequiresLineOfSight = false
+			p.KeyboardKeyCode = Enum.KeyCode.E
+			p.Parent = grip
+			Build.tag(grip, "SwingVine")
+		end,
+	})
+	-- a hint at the gate, in the jungle's own words
+	local gy = Build.groundY(SPAWN.X + 22, SPAWN.Z - 24) or 0.6
+	Build.sign(m, "SWING VINES  ·  who knows where one leads?", CF(SPAWN.X + 22, gy + 6, SPAWN.Z - 24) * ANG(0, math.pi, 0), V3(20, 2.2, 0.4), Color3.fromRGB(28, 44, 32), Color3.fromRGB(220, 255, 200))
+	Build.part(m, { name = "HintPost", size = V3(0.6, 6, 0.6), cf = CF(SPAWN.X + 22, gy + 3, SPAWN.Z - 24), color = BARK, material = Enum.Material.Wood })
+end
+
 -- Island -------------------------------------------------------------------------------------------------------------------------
 
 function Mossveil.build(folder: Folder, ctx: any)
@@ -315,6 +366,7 @@ function Mossveil.build(folder: Folder, ctx: any)
 	signPost(signs, "FERN HOLLOW", V3(FERN.X + 10, Build.groundY(FERN.X + 10, FERN.Z + 56) or 0.6, FERN.Z + 56), 0)
 	signPost(signs, "JADE TERRACE", V3(TERRACE.X + 8, Build.groundY(TERRACE.X + 8, TERRACE.Z + 48) or 0.6, TERRACE.Z + 48), 0)
 	buildFlora(folder)
+	buildSwingVines(folder)
 end
 
 return Mossveil

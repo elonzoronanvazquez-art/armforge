@@ -61,6 +61,13 @@ A timed island boost is `momentum = { coins, xp, seconds }` on the island def; `
 For a guardian: add a seal rock (`size = "seal"`) and the island's `guardian = { creature, seal, position, rebirths }`; the next island's
 requirements pick up the guardian gate automatically (`Logic/Islands.requirements`).
 
+## A new zone (a place you are sent to, not a ladder rung)
+
+Add a `ZoneDef` to `Config/Zones` (centre, radius, arrival, optional `boost`, rock fields, `floating`, `home`), put its id in `Zones.Order`, build
+it in `World/Islands/<Id>.luau` and call it from `WorldBuilder`, give its rocks `island = "<Id>"`, and send players there with
+`ZoneService.enter`. `Islands.open` treats zones as always open and `Islands.rewardBoost` reads the zone's boost; nothing in `islands.*` of the save
+changes. `tests/fishing.spec` shows how to test a zone.
+
 ## A new skill / booster / training station
 
 * Skill: `Config/Skills` (def + `Effects`), animation in `Config/Animations.SkillMoves`, effect numbers in

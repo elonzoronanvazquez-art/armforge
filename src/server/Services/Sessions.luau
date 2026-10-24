@@ -22,6 +22,7 @@ export type Session = {
 	saveFailures: number,
 	flags: { [string]: any },
 	momentum: Momentum.State?, -- Summit Momentum (Logic/Momentum), transient
+	zone: string?, -- the zone (Config/Zones) the player is in right now, nil on the ladder islands; cleared on respawn
 }
 
 local byPlayer: { [Player]: Session } = {}
@@ -41,6 +42,7 @@ function Sessions.create(player: Player): Session
 		saveFailures = 0,
 		flags = {},
 		momentum = nil,
+		zone = nil,
 	}
 	byPlayer[player] = session
 	return session

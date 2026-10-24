@@ -41,8 +41,10 @@ creatures, guardians, balance simulation, live guardian runs in Studio). Not bui
 * **Steampunk** is built as Cogspire Foundry (gear gate, Great Clock and engine room, spinning gears, pipes, airships, four rocks and creatures,
   Cogheart as the guardian). Its gears turn client-side through the `Spin` tag; the airships and clock hands are decorative. The sketch gave no
   steampunk mechanics, so it has no boost.
-* **Fishing on the dock** (10% chance to travel to "The Atlantic Sea", +25% XP and coins), **the Atlantic Sea zone**, and the **vine
-  teleport** (2%; the sketch's text was cut off) are scenery or absent. The dock has rods and bobbers but no interaction.
+* **Fishing, The Atlantic Sea and the vine teleport are built** (see GAME_DESIGN.md, "Zones"). The sketch's vine text was cut off, so the
+  vine's destination (a floating Canopy Grove with a gift chest) and its rewards are an interpretation; the 2% is from the sketch. Fishing
+  has no rod or fish models, no bobber animation and no sounds (the bite is a toast, a bar and a flash); the Atlantic Sea has no water
+  below the atoll beyond Roblox's own terrain water, and Atlantic and Grove ambience beds reuse existing loops.
 * Mossveil and Dustwake creatures use the generic procedural bodies (tinted crawler, brute and titan templates) and the guardians have no
   generated rigs yet. AI meshes and segmented rigs (`scripts/gen_rigs.py`) are the polish step; Studio's `generate_mesh` was not used this
   sprint.
