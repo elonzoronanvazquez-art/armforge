@@ -76,7 +76,7 @@ frame 22 ms) with at most 142 effect instances alive.
 ## Biome sprint (jungle, desert ruins, ladder rebuild, per-biome boosts)
 
 Automated (305 tests, strict typecheck clean under both solvers): the new ladder order and biome sequence, gate shifts (rebirths 1 to 5),
-the guardian chain skipping the coming-soon Cogspire (Dustwake needs Emberfang's guardian and 4 rebirths), the v1 migration crediting
+the guardian chain skipping the then coming-soon Cogspire (since built; the skip rule is still tested with a simulated unbuilt island), the v1 migration crediting
 guardians before any unlocked island, the Volcano-only +50% boost (and its absence everywhere else), the server paying a rock by the boost of
 the island it stands on (not where the player is registered), and fight simulations for the 8 new creatures (all 8/8 wins, bands respected,
 punching alone is no shortcut). The creature, rock and island content rules in `guardians.spec` / `config.spec` cover the new ids.
@@ -92,6 +92,16 @@ the Islands panel with seven scrolling cards (boost line, requirements, guardian
 Not verified: fights against the new creatures by a human (only the scripted bot); a second client; the real DataStore with the migrated
 ladder; the HUD boost line after a real `Travel` (the dev `island` command set it); the jungle ambience (placeholder loop); performance on a
 phone with roughly 4,000 added world instances. Studio's MCP connection also flaps occasionally ("Place is not open"); retrying works.
+
+## Steampunk build (Cogspire Foundry)
+
+Automated: 306 passing (a new chain test covers Forgeheart to Dustwake with the real rebirth gates, and a simulated unbuilt island checks the
+skip rule), strict typecheck clean. The fight simulation passes for the four new creatures (8/8, bands respected, punching alone is no shortcut)
+and for the Dustwake creatures after their gate moved to rebirths 5 and 6. Studio (screenshots read back): the island from the sea with
+airships and the clock tower, the gear gate with turning gears, streets and lamps, the Great Clock and sealed engine room, the seal arena with its
+piston ring, pipes and steam; all 134 rocks place with no warnings; the Cogheart fight was played through the dev bridge (seal at the clock's foot,
+1,336,980 HP creature, defeat recorded). About 14,300 world instances in total now. Not verified: that the gears and clock hands actually turn in
+a second client (the Spin tag is handled in AtmosphereController and was seen only indirectly); mobile performance of the added emitters and parts.
 
 ## Volcano rebuild (Emberfang)
 

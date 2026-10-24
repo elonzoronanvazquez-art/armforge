@@ -58,11 +58,14 @@ respawn with a freshly generated layout.
 | Basalt Slab | Emberfang | stone | 62,000 | 20% | 11,000 | 4,200 | |
 | Magma Core | Emberfang | magma | 230,000 | 25% | 40,000 | 14,000 | |
 | Obsidian Heart (rare) | Emberfang | magma | 780,000 | 35% | 135,000 | 48,000 | 8-16 shards |
+| Brass Cogstone | Cogspire | ore | 110,000 | 20% | 20,000 | 7,500 | brass boulder, ticking heart |
+| Boilerplate Slab | Cogspire | ore | 400,000 | 25% | 75,000 | 26,000 | riveted boiler plate |
+| Aetherglass Geode (rare) | Cogspire | crystal | 1,400,000 | 35% | 250,000 | 90,000 | 10-18 shards |
 | Ruin Sandblock | Dustwake | stone | 260,000 | 25% | 46,000 | 17,000 | fallen temple block |
 | Buried Relic | Dustwake | ore | 950,000 | 30% | 170,000 | 60,000 | gold-banded, cyan glyphs |
 | Sunstone Geode (rare) | Dustwake | crystal | 3,200,000 | 40% | 580,000 | 200,000 | 14-26 shards |
 | Forgestone Monolith (rare) | Forgeheart | stone | 2,200 | 5% | 420 | 180 | large rock: releases the Quarry Colossus |
-| Anvil / Root / Choir / Caldera / Sunken Seal | each island | ore / stone / crystal / magma / ore | 3,600 / 14,000 / 52,000 / 1.15M / 4M | 5% | small | small | guardian seals (rebirth-gated); mining pays only 10% |
+| Anvil / Root / Choir / Caldera / Valve / Sunken Seal | each island | ore / stone / crystal / magma / ore / ore | 3,600 / 14,000 / 52,000 / 1.15M / 2M / 4M | 5% | small | small | guardian seals (rebirth-gated); mining pays only 10% |
 
 Mining pays only a share of these coins / XP once a rock holds a creature (50% small and medium, 40% large); the creature pays the rest.
 
@@ -106,13 +109,14 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 | 2 | Mossveil Jungle (Mossveil) | jungle: big lake, waterfall off a rock cliff, giant and small trees, bushes, ferns, mossy rocks, vines, Rootmother's glade | Lv 5 | Ymira, the Rootmother (2) | none | built |
 | 3 | Frostpeak Mountain (Crystalfall) | mountain: a 95-stud flat-topped snow mountain, snowy pines, snow-capped crystal rocks, a spiral summit road, scenery tramway, summit guardian | Lv 12 | Lyrae, the Frozen Chorus (3), on the summit | none yet | built (climbing and tramway rides pending) |
 | 4 | Emberfang Volcano (Emberfang) | volcano: a 65-stud cone with a crater lava lake and the seal on its floor, lava rivers and pools, molten rocks, scorched trees, ember road | Lv 25 | Cinderjaw Sovereign (4), in the crater | **+50% coins and XP** | built |
-| 5 | Cogspire Foundry (Cogspire) | steampunk | Lv 28 | none yet | none yet | teaser platform, coming soon |
-| 6 | Dustwake Ruins (Dustwake) | forgotten desert: dunes, semi-exposed and buried temple, colossus, pyramid, obelisks | Lv 28 | Oszarak, the Buried Sovereign (5) | none | built |
+| 5 | Cogspire Foundry (Cogspire) | steampunk: brass-and-brick foundry city, gear gate, Great Clock with the sealed engine room, spinning gears, pipework, smoking chimneys, airships | Lv 28 | Cogheart, the Foundry Engine (5), at the clock's foot | none | built |
+| 6 | Dustwake Ruins (Dustwake) | forgotten desert: dunes, semi-exposed and buried temple, colossus, pyramid, obelisks | Lv 30 | Oszarak, the Buried Sovereign (6) | none | built |
 | 7 | Voidreach | void | Lv 34 | none yet | none yet | teaser, coming soon |
 
-* **The gate skips unbuilt islands.** An island needs the nearest *earlier island that has a guardian* beaten, so Dustwake is gated by
-  Emberfang's guardian while Cogspire is still coming soon (`Logic/Islands.previousGuarded`). When Cogspire gets a guardian it slots in
-  between automatically (and Dustwake then needs Cogspire's).
+* **The gate skips unbuilt islands.** An island needs the nearest *earlier island that has a guardian* beaten (`Logic/Islands.previousGuarded`),
+  so a coming-soon island in the middle of the ladder never blocks the ones behind it (a test simulates exactly that with Cogspire). Today
+  every island up to Dustwake has a guardian, so the chain is Forgeheart > Mossveil > Frostpeak > Emberfang > Cogspire > Dustwake, with
+  rebirth gates 1 to 6; only Voidreach is still a teaser.
 * **Per-biome boosts** (`IslandDef.boost`, `Logic/Islands.rewardBoost`) multiply the coins and XP of everything *earned on that island*
   (rock mining and creature fights), chosen by the island the rock stands on, never by where the player says they are. Shards are not
   boosted. The HUD status card and the Islands panel show the boost. Today only Emberfang has one (sketch: "50% increase in everything").
@@ -122,8 +126,8 @@ The world is a ladder of themed islands (`Config/Islands`, ids are internal; nam
 ### Sketch features not built yet
 
 Fishing rewards (10% chance to sail to "The Atlantic Sea", +25% XP and coins) and the dock's Atlantic zone, the jungle vine teleport (2%),
-the mountain's climbing mechanic, working aerial tramway, three mini bosses and the 50% / 7% climbing boosts, and the
-steampunk build. They are listed in [NEXT.md](NEXT.md).
+the mountain's climbing mechanic, working aerial tramway, three mini bosses and the 50% / 7% climbing boosts.
+They are listed in [NEXT.md](NEXT.md).
 
 ## Economy targets (from the balance simulation)
 

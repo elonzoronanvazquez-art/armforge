@@ -21,6 +21,7 @@ local THEMES = {
 	Emberfang = { clock = 17.6, ambient = Color3.fromRGB(128, 82, 74), outdoor = Color3.fromRGB(176, 112, 96), atmoColor = Color3.fromRGB(255, 130, 90), decay = Color3.fromRGB(160, 70, 56), density = 0.4, tint = Color3.fromRGB(255, 230, 214), brightness = 2.8 },
 	Mossveil = { clock = 11.4, ambient = Color3.fromRGB(70, 104, 80), outdoor = Color3.fromRGB(108, 142, 100), atmoColor = Color3.fromRGB(176, 226, 170), decay = Color3.fromRGB(84, 134, 92), density = 0.38, tint = Color3.fromRGB(236, 255, 236), brightness = 2.3 },
 	Dustwake = { clock = 13.4, ambient = Color3.fromRGB(150, 122, 92), outdoor = Color3.fromRGB(190, 158, 118), atmoColor = Color3.fromRGB(240, 204, 150), decay = Color3.fromRGB(214, 160, 100), density = 0.3, tint = Color3.fromRGB(255, 240, 214), brightness = 3.0 },
+	Cogspire = { clock = 15.6, ambient = Color3.fromRGB(116, 96, 76), outdoor = Color3.fromRGB(160, 132, 100), atmoColor = Color3.fromRGB(214, 176, 124), decay = Color3.fromRGB(150, 110, 70), density = 0.42, tint = Color3.fromRGB(255, 236, 210), brightness = 2.4 },
 	Voidreach = { clock = 22.5, ambient = Color3.fromRGB(60, 44, 90), outdoor = Color3.fromRGB(80, 60, 120), atmoColor = Color3.fromRGB(140, 100, 220), decay = Color3.fromRGB(60, 40, 110), density = 0.4, tint = Color3.fromRGB(230, 220, 255), brightness = 1.6 },
 }
 

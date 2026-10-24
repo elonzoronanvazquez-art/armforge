@@ -55,6 +55,7 @@ Size changes geometry, fracture detail, the creature's scale and the kind of cha
 | Mossveil | MossStone -> **Mossback Crawler** (pounce) | Rootstone -> **Rootborn Brute** (armor, root slam, thorn sweep) | Jadeheart -> **Canopy Elder** | Root Seal -> **Ymira, the Rootmother** |
 | Crystalfall | Quartz -> **Shardling** (fast skewer) | Amethyst -> **Amethyst Warden** (shell, resonance pulse) | Heartstone -> **Choir Behemoth** | Choir Seal -> **Lyrae, the Frozen Chorus** |
 | Emberfang | Basalt -> **Ash Hound** (long dash) | MagmaCore -> **Magma Golem** (crust, slam, lava line) | Obsidian -> **Obsidian Executioner** | Caldera Seal -> **Cinderjaw Sovereign** |
+| Cogspire | Cogstone -> **Cog Scuttler** (spring lunge) | Boilerplate -> **Boiler Brute** (plating, piston slam, steam blast) | Aetherglass -> **Brass Behemoth** | Valve Seal -> **Cogheart, the Foundry Engine** |
 | Dustwake | Sandblock -> **Dune Skitterer** (burrow dash) | Relic -> **Husk Sentinel** (gilded crust, spear drop, sand sweep) | Sunstone -> **Tomb Colossus** | Sunken Seal -> **Oszarak, the Buried Sovereign** |
 
 Rock footprints grow from small (radius ~4) to large (7.0-7.4, 40-42 chunks) to seals (radius 10, 46 chunks). Players see what is
@@ -115,14 +116,18 @@ matching loadout (8 seeds each, bot reaction 0.35 s):
 | Magma Golem | normal (crust) | Magma L3 | 8/8 | 19 s |
 | Obsidian Executioner | elite | Magma L6 | 8/8 | 38 s (4/8 in 410 s punching only) |
 | Cinderjaw Sovereign | guardian | Magma L4 after four rebirths | 8/8 | 90 s (0/8 punching only) |
-| Dune Skitterer | normal | Void L1 after four rebirths | 8/8 | 10 s |
-| Husk Sentinel | normal (crust) | Void L3, Shatter Wave | 8/8 | 24 s |
-| Tomb Colossus | elite | Void L5, Shatter Wave 3 | 8/8 | 48 s (3/8 in 472 s punching only) |
-| Oszarak, the Buried Sovereign | guardian | Void L4 after five rebirths | 8/8 | 108 s (0/8 punching only) |
+| Cog Scuttler | normal | Magma L8 after four rebirths | 8/8 | 13 s |
+| Boiler Brute | normal (plating) | Magma L10, Shatter Wave | 8/8 | 26 s |
+| Brass Behemoth | elite | Magma L13, Shatter Wave 3 | 8/8 | 51 s (0/8 punching only) |
+| Cogheart, the Foundry Engine | guardian | Magma L11 after five rebirths | 8/8 | 99 s (0/8 punching only) |
+| Dune Skitterer | normal | Void L1 after five rebirths | 8/8 | 9 s |
+| Husk Sentinel | normal (crust) | Void L3, Shatter Wave | 8/8 | 22 s |
+| Tomb Colossus | elite | Void L5, Shatter Wave 3 | 8/8 | 44 s (4/8 in 443 s punching only) |
+| Oszarak, the Buried Sovereign | guardian | Void L4 after six rebirths | 8/8 | 104 s (0/8 punching only) |
 
 Void arms pierce armor (every 4th strike ignores 60% extra), so the Dustwake creatures declare longer reference fights (60 / 120 / 250 s)
 than their Emberfang equivalents to land in the same bands; the Tomb Colossus is the one creature where punching alone is merely
-slow (3/8 in 472 s) rather than impossible.
+slow (4/8 in 443 s) rather than impossible.
 
 The same bot standing still beats the first creature (new players can win by punching) but loses every elite and guardian.
 The bot dodges perfectly once it reacts; a person will take more hits, which is what the 100 health points are for.
@@ -131,7 +136,7 @@ The bot dodges perfectly once it reacts; a person will take more hits, which is 
 
 Each playable island has a guardian sealed in a large rock (`Rocks.Seals`, placed by `RockService.populate` at the island's
 `guardian.position`, snapped to flat ground). The seal only yields to a player who has reached `guardian.rebirths`
-(Forgeheart 1, Mossveil 2, Crystalfall 3, Emberfang 4, Dustwake 5). An ineligible player can walk up to it, read the requirement on the rock, punch it
+(Forgeheart 1, Mossveil 2, Crystalfall 3, Emberfang 4, Cogspire 5, Dustwake 6). An ineligible player can walk up to it, read the requirement on the rock, punch it
 (nothing happens, they are told what is missing) and watch a fight, but cannot hurt the seal, the released guardian, or be hurt by it.
 
 **The rule** (`Logic/Islands`, `Logic/Guardians`; each part is checked on its own, never inferred from another):
@@ -142,10 +147,9 @@ Each playable island has a guardian sealed in a large rock (`Rocks.Seals`, place
 * `Guardians.recordDefeat` re-validates eligibility itself (rebirths + access to the island), so no caller can complete an island
   the player was not allowed to fight; there is no client remote for any of it.
 
-Chosen interpretation of the rebirth sequence: rebirth N is required to **defeat** the Nth guarded island's guardian (1 to 5); the
+Chosen interpretation of the rebirth sequence: rebirth N is required to **defeat** the Nth guarded island's guardian (1 to 6); the
 unlock of the next island then needs that victory plus rebirth N plus its own level. The ladder gained Mossveil between Forgeheart and
-Crystalfall, so Crystalfall's, Emberfang's gates moved from 2 / 3 to 3 / 4 rebirths and Dustwake (after Emberfang, skipping the unbuilt
-Cogspire) asks for 5. Existing per-island `requires.rebirths` entries were folded into this. Rebirth resets level, skills, coins and arm upgrades
+Crystalfall, so Crystalfall's and Emberfang's gates moved from 2 / 3 to 3 / 4 rebirths; Cogspire (5) and Dustwake (6) follow. Existing per-island `requires.rebirths` entries were folded into this. Rebirth resets level, skills, coins and arm upgrades
 as before, so a reborn player re-learns the breaker skill on the way back up; every guardian's recommended skill unlocks at level 3
 (Charged Smash) or 12 (Shatter Wave) and costs 1-2 skill points, which `tests/guardians.spec` checks against the points available
 at the guardian's recommended level.

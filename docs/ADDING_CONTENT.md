@@ -44,7 +44,7 @@ whole-body mesh). See [CREATURES.md](CREATURES.md).
    `World/Flora` for trees, palms, bushes, ferns, vines, cacti and mossy rocks and `Flora.scatter` to place them on ground while avoiding
    zones (`Flora.pine` for snowy conifers, `Flora.charTree` / `Flora.moltenRock` for the volcano, `World/Road` for spiral roads and lava / water flows laid on slopes); tall terrain: the `mound` feature (flat top radius in `length`) plus `spec.layers` (each layer is 4
    studs above -28), see `Crystalfall.luau`; anything "buried" is just geometry placed below `Build.groundY`. `Mossveil.luau` (lake, waterfall, flora) and `Dustwake.luau`
-   (half-buried ruins) are the worked examples; `Cogspire.luau` is a teaser platform.
+   (half-buried ruins) are the worked examples; `Cogspire.luau` shows tagged spinning gears (`Spin` tag, axle = local Z), pipe runs and streets.
 3. `AtmosphereController.THEMES` for its lighting, `Assets.Ambience` for its bed; unique terrain materials give it a unique palette.
 
 Guardian gates skip islands without a guardian (`Logic/Islands.previousGuarded`), so a coming-soon island in the middle of the ladder

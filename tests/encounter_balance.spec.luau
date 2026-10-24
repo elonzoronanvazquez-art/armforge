@@ -321,11 +321,16 @@ return function(t, u)
 		{ "MagmaGolem", { ChargedSmash = 4, ShatterWave = 3 }, 3, 26, "medium" },
 		{ "ObsidianExecutioner", { ChargedSmash = 4, ShatterWave = 3 }, 3, 28, "elite" },
 		{ "CinderjawSovereign", { ChargedSmash = 4, ShatterWave = 3 }, 4, 28, "boss" },
-		-- Dustwake (fourth rebirth to enter, fifth for its guardian)
-		{ "DuneSkitterer", { ChargedSmash = 4, ShatterWave = 3 }, 4, 28, "small" },
-		{ "HuskSentinel", { ChargedSmash = 4, ShatterWave = 3 }, 4, 28, "medium" },
-		{ "TombColossus", { ChargedSmash = 4, ShatterWave = 3 }, 4, 30, "elite" },
-		{ "OszarakBuriedSovereign", { ChargedSmash = 4, ShatterWave = 3 }, 5, 30, "boss" },
+		-- Cogspire (fourth rebirth to enter, fifth for its guardian)
+		{ "CogScuttler", { ChargedSmash = 4, ShatterWave = 3 }, 4, 28, "small" },
+		{ "BoilerBrute", { ChargedSmash = 4, ShatterWave = 3 }, 4, 28, "medium" },
+		{ "BrassBehemoth", { ChargedSmash = 4, ShatterWave = 3 }, 4, 29, "elite" },
+		{ "CogheartEngine", { ChargedSmash = 4, ShatterWave = 3 }, 5, 30, "boss" },
+		-- Dustwake (fifth rebirth to enter, sixth for its guardian)
+		{ "DuneSkitterer", { ChargedSmash = 4, ShatterWave = 3 }, 5, 30, "small" },
+		{ "HuskSentinel", { ChargedSmash = 4, ShatterWave = 3 }, 5, 30, "medium" },
+		{ "TombColossus", { ChargedSmash = 4, ShatterWave = 3 }, 5, 30, "elite" },
+		{ "OszarakBuriedSovereign", { ChargedSmash = 4, ShatterWave = 3 }, 6, 30, "boss" },
 	}
 	for _, entry in PLAN do
 		local def = Creatures.Defs[entry[1]]

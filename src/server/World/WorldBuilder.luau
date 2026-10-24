@@ -86,6 +86,7 @@ local function setupTerrain()
 	t:SetMaterialColor(Enum.Material.Rock, Color3.fromRGB(98, 88, 86))
 	t:SetMaterialColor(Enum.Material.Basalt, Color3.fromRGB(72, 62, 66))
 	t:SetMaterialColor(Enum.Material.Sand, Color3.fromRGB(216, 186, 130))
+	t:SetMaterialColor(Enum.Material.Cobblestone, Color3.fromRGB(112, 98, 88))
 	t:SetMaterialColor(Enum.Material.Sandstone, Color3.fromRGB(196, 150, 100))
 	t:SetMaterialColor(Enum.Material.Grass, Color3.fromRGB(78, 122, 62))
 	t:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromRGB(62, 106, 56))
@@ -105,6 +106,7 @@ local function terrainSpec(id: string): IslandTerrain.Spec
 		elseif id == "Emberfang" then Emberfang.features()
 		elseif id == "Mossveil" then Mossveil.features()
 		elseif id == "Dustwake" then Dustwake.features()
+		elseif id == "Cogspire" then Cogspire.features()
 		else {}
 	local spec: IslandTerrain.Spec = {
 		center = def.center,
@@ -149,6 +151,14 @@ local function terrainSpec(id: string): IslandTerrain.Spec
 		spec.deep = Enum.Material.Basalt
 		spec.noiseScale = 58
 		spec.noiseAmp = 3.4
+	elseif id == "Cogspire" then
+		spec.ground = Enum.Material.Cobblestone
+		spec.ground2 = Enum.Material.Pavement
+		spec.rock = Enum.Material.Slate
+		spec.shore = Enum.Material.Concrete
+		spec.deep = Enum.Material.Slate
+		spec.noiseScale = 80
+		spec.noiseAmp = 1.2
 	elseif id == "Dustwake" then
 		spec.ground = Enum.Material.Sand
 		spec.ground2 = Enum.Material.Sand
@@ -176,7 +186,7 @@ function WorldBuilder.build(onSpawn: (string, SpawnLocation) -> ()): Folder
 
 	IslandTerrain.fillSea(-1400, 1400, -1500, 1300, SEA_LEVEL)
 	task.wait()
-	for _, id in { "Forgeheart", "Crystalfall", "Emberfang", "Mossveil", "Dustwake" } do
+	for _, id in { "Forgeheart", "Crystalfall", "Emberfang", "Mossveil", "Dustwake", "Cogspire" } do
 		IslandTerrain.build(terrainSpec(id))
 	end
 

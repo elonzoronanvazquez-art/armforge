@@ -170,22 +170,33 @@ return function(t, u)
 		t.eq(gate(d, "Voidreach").state, "no_guardian")
 	end)
 
-	t.test("a coming-soon island without a guardian never blocks the ladder: the desert is gated by the volcano's guardian", function()
-		t.eq(IslandCfg.Defs.Cogspire.comingSoon, true)
-		t.eq(Islands.previousGuarded("Dustwake"), "Emberfang", "Cogspire is skipped")
-		t.eq(Islands.nextPlayable("Emberfang"), "Dustwake")
-		t.eq(Guardians.nextIsland("Emberfang"), "Dustwake")
+	t.test("the chain is Forgeheart > Mossveil > Crystalfall > Emberfang > Cogspire > Dustwake with rising rebirths", function()
+		local chain = { "Forgeheart", "Mossveil", "Crystalfall", "Emberfang", "Cogspire", "Dustwake" }
+		for i = 2, #chain do
+			t.eq(Islands.previousGuarded(chain[i]), chain[i - 1], chain[i])
+			t.eq(Guardians.nextIsland(chain[i - 1]), chain[i], chain[i - 1])
+		end
 		local d = fresh()
 		d.level = 40
-		d.coins = 1e12
-		d.rebirths = 3
-		t.deepEq(Islands.missing(d, "Dustwake"), { "Rebirth 4", "Defeat the guardian of Emberfang Volcano" })
 		d.rebirths = 4
-		d.islands.unlocked.Emberfang = true
 		d.guardians.defeated.Emberfang = true
+		t.deepEq(Islands.missing(d, "Cogspire"), {}, "Cogspire opens with the volcano's guardian and 4 rebirths")
+		t.deepEq(Islands.missing(d, "Dustwake"), { "Rebirth 5", "Defeat the guardian of Cogspire Foundry" })
+		d.rebirths = 5
+		d.guardians.defeated.Cogspire = true
 		t.deepEq(Islands.missing(d, "Dustwake"), {})
-		t.truthy(Islands.unlock(d, "Dustwake").ok)
-		t.eq(Islands.unlock(d, "Cogspire").err, "coming_soon")
+	end)
+
+	t.test("a coming-soon island without a guardian never blocks the ladder", function()
+		-- simulate an unbuilt island in the middle: the gate skips it
+		local cog = IslandCfg.Defs.Cogspire
+		local savedGuardian, savedSoon = cog.guardian, cog.comingSoon
+		cog.guardian, cog.comingSoon = nil, true
+		t.eq(Islands.previousGuarded("Dustwake"), "Emberfang")
+		t.eq(Islands.nextPlayable("Emberfang"), "Dustwake")
+		t.eq(Islands.unlock(fresh(), "Cogspire").err, "coming_soon")
+		cog.guardian, cog.comingSoon = savedGuardian, savedSoon
+		t.eq(Islands.previousGuarded("Dustwake"), "Cogspire")
 	end)
 
 	t.test("the whole ladder follows the sketch: starter, jungle, mountain, volcano, steampunk, desert, then the teaser", function()
@@ -311,7 +322,7 @@ return function(t, u)
 	end
 
 	t.test("every playable island has a guardian with a seal, a boss creature and ascending rebirth gates", function()
-		t.eq(#playable, 5)
+		t.eq(#playable, 6)
 		local lastRebirths = 0
 		for _, id in playable do
 			local g = IslandCfg.Defs[id].guardian
@@ -327,7 +338,6 @@ return function(t, u)
 			lastRebirths = g.rebirths
 		end
 		t.eq(IslandCfg.Defs.Voidreach.guardian, nil, "the teaser island has none yet")
-		t.eq(IslandCfg.Defs.Cogspire.guardian, nil, "neither has the unbuilt steampunk island")
 		-- guardians are unique per island
 		local seen = {}
 		for _, id in playable do

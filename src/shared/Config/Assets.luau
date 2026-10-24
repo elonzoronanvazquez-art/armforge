@@ -76,6 +76,7 @@ Assets.Ambience = {
 	-- placeholders: no jungle / desert loops have been sourced yet, so these reuse the existing beds at their own volumes
 	Mossveil = { id = "rbxassetid://9125602386", volume = 0.07 },
 	Dustwake = { id = "rbxassetid://9112823199", volume = 0.1 },
+	Cogspire = { id = "rbxassetid://9112823199", volume = 0.12 },
 	Voidreach = { id = "rbxassetid://9125602386", volume = 0.1 },
 } :: { [string]: { id: string, volume: number } }
 

@@ -101,7 +101,7 @@ Everything has a fallback and the generated meshes belong to the account that ra
 
 ## Biome sprint: nothing AI-generated
 
-The jungle (Mossveil), desert (Dustwake), fishing dock and Cogspire teaser are built entirely from primitives (`World/Flora`, the island
+The jungle (Mossveil), desert (Dustwake), mountain, volcano, steampunk foundry and fishing dock are built entirely from primitives (`World/Flora`, the island
 modules): trees, palms, vines, ruins, the colossus head, pyramid and ribcage are parts, not meshes. The eight new creatures use the procedural
 crawler / brute / titan bodies tinted from `visual`. No `generate_mesh` or audio search was run; the two new ambience beds reuse existing
 loop ids at their own volumes (placeholders).

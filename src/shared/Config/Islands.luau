@@ -171,14 +171,27 @@ Islands.Defs = {
 		name = "Cogspire Foundry",
 		biome = "steampunk",
 		tagline = "Brass, steam and ten thousand gears",
-		description = "A steampunk city of brass towers and pressure pipes. Still on the drawing board.",
+		description = "A steampunk foundry city: brass towers, pressure pipes, spinning gears and a Great Clock whose engine will not stay asleep.",
 		order = 5,
 		requires = { level = 28 },
-		comingSoon = true,
 		center = Vector3.new(820, 0, 820),
 		radius = 200,
 		arrival = Vector3.new(820, 4, 916),
-		fields = {},
+		fields = {
+			{
+				name = "Boiler Yard",
+				center = Vector3.new(740, 0, 830),
+				radius = 52,
+				rocks = { { rock = "Cogstone", count = 8 }, { rock = "Boilerplate", count = 3 } },
+			},
+			{
+				name = "Aether Works",
+				center = Vector3.new(900, 0, 800),
+				radius = 38,
+				rocks = { { rock = "Boilerplate", count = 5 }, { rock = "Cogstone", count = 3 }, { rock = "Aetherglass", count = 2 } },
+			},
+		},
+		guardian = { creature = "CogheartEngine", seal = "ValveSeal", position = Vector3.new(820, 0, 812), rebirths = 5 },
 		accent = Color3.fromRGB(214, 150, 70),
 		sky = Color3.fromRGB(214, 176, 120),
 		fog = Color3.fromRGB(190, 160, 120),
@@ -191,7 +204,7 @@ Islands.Defs = {
 		tagline = "The forgotten sands",
 		description = "A forgotten desert. Ancient temples lie half-exposed and half-buried under the dunes, and something still sleeps below.",
 		order = 6,
-		requires = { level = 28 },
+		requires = { level = 30 },
 		center = Vector3.new(-820, 0, 820),
 		radius = 200,
 		arrival = Vector3.new(-820, 4, 916),
@@ -209,7 +222,7 @@ Islands.Defs = {
 				rocks = { { rock = "Relic", count = 5 }, { rock = "Sandblock", count = 3 }, { rock = "Sunstone", count = 2 } },
 			},
 		},
-		guardian = { creature = "OszarakBuriedSovereign", seal = "SunkenSeal", position = Vector3.new(-905, 0, 865), rebirths = 5 },
+		guardian = { creature = "OszarakBuriedSovereign", seal = "SunkenSeal", position = Vector3.new(-905, 0, 865), rebirths = 6 },
 		accent = Color3.fromRGB(240, 190, 90),
 		sky = Color3.fromRGB(240, 200, 140),
 		fog = Color3.fromRGB(235, 200, 150),
@@ -242,6 +255,6 @@ Islands.Order = { "Forgeheart", "Mossveil", "Crystalfall", "Emberfang", "Cogspir
 Islands.Start = "Forgeheart"
 
 -- Crystalfall is now the Mountain (guardian seal on the summit) and Emberfang the Volcano (seal on the crater floor); both keep their
--- internal ids. Cogspire (steampunk) and Voidreach are teasers without guardians yet.
+-- internal ids. Cogspire is the steampunk foundry; Voidreach is still a teaser without a guardian.
 
 return Islands
