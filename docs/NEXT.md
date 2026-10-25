@@ -21,7 +21,9 @@
   predict the first sparks at contact and reconcile with the server's `Hit`.
 * Proximity checks (Skyport, Reforge Core, training stations) use the client-owned character position; harden with server
   movement validation if exploiting becomes a problem.
-* Gamepad: punch (R2) and skills (D-pad) work; the custom panels have not been set up for gamepad selection.
+* Signature moves and the new effects (`ArmFx`) have no sounds of their own: they reuse the Smash and Swing samples. Each arm could
+  have its own whoosh and impact layer. Creature hit reactions are visual only (no stagger animation on the creature body).
+* Gamepad: punch (R2), skills (D-pad) and the signature (Y) are bound; the custom panels have not been set up for gamepad selection.
 * There is no on-screen button for panel opening on very small screens other than the menu column; tablets and phones were
   only checked in the emulator.
 

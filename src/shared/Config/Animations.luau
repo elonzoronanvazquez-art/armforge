@@ -7,6 +7,8 @@
 --   RootPos                 translation of the Root joint in studs (weight transfer: -Z is forward)
 --   RShoulder, LShoulder    +X raises the arm forward, +Z swings the right arm outward (left: -Z)
 --   RElbow, LElbow          +X curls the forearm up when the arm points forward
+--   RHip, LHip              +X swings the thigh forward (a step, a knee lift); +Z swings it outward
+--   RKnee, LKnee            -X bends the knee (crouch, lunge, stomp wind-up)
 -- Times are normalised 0..1 across `duration`. `contact` is the moment of impact: the server applies damage
 -- exactly then, so the visible hit and the mechanical hit are one event (see Logic/Attack).
 
@@ -477,10 +479,217 @@ Moves.RendBoth = {
 }
 
 -- Skills --------------------------------------------------------------------------------------------------
+
+
+-- Non-striking skill poses (no contact; `contact` marks the "cast" moment).
+
+
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Second animation pass: legs (hips and knees) join the poses, every arm gets extra combo moves, the four skills
+-- are rebuilt, and each arm gets a signature move (Config/Signatures) with beats timed to its strikes.
+-- ---------------------------------------------------------------------------------------------------------------
+
+local SWAP_JOINTS: { [string]: string } = {
+	RShoulder = "LShoulder",
+	LShoulder = "RShoulder",
+	RElbow = "LElbow",
+	LElbow = "RElbow",
+	RHip = "LHip",
+	LHip = "RHip",
+	RKnee = "LKnee",
+	LKnee = "RKnee",
+}
+
+-- A pose with the arms and legs swapped (for composing alternating jabs; moves themselves mirror through MirrorOf).
+local function flip(pose: Pose): Pose
+	local out: Pose = {}
+	for joint, v in pose do
+		local name = SWAP_JOINTS[joint] or joint
+		if joint == "RootPos" then
+			out[name] = V(-v.X, v.Y, v.Z)
+		else
+			out[name] = V(v.X, -v.Y, -v.Z)
+		end
+	end
+	return out
+end
+
+local function K(t: number, ease: string?, pose: Pose): Key
+	return { t = t, ease = ease, pose = pose }
+end
+
+local NEUTRAL_START: Key = { t = 0, pose = {} }
+local NEUTRAL_END: Key = { t = 1, pose = {}, ease = "inout" }
+
+-- Knees bent and thighs forward: the crouch every heavy move starts from. `depth` 0..1.
+local function crouch(depth: number): Pose
+	return {
+		RHip = V(46 * depth, 0, 0),
+		LHip = V(46 * depth, 0, 0),
+		RKnee = V(-92 * depth, 0, 0),
+		LKnee = V(-92 * depth, 0, 0),
+	}
+end
+
+local function merge(a: Pose, b: Pose): Pose
+	local out: Pose = {}
+	for k, v in a do
+		out[k] = v
+	end
+	for k, v in b do
+		out[k] = v
+	end
+	return out
+end
+
+-- Right-handed straight punch pose and the guard it recoils into; shared by the flurry moves.
+local JAB_R: Pose = {
+	Waist = V(0, 26, 0),
+	Root = V(0, 10, 0),
+	RootPos = V(0, -0.16, -0.3),
+	RShoulder = V(92, 0, 2),
+	RElbow = V(3, 0, 0),
+	LShoulder = V(54, 0, -8),
+	LElbow = V(108, 0, 0),
+	Neck = V(0, -30, 0),
+	LHip = V(18, 0, 0),
+	RHip = V(-8, 0, 0),
+}
+local GUARD: Pose = {
+	Waist = V(0, -6, 0),
+	RootPos = V(0, -0.1, 0.06),
+	RShoulder = V(52, 0, 8),
+	RElbow = V(106, 0, 0),
+	LShoulder = V(52, 0, -8),
+	LElbow = V(106, 0, 0),
+	Neck = V(0, 6, 0),
+}
+
+-- Combo moves ---------------------------------------------------------------------------------------------------------------
+
+-- Looping hook: elbow out, hips and shoulders drive the fist round in a flat arc.
+Moves.HookR = {
+	name = "HookR",
+	duration = 0.46,
+	contact = 0.52,
+	hand = "R",
+	shake = 0.34,
+	hitstop = 0.04,
+	power = 1.0,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.3, "out", { Waist = V(0, -40, 0), Root = V(0, -12, 0), RootPos = V(0, -0.16, 0.2), RShoulder = V(30, 0, 88), RElbow = V(96, 0, 0), LShoulder = V(62, 0, -10), LElbow = V(112, 0, 0), Neck = V(0, 36, 0), RHip = V(14, 0, 8), LHip = V(-12, 0, 0), RKnee = V(-22, 0, 0) }),
+		K(0.52, "in", { Waist = V(0, 48, 0), Root = V(0, 20, 0), RootPos = V(0, -0.26, -0.5), RShoulder = V(86, 0, -16), RElbow = V(92, 0, 0), LShoulder = V(62, 0, -12), LElbow = V(116, 0, 0), Neck = V(0, -46, 0), RHip = V(-10, 0, 0), LHip = V(26, 0, 0), LKnee = V(-30, 0, 0) }),
+		K(0.74, "out", { Waist = V(0, 52, 0), Root = V(0, 22, 0), RootPos = V(0, -0.28, -0.54), RShoulder = V(90, 0, -20), RElbow = V(90, 0, 0), LShoulder = V(62, 0, -12), LElbow = V(116, 0, 0), Neck = V(0, -50, 0), LHip = V(26, 0, 0), LKnee = V(-30, 0, 0) }),
+		NEUTRAL_END,
+	},
+}
+
+-- Crouch and drive up through the target (Alloy's chain finisher).
+Moves.UppercutR = {
+	name = "UppercutR",
+	duration = 0.44,
+	contact = 0.5,
+	hand = "R",
+	shake = 0.4,
+	hitstop = 0.05,
+	power = 1.15,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.28, "out", merge(crouch(0.9), { Waist = V(8, -28, 0), Root = V(0, -14, 0), RootPos = V(0, -0.62, 0.14), RShoulder = V(-34, 0, 12), RElbow = V(34, 0, 0), LShoulder = V(46, 0, -8), LElbow = V(110, 0, 0), Neck = V(0, 26, 0) })),
+		K(0.5, "in", { Waist = V(-14, 22, 0), Root = V(0, 12, 0), RootPos = V(0, 0.02, -0.5), RShoulder = V(164, 0, 6), RElbow = V(34, 0, 0), LShoulder = V(40, 0, -10), LElbow = V(116, 0, 0), Neck = V(18, -24, 0), RHip = V(-8, 0, 0), LHip = V(18, 0, 0), LKnee = V(-14, 0, 0) }),
+		K(0.72, "out", { Waist = V(-18, 24, 0), Root = V(0, 14, 0), RootPos = V(0, 0.08, -0.5), RShoulder = V(170, 0, 6), RElbow = V(30, 0, 0), LShoulder = V(40, 0, -10), LElbow = V(116, 0, 0), Neck = V(20, -26, 0) }),
+		NEUTRAL_END,
+	},
+}
+
+-- Hammer: lift a knee, raise both fists and stamp down (Stonebreaker's third swing).
+Moves.GroundPound = {
+	name = "GroundPound",
+	duration = 0.96,
+	contact = 0.6,
+	hand = "B",
+	shake = 0.85,
+	hitstop = 0.08,
+	power = 1.6,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.36, "out", { Waist = V(10, 0, 0), RootPos = V(0, 0.1, 0.12), RShoulder = V(166, 0, 18), LShoulder = V(166, 0, -18), RElbow = V(28, 0, 0), LElbow = V(28, 0, 0), Neck = V(-14, 0, 0), RHip = V(62, 0, 0), RKnee = V(-84, 0, 0), LHip = V(-6, 0, 0) }),
+		K(0.6, "in", { Waist = V(-36, 0, 0), RootPos = V(0, -0.5, -0.46), RShoulder = V(40, 0, 6), LShoulder = V(40, 0, -6), RElbow = V(10, 0, 0), LElbow = V(10, 0, 0), Neck = V(28, 0, 0), RHip = V(12, 0, 0), LHip = V(34, 0, 0), LKnee = V(-52, 0, 0) }),
+		K(0.8, "out", { Waist = V(-40, 0, 0), RootPos = V(0, -0.54, -0.5), RShoulder = V(34, 0, 8), LShoulder = V(34, 0, -8), Neck = V(30, 0, 0), RHip = V(12, 0, 0), LHip = V(36, 0, 0), LKnee = V(-56, 0, 0) }),
+		NEUTRAL_END,
+	},
+}
+
+-- Prism: spin round the lunge so the blade arm finishes where it started (Crystal's third swing).
+Moves.SpinThrustR = {
+	name = "SpinThrustR",
+	duration = 0.58,
+	contact = 0.52,
+	hand = "R",
+	shake = 0.34,
+	hitstop = 0.04,
+	power = 1.1,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.3, "out", { Waist = V(0, -44, 0), Root = V(0, -72, 0), RootPos = V(0, -0.18, 0.2), RShoulder = V(70, 0, 46), RElbow = V(100, 0, 0), LShoulder = V(24, 0, -60), LElbow = V(30, 0, 0), Neck = V(0, 60, 0), RHip = V(-14, 0, 14), LHip = V(26, 0, 0), LKnee = V(-30, 0, 0) }),
+		K(0.52, "in", { Waist = V(0, 30, 0), Root = V(0, 38, 0), RootPos = V(0, -0.36, -0.72), RShoulder = V(90, 0, -4), RElbow = V(0, 0, 0), LShoulder = V(20, 0, -70), LElbow = V(24, 0, 0), Neck = V(0, -50, 0), RHip = V(40, 0, 0), RKnee = V(-34, 0, 0), LHip = V(-24, 0, 0) }),
+		K(0.76, "out", { Waist = V(0, 32, 0), Root = V(0, 40, 0), RootPos = V(0, -0.38, -0.78), RShoulder = V(92, 0, -4), RElbow = V(0, 0, 0), LShoulder = V(20, 0, -72), LElbow = V(24, 0, 0), Neck = V(0, -52, 0), RHip = V(40, 0, 0), RKnee = V(-34, 0, 0), LHip = V(-24, 0, 0) }),
+		NEUTRAL_END,
+	},
+}
+
+-- Magma: a leap and a two-fisted smash (the third swing of the volcano chain).
+Moves.MagmaDoubleSmash = {
+	name = "MagmaDoubleSmash",
+	duration = 1.0,
+	contact = 0.62,
+	hand = "B",
+	shake = 1.0,
+	hitstop = 0.1,
+	power = 1.8,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.26, "out", merge(crouch(0.9), { Waist = V(16, 0, 0), RootPos = V(0, -0.52, 0.18), RShoulder = V(-24, 0, 22), LShoulder = V(-24, 0, -22), RElbow = V(24, 0, 0), LElbow = V(24, 0, 0), Neck = V(-8, 0, 0) })),
+		K(0.46, "out", { Waist = V(-8, 0, 0), RootPos = V(0, 1.0, 0.1), RShoulder = V(176, 0, 14), LShoulder = V(176, 0, -14), RElbow = V(30, 0, 0), LElbow = V(30, 0, 0), Neck = V(-18, 0, 0), RHip = V(40, 0, 0), LHip = V(30, 0, 0), RKnee = V(-62, 0, 0), LKnee = V(-48, 0, 0) }),
+		K(0.62, "in", merge(crouch(0.7), { Waist = V(-44, 0, 0), RootPos = V(0, -0.62, -0.7), RShoulder = V(48, 0, 4), LShoulder = V(48, 0, -4), RElbow = V(6, 0, 0), LElbow = V(6, 0, 0), Neck = V(34, 0, 0) })),
+		K(0.82, "out", merge(crouch(0.7), { Waist = V(-48, 0, 0), RootPos = V(0, -0.66, -0.72), RShoulder = V(42, 0, 6), LShoulder = V(42, 0, -6), Neck = V(36, 0, 0) })),
+		NEUTRAL_END,
+	},
+}
+
+-- Void: a raking diagonal claw, right then left, ahead of the four-strike Rend.
+Moves.ClawRakeR = {
+	name = "ClawRakeR",
+	duration = 0.38,
+	contact = 0.46,
+	hand = "R",
+	shake = 0.24,
+	hitstop = 0.03,
+	power = 0.9,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.26, "out", { Waist = V(0, -34, 8), Root = V(0, -14, 0), RootPos = V(0, -0.06, 0.16), RShoulder = V(156, 0, 40), RElbow = V(34, 0, 0), LShoulder = V(30, 0, -30), LElbow = V(70, 0, 0), Neck = V(-8, 30, 0), LHip = V(14, 0, 0) }),
+		K(0.46, "in", { Waist = V(-14, 40, -6), Root = V(0, 18, 0), RootPos = V(0, -0.22, -0.46), RShoulder = V(60, 0, -34), RElbow = V(8, 0, 0), LShoulder = V(28, 0, -34), LElbow = V(76, 0, 0), Neck = V(12, -38, 0), RHip = V(24, 0, 0), LHip = V(-10, 0, 0) }),
+		K(0.7, "out", { Waist = V(-16, 44, -6), Root = V(0, 20, 0), RootPos = V(0, -0.24, -0.5), RShoulder = V(54, 0, -40), RElbow = V(6, 0, 0), LShoulder = V(28, 0, -34), LElbow = V(76, 0, 0), Neck = V(14, -42, 0), RHip = V(24, 0, 0), LHip = V(-10, 0, 0) }),
+		NEUTRAL_END,
+	},
+}
+
+-- Skills --------------------------------------------------------------------------------------------------------------------
+-- Charged Smash: sink into a crouch while the power gathers, rise onto the toes with both fists overhead, then drop
+-- the whole body through the hit.
 Moves.ChargedSmash = {
 	name = "ChargedSmash",
-	duration = 1.15,
-	contact = 0.7,
+	duration = 1.25,
+	contact = 0.72,
 	hand = "B",
 	shake = 1.0,
 	hitstop = 0.12,
@@ -488,117 +697,40 @@ Moves.ChargedSmash = {
 	trail = true,
 	finisher = true,
 	keys = {
-		{ t = 0, pose = {} },
-		{
-			t = 0.2,
-			ease = "out",
-			pose = {
-				Waist = V(10, 0, 0),
-				RootPos = V(0, -0.2, 0.1),
-				RShoulder = V(110, 0, 20),
-				LShoulder = V(110, 0, -20),
-				RElbow = V(90, 0, 0),
-				LElbow = V(90, 0, 0),
-			},
-		},
-		{
-			t = 0.55,
-			ease = "inout",
-			pose = {
-				Waist = V(22, 0, 0),
-				RootPos = V(0, -0.3, 0.3),
-				RShoulder = V(178, 0, 18),
-				LShoulder = V(178, 0, -18),
-				RElbow = V(20, 0, 0),
-				LElbow = V(20, 0, 0),
-				Neck = V(-16, 0, 0),
-			},
-		},
-		{
-			t = 0.7,
-			ease = "in",
-			pose = {
-				Waist = V(-40, 0, 0),
-				RootPos = V(0, -0.6, -0.7),
-				RShoulder = V(52, 0, 4),
-				LShoulder = V(52, 0, -4),
-				RElbow = V(6, 0, 0),
-				LElbow = V(6, 0, 0),
-				Neck = V(34, 0, 0),
-			},
-		},
-		{
-			t = 0.86,
-			ease = "out",
-			pose = {
-				Waist = V(-44, 0, 0),
-				RootPos = V(0, -0.66, -0.74),
-				RShoulder = V(44, 0, 4),
-				LShoulder = V(44, 0, -4),
-				RElbow = V(4, 0, 0),
-				LElbow = V(4, 0, 0),
-				Neck = V(36, 0, 0),
-			},
-		},
-		{ t = 1, pose = {}, ease = "inout" },
+		NEUTRAL_START,
+		K(0.14, "out", merge(crouch(0.8), { Waist = V(14, 0, 0), RootPos = V(0, -0.5, 0.2), RShoulder = V(-18, 0, 26), LShoulder = V(-18, 0, -26), RElbow = V(24, 0, 0), LElbow = V(24, 0, 0), Neck = V(-6, 0, 0) })),
+		K(0.48, "inout", merge(crouch(1.0), { Waist = V(20, 0, 0), RootPos = V(0, -0.62, 0.26), RShoulder = V(46, 0, 12), LShoulder = V(46, 0, -12), RElbow = V(96, 0, 0), LElbow = V(96, 0, 0), Neck = V(-10, 0, 0) })),
+		K(0.62, "out", { Waist = V(24, 0, 0), RootPos = V(0, 0.34, 0.3), RShoulder = V(178, 0, 16), LShoulder = V(178, 0, -16), RElbow = V(18, 0, 0), LElbow = V(18, 0, 0), Neck = V(-18, 0, 0), RHip = V(-6, 0, 0), LHip = V(-6, 0, 0) }),
+		K(0.72, "in", merge(crouch(0.55), { Waist = V(-42, 0, 0), RootPos = V(0, -0.6, -0.72), RShoulder = V(50, 0, 4), LShoulder = V(50, 0, -4), RElbow = V(6, 0, 0), LElbow = V(6, 0, 0), Neck = V(34, 0, 0) })),
+		K(0.9, "out", merge(crouch(0.55), { Waist = V(-46, 0, 0), RootPos = V(0, -0.66, -0.76), RShoulder = V(44, 0, 4), LShoulder = V(44, 0, -4), RElbow = V(4, 0, 0), LElbow = V(4, 0, 0), Neck = V(36, 0, 0) })),
+		NEUTRAL_END,
 	},
 }
 
+-- Shatter Wave: a standing jump with the arms flung wide, landing in a deep squat with both fists on the ground.
 Moves.ShatterWave = {
 	name = "ShatterWave",
-	duration = 0.95,
-	contact = 0.58,
+	duration = 1.05,
+	contact = 0.6,
 	hand = "B",
 	shake = 0.9,
 	hitstop = 0.06,
 	power = 1.8,
 	trail = true,
 	keys = {
-		{ t = 0, pose = {} },
-		{
-			t = 0.45,
-			ease = "out",
-			pose = {
-				Waist = V(12, 0, 0),
-				RootPos = V(0, 0.1, 0.1),
-				RShoulder = V(150, 0, 30),
-				LShoulder = V(150, 0, -30),
-				RElbow = V(40, 0, 0),
-				LElbow = V(40, 0, 0),
-			},
-		},
-		{
-			t = 0.58,
-			ease = "in",
-			pose = {
-				Waist = V(-58, 0, 0),
-				RootPos = V(0, -0.9, -0.5),
-				RShoulder = V(20, 0, 14),
-				LShoulder = V(20, 0, -14),
-				RElbow = V(4, 0, 0),
-				LElbow = V(4, 0, 0),
-				Neck = V(40, 0, 0),
-			},
-		},
-		{
-			t = 0.78,
-			ease = "out",
-			pose = {
-				Waist = V(-60, 0, 0),
-				RootPos = V(0, -0.95, -0.5),
-				RShoulder = V(16, 0, 16),
-				LShoulder = V(16, 0, -16),
-				Neck = V(42, 0, 0),
-			},
-		},
-		{ t = 1, pose = {}, ease = "inout" },
+		NEUTRAL_START,
+		K(0.2, "out", merge(crouch(0.8), { Waist = V(16, 0, 0), RootPos = V(0, -0.5, 0.1), RShoulder = V(10, 0, 30), LShoulder = V(10, 0, -30), RElbow = V(30, 0, 0), LElbow = V(30, 0, 0) })),
+		K(0.42, "out", { Waist = V(-8, 0, 0), RootPos = V(0, 1.2, 0.1), RShoulder = V(150, 0, 56), LShoulder = V(150, 0, -56), RElbow = V(24, 0, 0), LElbow = V(24, 0, 0), Neck = V(-16, 0, 0), RHip = V(36, 0, 6), LHip = V(36, 0, -6), RKnee = V(-70, 0, 0), LKnee = V(-70, 0, 0) }),
+		K(0.6, "in", merge(crouch(1.15), { Waist = V(-56, 0, 0), RootPos = V(0, -1.0, -0.44), RShoulder = V(20, 0, 16), LShoulder = V(20, 0, -16), RElbow = V(4, 0, 0), LElbow = V(4, 0, 0), Neck = V(42, 0, 0) })),
+		K(0.82, "out", merge(crouch(1.15), { Waist = V(-60, 0, 0), RootPos = V(0, -1.04, -0.46), RShoulder = V(16, 0, 18), LShoulder = V(16, 0, -18), Neck = V(44, 0, 0) })),
+		NEUTRAL_END,
 	},
 }
 
--- Non-striking skill poses (no contact; `contact` marks the "cast" moment).
+-- Overdrive: a roaring double bicep, chest out, knees wide.
 Moves.OverdriveFlex = {
 	name = "OverdriveFlex",
-	duration = 0.55,
+	duration = 0.7,
 	contact = 0.4,
 	hand = "B",
 	shake = 0.3,
@@ -606,28 +738,18 @@ Moves.OverdriveFlex = {
 	power = 1,
 	trail = false,
 	keys = {
-		{ t = 0, pose = {} },
-		{
-			t = 0.4,
-			ease = "out",
-			pose = {
-				Waist = V(-10, 0, 0),
-				RootPos = V(0, -0.15, 0),
-				RShoulder = V(40, 0, 70),
-				LShoulder = V(40, 0, -70),
-				RElbow = V(100, 0, 0),
-				LElbow = V(100, 0, 0),
-				Neck = V(-14, 0, 0),
-			},
-		},
-		{ t = 0.7, ease = "inout", pose = { Waist = V(-12, 0, 0), RootPos = V(0, -0.18, 0), RShoulder = V(44, 0, 74), LShoulder = V(44, 0, -74), RElbow = V(104, 0, 0), LElbow = V(104, 0, 0), Neck = V(-16, 0, 0) } },
-		{ t = 1, pose = {}, ease = "inout" },
+		NEUTRAL_START,
+		K(0.2, "out", merge(crouch(0.6), { Waist = V(18, 0, 0), RootPos = V(0, -0.4, 0.1), RShoulder = V(0, 0, 18), LShoulder = V(0, 0, -18), RElbow = V(110, 0, 0), LElbow = V(110, 0, 0), Neck = V(10, 0, 0) })),
+		K(0.4, "out", { Waist = V(-16, 0, 0), RootPos = V(0, 0.08, 0), RShoulder = V(54, 0, 84), LShoulder = V(54, 0, -84), RElbow = V(132, 0, 0), LElbow = V(132, 0, 0), Neck = V(-28, 0, 0), RHip = V(0, 0, 10), LHip = V(0, 0, -10) }),
+		K(0.72, "inout", { Waist = V(-18, 0, 0), RootPos = V(0, 0.1, 0), RShoulder = V(58, 0, 88), LShoulder = V(58, 0, -88), RElbow = V(136, 0, 0), LElbow = V(136, 0, 0), Neck = V(-30, 0, 0), RHip = V(0, 0, 10), LHip = V(0, 0, -10) }),
+		NEUTRAL_END,
 	},
 }
 
+-- Critical Focus: settle into a stance and sight along the lead arm.
 Moves.FocusPose = {
 	name = "FocusPose",
-	duration = 0.5,
+	duration = 0.6,
 	contact = 0.4,
 	hand = "B",
 	shake = 0.1,
@@ -635,20 +757,138 @@ Moves.FocusPose = {
 	power = 0.5,
 	trail = false,
 	keys = {
-		{ t = 0, pose = {} },
-		{
-			t = 0.4,
-			ease = "out",
-			pose = {
-				Waist = V(-8, 0, 0),
-				RootPos = V(0, -0.2, 0.05),
-				RShoulder = V(36, 0, 14),
-				LShoulder = V(36, 0, -14),
-				RElbow = V(110, 0, 0),
-				LElbow = V(110, 0, 0),
-			},
-		},
-		{ t = 1, pose = {}, ease = "inout" },
+		NEUTRAL_START,
+		K(0.4, "out", merge(crouch(0.4), { Waist = V(0, -18, 0), Root = V(0, -20, 0), RootPos = V(0, -0.24, 0.05), RShoulder = V(86, 0, 4), RElbow = V(8, 0, 0), LShoulder = V(54, 0, -20), LElbow = V(112, 0, 0), Neck = V(0, 24, 0) })),
+		K(0.75, "inout", merge(crouch(0.4), { Waist = V(0, -18, 0), Root = V(0, -20, 0), RootPos = V(0, -0.26, 0.05), RShoulder = V(90, 0, 4), RElbow = V(6, 0, 0), LShoulder = V(56, 0, -20), LElbow = V(112, 0, 0), Neck = V(0, 26, 0) })),
+		NEUTRAL_END,
+	},
+}
+
+-- Signature moves (Config/Signatures sets when each strike lands inside them) -------------------------------------------
+
+-- Starter: four fast jabs and a haymaker.
+Moves.BarrageFlurry = {
+	name = "BarrageFlurry",
+	duration = 1.2,
+	contact = 0.817,
+	hand = "B",
+	shake = 0.6,
+	hitstop = 0.05,
+	power = 1.2,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.208, "out", JAB_R),
+		K(0.333, "inout", flip(JAB_R)),
+		K(0.458, "inout", JAB_R),
+		K(0.583, "inout", flip(JAB_R)),
+		K(0.69, "out", { Waist = V(0, -56, 0), Root = V(0, -24, 0), RootPos = V(0, -0.3, 0.34), RShoulder = V(24, 0, 28), RElbow = V(120, 0, 0), LShoulder = V(50, 0, -8), LElbow = V(100, 0, 0), Neck = V(0, 46, 0), LHip = V(30, 0, 0), LKnee = V(-40, 0, 0), RHip = V(-18, 0, 0) }),
+		K(0.817, "in", { Waist = V(0, 58, 0), Root = V(0, 26, 0), RootPos = V(0, -0.46, -0.92), RShoulder = V(102, 0, 8), RElbow = V(0, 0, 0), LShoulder = V(40, 0, -14), LElbow = V(126, 0, 0), Neck = V(0, -56, 0), RHip = V(46, 0, 0), RKnee = V(-48, 0, 0), LHip = V(-24, 0, 0) }),
+		K(0.93, "out", { Waist = V(0, 62, 0), Root = V(0, 28, 0), RootPos = V(0, -0.5, -0.96), RShoulder = V(106, 0, 6), RElbow = V(0, 0, 0), LShoulder = V(40, 0, -14), LElbow = V(126, 0, 0), Neck = V(0, -60, 0), RHip = V(46, 0, 0), RKnee = V(-48, 0, 0), LHip = V(-24, 0, 0) }),
+		NEUTRAL_END,
+	},
+}
+
+-- Stonebreaker: knee up, both fists high, then a stamp that splits the ground.
+Moves.QuakeStomp = {
+	name = "QuakeStomp",
+	duration = 1.1,
+	contact = 0.564,
+	hand = "B",
+	shake = 1.0,
+	hitstop = 0.1,
+	power = 1.9,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.18, "out", merge(crouch(0.5), { Waist = V(8, 0, 0), RootPos = V(0, -0.3, 0.1), RShoulder = V(70, 0, 40), LShoulder = V(70, 0, -40), RElbow = V(80, 0, 0), LElbow = V(80, 0, 0) })),
+		K(0.4, "out", { Waist = V(12, 0, 0), RootPos = V(0, 0.12, 0.1), RShoulder = V(158, 0, 30), LShoulder = V(158, 0, -30), RElbow = V(36, 0, 0), LElbow = V(36, 0, 0), Neck = V(-14, 0, 0), RHip = V(74, 0, 0), RKnee = V(-96, 0, 0), LHip = V(-8, 0, 0) }),
+		K(0.564, "in", { Waist = V(-38, 0, 0), RootPos = V(0, -0.62, -0.32), RShoulder = V(30, 0, 12), LShoulder = V(30, 0, -12), RElbow = V(6, 0, 0), LElbow = V(6, 0, 0), Neck = V(30, 0, 0), RHip = V(14, 0, 8), RKnee = V(-6, 0, 0), LHip = V(40, 0, 0), LKnee = V(-70, 0, 0) }),
+		K(0.78, "out", { Waist = V(-42, 0, 0), RootPos = V(0, -0.66, -0.34), RShoulder = V(26, 0, 14), LShoulder = V(26, 0, -14), Neck = V(32, 0, 0), RHip = V(14, 0, 8), LHip = V(42, 0, 0), LKnee = V(-74, 0, 0) }),
+		NEUTRAL_END,
+	},
+}
+
+-- Alloy: eight piston jabs in under a second, the fists a blur.
+local STORM_R: Pose = merge(JAB_R, { RootPos = V(0, -0.14, -0.2), Waist = V(0, 20, 0), Root = V(0, 8, 0), Neck = V(0, -24, 0) })
+do
+	local keys: { Key } = { NEUTRAL_START, K(0.1, "out", GUARD) }
+	for i = 0, 7 do
+		local t = 0.2308 + i * 0.0769 -- a jab every 0.1 s of the 1.3 s move, the first landing at 0.3 s
+		table.insert(keys, K(t, "inout", if i % 2 == 0 then STORM_R else flip(STORM_R)))
+	end
+	table.insert(keys, K(0.86, "out", GUARD))
+	table.insert(keys, NEUTRAL_END)
+	Moves.PistonStorm = {
+		name = "PistonStorm",
+		duration = 1.3,
+		contact = 0.7691,
+		hand = "B",
+		shake = 0.5,
+		hitstop = 0.02,
+		power = 0.9,
+		trail = true,
+		keys = keys,
+	}
+end
+
+-- Crystal: cock the arm back, sight along the other, and drive a single prism lance through the target.
+Moves.PrismLance = {
+	name = "PrismLance",
+	duration = 1.3,
+	contact = 0.538,
+	hand = "R",
+	shake = 0.6,
+	hitstop = 0.07,
+	power = 1.6,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.16, "out", merge(crouch(0.35), { Waist = V(0, -20, 0), Root = V(0, -26, 0), RootPos = V(0, -0.2, 0.2), RShoulder = V(70, 0, 30), RElbow = V(110, 0, 0), LShoulder = V(86, 0, -14), LElbow = V(4, 0, 0), Neck = V(0, 30, 0) })),
+		K(0.38, "inout", merge(crouch(0.5), { Waist = V(0, -36, 0), Root = V(0, -38, 0), RootPos = V(0, -0.3, 0.34), RShoulder = V(124, 0, 44), RElbow = V(132, 0, 0), LShoulder = V(92, 0, -18), LElbow = V(2, 0, 0), Neck = V(0, 50, 0) })),
+		K(0.538, "in", { Waist = V(0, 22, 0), Root = V(0, -14, 0), RootPos = V(0, -0.46, -0.98), RShoulder = V(88, 0, 0), RElbow = V(0, 0, 0), LShoulder = V(24, 0, -66), LElbow = V(24, 0, 0), Neck = V(0, -10, 0), RHip = V(62, 0, 0), RKnee = V(-52, 0, 0), LHip = V(-26, 0, 0) }),
+		K(0.78, "out", { Waist = V(0, 24, 0), Root = V(0, -14, 0), RootPos = V(0, -0.5, -1.04), RShoulder = V(92, 0, 0), RElbow = V(0, 0, 0), LShoulder = V(24, 0, -68), LElbow = V(24, 0, 0), Neck = V(0, -12, 0), RHip = V(62, 0, 0), RKnee = V(-52, 0, 0), LHip = V(-26, 0, 0) }),
+		NEUTRAL_END,
+	},
+}
+
+-- Magma: gather, leap, and bring both fists down like a falling mountain.
+Moves.EruptionSlam = {
+	name = "EruptionSlam",
+	duration = 1.2,
+	contact = 0.55,
+	hand = "B",
+	shake = 1.0,
+	hitstop = 0.11,
+	power = 2.0,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.22, "out", merge(crouch(1.0), { Waist = V(18, 0, 0), RootPos = V(0, -0.6, 0.22), RShoulder = V(-26, 0, 28), LShoulder = V(-26, 0, -28), RElbow = V(30, 0, 0), LElbow = V(30, 0, 0), Neck = V(-8, 0, 0) })),
+		K(0.4, "out", { Waist = V(-10, 0, 0), RootPos = V(0, 1.1, 0.1), RShoulder = V(178, 0, 12), LShoulder = V(178, 0, -12), RElbow = V(26, 0, 0), LElbow = V(26, 0, 0), Neck = V(-20, 0, 0), RHip = V(44, 0, 0), LHip = V(34, 0, 0), RKnee = V(-70, 0, 0), LKnee = V(-56, 0, 0) }),
+		K(0.55, "in", merge(crouch(0.9), { Waist = V(-52, 0, 0), RootPos = V(0, -0.8, -0.6), RShoulder = V(44, 0, 4), LShoulder = V(44, 0, -4), RElbow = V(4, 0, 0), LElbow = V(4, 0, 0), Neck = V(38, 0, 0) })),
+		K(0.8, "out", merge(crouch(0.9), { Waist = V(-56, 0, 0), RootPos = V(0, -0.84, -0.62), RShoulder = V(38, 0, 6), LShoulder = V(38, 0, -6), Neck = V(40, 0, 0) })),
+		NEUTRAL_END,
+	},
+}
+
+-- Void: both fists together at the chest, then wrenched apart as if tearing a seam in the air.
+Moves.RiftTear = {
+	name = "RiftTear",
+	duration = 1.3,
+	contact = 0.538,
+	hand = "B",
+	shake = 0.8,
+	hitstop = 0.08,
+	power = 1.8,
+	trail = true,
+	keys = {
+		NEUTRAL_START,
+		K(0.18, "out", merge(crouch(0.4), { Waist = V(10, 0, 0), RootPos = V(0, -0.22, 0.1), RShoulder = V(84, 0, -8), LShoulder = V(84, 0, 8), RElbow = V(104, 0, 0), LElbow = V(104, 0, 0), Neck = V(6, 0, 0) })),
+		K(0.38, "inout", merge(crouch(0.55), { Waist = V(14, 0, 0), RootPos = V(0, -0.3, 0.16), RShoulder = V(96, 0, -14), LShoulder = V(96, 0, 14), RElbow = V(70, 0, 0), LElbow = V(70, 0, 0), Neck = V(-6, 0, 0) })),
+		K(0.538, "in", merge(crouch(0.65), { Waist = V(-14, 0, 0), RootPos = V(0, -0.46, -0.4), RShoulder = V(80, 0, 78), LShoulder = V(80, 0, -78), RElbow = V(0, 0, 0), LElbow = V(0, 0, 0), Neck = V(14, 0, 0), RHip = V(30, 0, 14), LHip = V(30, 0, -14) })),
+		K(0.78, "out", merge(crouch(0.65), { Waist = V(-18, 0, 0), RootPos = V(0, -0.5, -0.42), RShoulder = V(150, 0, 56), LShoulder = V(150, 0, -56), RElbow = V(8, 0, 0), LElbow = V(8, 0, 0), Neck = V(-12, 0, 0), RHip = V(30, 0, 14), LHip = V(30, 0, -14) })),
+		NEUTRAL_END,
 	},
 }
 
@@ -656,17 +896,19 @@ Animations.Moves = Moves
 
 -- Attack styles: the combo sequence cycles through `moves`. A style is chosen per arm via ArmDef.attackStyle.
 Animations.Styles = {
-	Fists = { moves = { "JabR", "JabL", "CrossR" } },
-	Hammer = { moves = { "OverheadSlam", "SideSwingR", "OverheadSlam", "SideSwingL" } },
-	Piston = { moves = { "PistonR", "PistonL" } },
-	Prism = { moves = { "LungeR", "LungeL" } },
-	Slam = { moves = { "VolcanoSlamR", "VolcanoSlamL" } },
-	Rend = { moves = { "RendBoth" } },
+	Fists = { moves = { "JabR", "HookL", "CrossR" } },
+	Hammer = { moves = { "OverheadSlam", "SideSwingR", "GroundPound", "SideSwingL" } },
+	Piston = { moves = { "PistonR", "PistonL", "PistonR", "UppercutR" } },
+	Prism = { moves = { "LungeR", "LungeL", "SpinThrustR" } },
+	Slam = { moves = { "VolcanoSlamR", "VolcanoSlamL", "MagmaDoubleSmash" } },
+	Rend = { moves = { "ClawRakeR", "ClawRakeL", "ClawRakeR", "RendBoth" } },
 } :: { [string]: { moves: { string } } }
 
 -- Moves with an "L" suffix are generated by mirroring the "R" move (see Logic/PoseMath.mirrorMove).
 Animations.MirrorOf = {
 	JabL = "JabR",
+	HookL = "HookR",
+	ClawRakeL = "ClawRakeR",
 	SideSwingL = "SideSwingR",
 	PistonL = "PistonR",
 	LungeL = "LungeR",

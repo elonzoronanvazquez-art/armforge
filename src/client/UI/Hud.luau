@@ -8,6 +8,8 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Armforge")
 local Arms = require(Shared.Config.Arms)
 local Rocks = require(Shared.Config.Rocks)
 local SkillConfig = require(Shared.Config.Skills)
+local SignatureConfig = require(Shared.Config.Signatures)
+local Signature = require(Shared.Logic.Signature)
 local BoosterConfig = require(Shared.Config.Boosters)
 local ProgressionConfig = require(Shared.Config.Progression)
 local Formulas = require(Shared.Logic.Formulas)
@@ -331,6 +333,54 @@ local function buildSkillBar(root: Frame)
 	end
 end
 
+-- The signature slot sits to the right of the skill bar: the worn arm's own special move (Q).
+local function buildSignatureSlot(root: Frame)
+	local slot = W.new("TextButton", {
+		Name = "SignatureSlot",
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0.5, 2 * 74 + 10, 1, -14),
+		Size = UDim2.fromOffset(68, 68),
+		BackgroundColor3 = C.panel,
+		BorderSizePixel = 0,
+		Text = "",
+		AutoButtonColor = false,
+		ClipsDescendants = true,
+		Parent = root,
+	})
+	W.corner(UDim.new(0, 10)).Parent = slot
+	local stroke = W.stroke(C.accent, 2.5, 0.1)
+	stroke.Parent = slot
+	local name = W.text({
+		Size = UDim2.new(1, -4, 0, 30),
+		Position = UDim2.fromOffset(2, 18),
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Font = Theme.fontBold,
+		TextSize = 10,
+		Text = "",
+		TextColor3 = C.text,
+		Parent = slot,
+	})
+	local key = W.text({ Position = UDim2.fromOffset(6, 3), Size = UDim2.fromOffset(20, 14), Font = Theme.fontBlack, TextSize = 12, TextColor3 = C.accent, Text = "Q", Parent = slot })
+	local tag = W.text({
+		Position = UDim2.new(1, -4, 1, -16),
+		AnchorPoint = Vector2.new(1, 0),
+		Size = UDim2.fromOffset(44, 14),
+		TextXAlignment = Enum.TextXAlignment.Right,
+		Font = Theme.fontBold,
+		TextSize = 9,
+		TextColor3 = C.sub,
+		Text = "SIGNATURE",
+		Parent = slot,
+	})
+	local overlay = W.frame({ Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.black, BackgroundTransparency = 0.12, Visible = false, ZIndex = 3, Parent = slot })
+	local timer = W.text({ Size = UDim2.fromScale(1, 1), TextXAlignment = Enum.TextXAlignment.Center, Font = Theme.fontBlack, TextSize = 20, Text = "", ZIndex = 4, Parent = slot })
+	slot.Activated:Connect(function()
+		CombatController.useSignature()
+	end)
+	refs.sig = { slot = slot, stroke = stroke, name = name, key = key, tag = tag, overlay = overlay, timer = timer, armId = "" }
+end
+
 local function buildPunchButton(root: Frame)
 	if not W.isTouch() then
 		return
@@ -455,6 +505,27 @@ local function refreshDynamic()
 		r.stroke.Thickness = if active > 0 then 3.5 else 2
 		r.stroke.Transparency = if active > 0 then 0 else 0.25
 	end
+	-- signature slot: follows the worn arm
+	local sig = refs.sig
+	if sig then
+		local armId = Store.armId()
+		local def = SignatureConfig.Defs[armId]
+		local arm = Arms.Defs[armId]
+		if def and sig.armId ~= armId then
+			sig.armId = armId
+			sig.name.Text = string.upper(def.name)
+			sig.key.TextColor3 = arm.palette.glow
+			sig.stroke.Color = arm.palette.glow
+		end
+		local cd = if def then Store.skillCooldown(Signature.key(armId)) else 0
+		if cd > 0.05 then
+			sig.overlay.Visible = true
+			sig.timer.Text = string.format("%.1f", cd)
+		else
+			sig.overlay.Visible = false
+			sig.timer.Text = ""
+		end
+	end
 	-- booster chips
 	for id in d.boosters.active do
 		local def = BoosterConfig.Defs[id]
@@ -530,6 +601,7 @@ function Hud.build(root: Frame)
 	buildDevButton(root)
 	buildArmCard(root)
 	buildSkillBar(root)
+	buildSignatureSlot(root)
 	buildPunchButton(root)
 	Store.changed:connect(refreshStatus)
 	RunService.Heartbeat:Connect(function()

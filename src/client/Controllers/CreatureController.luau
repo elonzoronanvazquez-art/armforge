@@ -17,6 +17,7 @@ local SkillConfig = require(Shared.Config.Skills)
 local Format = require(Shared.Util.Format)
 local Store = require(script.Parent.Parent.Store)
 local EffectsController = require(script.Parent.EffectsController)
+local ArmFx = require(script.Parent.ArmFx)
 local CameraController = require(script.Parent.CameraController)
 local TargetController = require(script.Parent.TargetController)
 
@@ -661,6 +662,7 @@ local function familyOf(creatureId: string): string
 end
 
 function CreatureController.reveal(p: any)
+	ArmFx.creatureReveal(p)
 	local pos: Vector3 = p.pos
 	local color: Color3 = p.color
 	local boss = p.boss == true
@@ -693,6 +695,7 @@ function CreatureController.telegraph(p: any)
 end
 
 function CreatureController.strike(p: any)
+	ArmFx.creatureStrike(p)
 	local pos: Vector3 = p.pos
 	local origin: Vector3 = p.origin
 	EffectsController.ring(Vector3.new(origin.X, origin.Y + 0.4, origin.Z), Vector3.yAxis, p.color, 2, if p.shape == "circle" then 14 else 8, 0.4)
@@ -709,6 +712,12 @@ function CreatureController.hit(p: any)
 	local isMine = p.attacker == LOCAL.UserId
 	EffectsController.flash(pos, if p.crit then Color3.fromRGB(255, 240, 180) else color:Lerp(Color3.new(1, 1, 1), 0.5), 3 + (p.power or 1) * 2, 0.14)
 	EffectsController.emit("spark", pos, Vector3.yAxis, color, if p.coreHit then 26 else 12)
+	if p.armId then
+		ArmFx.impact(p.armId, pos, Vector3.yAxis, p.power or 1, p.crit == true)
+		if p.armId == "Magma" then
+			ArmFx.burning(pos, 1.6)
+		end
+	end
 	EffectsController.sound(soundKey("Hit", if p.armored then "ore" else "stone"), pos, 0.9, if p.armored then 0.8 else 1)
 	for model in rigs do
 		if model:GetAttribute("RockId") == p.id then
@@ -760,6 +769,7 @@ function CreatureController.phase(p: any)
 end
 
 function CreatureController.defeat(p: any)
+	ArmFx.creatureDefeat(p)
 	local pos: Vector3 = p.pos
 	local color: Color3 = p.color
 	local r: number = p.radius or 4

@@ -10,7 +10,11 @@ Run `lune run tests/run` after every change: `config.spec`, `wiring.spec` and th
 2. **`Logic/Combat.luau`**: if it has a new `trait`, implement it in `resolveHit` (or `stats` for speed/crit traits) and
    add a test in `tests/combat.spec.luau`. Reuse `"Finisher"`, `"Overclock"` etc. only if the behaviour is identical.
 3. **`Config/Animations.luau`**: add moves and a `Styles` entry named by `attackStyle` (use `MirrorOf` for the left-hand
-   version). Every move needs a key at its `contact` time, neutral first and last keys (`config.spec` enforces it).
+   version). Every move needs a key at its `contact` time, neutral first and last keys (`config.spec` enforces it). Poses can drive
+   the hips and knees (`RHip`, `LHip`, `RKnee`, `LKnee`) as well as the arms; the `crouch()` helper builds the bent-knee stance.
+   Give the arm a **signature move** too: a move with strike beats, and a `Config/Signatures.luau` entry whose `at` times sit on
+   key poses of that move (`tests/signatures.spec` checks it). Then give it a visual style in `client/Controllers/ArmFx.luau`
+   (`impact`, `signature` and `burst` switch on the arm id and the signature's `style`), and an arc in its `ARCS` table.
 4. **`Runtime/ArmDesigns.luau`**: add a `Designs[armId]` piece list (>= 4 base pieces and pieces at tiers 1, 2 and 3) and an
    `Effects` entry. For an AI gauntlet, generate it (`scripts/gen_assets.py`), register it in `Config/Assets.Meshes`, and
    add a `Mesh` piece plus `fallback = true` primitives (`wiring.spec` checks mesh keys).

@@ -169,6 +169,12 @@ local SERVER_COMMANDS: { [string]: (Player, Sessions.Session, { string }) -> Res
 		hum.Health = hum.MaxHealth
 		return done("healed")
 	end,
+	-- every skill and signature cooldown, instantly (testing the moves back to back)
+	resetcd = function(player, session)
+		table.clear(session.combat.skillReady)
+		Sync.mark(player)
+		return done("all skill and signature cooldowns cleared")
+	end,
 	goto = function(player, session, args)
 		local id = Validate.id(args[1])
 		if not id then

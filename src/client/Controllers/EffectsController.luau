@@ -23,6 +23,12 @@ local CameraController = require(script.Parent.CameraController)
 
 local EffectsController = {}
 
+-- required lazily: ArmFx itself requires this module
+local function armFx(): any
+	local module = require(script.Parent.ArmFx) :: any
+	return module
+end
+
 local LOCAL = Players.LocalPlayer
 local fxFolder: Folder
 local rng = Random.new()
@@ -576,6 +582,9 @@ local function onHit(p: any)
 		emit("chip", pos, dir, def.colors.mid, 4)
 		return
 	end
+	if p.armId and near then
+		armFx().impact(p.armId, pos, dir, power, p.crit == true)
+	end
 
 	-- impact: flash, sparks, chips, dust
 	flash(pos, if p.crit then Color3.fromRGB(255, 240, 180) else color:Lerp(Color3.new(1, 1, 1), 0.5), 3 + power * 2.4, 0.14)
@@ -674,6 +683,7 @@ local function onSwing(p: any)
 	local char = characterOf(p.u)
 	if char then
 		ArmAnimator.play(char, p.move, p.speed)
+		armFx().swing(char, p.move, p.armId, p.speed)
 		local hrp = char:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if hrp then
 			EffectsController.sound("Swing", hrp.Position, 0.6, 1)
@@ -697,19 +707,35 @@ local function onSkill(p: any)
 			emit("ember", hrp.Position, Vector3.yAxis, color, 30)
 		end
 	end
+	armFx().skill(p)
 end
 
 local function onWave(p: any)
 	local pos: Vector3 = p.pos
-	local color: Color3 = p.color or Color3.new(1, 1, 1)
 	local floor = pos - Vector3.new(0, 2.6, 0)
-	ring(floor, Vector3.yAxis, color, 4, p.radius * 2.1, 0.55)
-	ring(floor, Vector3.yAxis, Color3.new(1, 1, 1), 2, p.radius * 1.5, 0.4)
 	emit("dust", floor + Vector3.new(0, 1, 0), Vector3.yAxis, Color3.fromRGB(200, 190, 180), 26)
 	EffectsController.sound("Smash", pos, 1, 0.9)
 	if nearLocal(pos, 100) then
 		CameraController.shake(0.7, 0.4)
 	end
+	armFx().wave(p)
+end
+
+-- An arm's signature move: other players' characters play its animation; everyone sees its effects.
+local function onSignature(p: any)
+	local char = characterOf(p.u)
+	if char and p.u ~= LOCAL.UserId then
+		ArmAnimator.play(char, p.move, 1)
+	end
+	local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if hrp then
+		EffectsController.sound("Smash", hrp.Position, 0.55, 1.2)
+	end
+	armFx().signature(p)
+end
+
+local function onBurst(p: any)
+	armFx().burst(p)
 end
 
 local function onTravel(p: any)
@@ -740,6 +766,10 @@ end
 
 -- helpers shared with CreatureController (same budgets, same pooled visuals)
 EffectsController.flash = flash
+EffectsController.scale = countScale
+function EffectsController.folder(): Folder
+	return fxFolder
+end
 EffectsController.ring = ring
 EffectsController.emit = emit
 EffectsController.hitFlash = hitFlash
@@ -768,6 +798,8 @@ local dispatch: { [string]: (any) -> () } = {
 	Swing = onSwing,
 	Skill = onSkill,
 	Wave = onWave,
+	Signature = onSignature,
+	Burst = onBurst,
 	Travel = onTravel,
 	Rebirth = onRebirth,
 }
@@ -819,6 +851,7 @@ function EffectsController.start()
 	holder.Parent = workspace
 	flashHighlight.Parent = holder
 	setupEmitters()
+	armFx().start()
 
 	local remotes = Net.client()
 	remotes.Fx.OnClientEvent:Connect(function(kind: string, payload: any)

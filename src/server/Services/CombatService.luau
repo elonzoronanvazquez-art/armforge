@@ -15,6 +15,7 @@ local Combat = require(Shared.Logic.Combat)
 local PoseMath = require(Shared.Logic.PoseMath)
 local Progression = require(Shared.Logic.Progression)
 local Skills = require(Shared.Logic.Skills)
+local Signature = require(Shared.Logic.Signature)
 local Islands = require(Shared.Logic.Islands)
 local Validate = require(Shared.Util.Validate)
 local RateLimiter = require(Shared.Logic.RateLimiter)
@@ -173,6 +174,68 @@ local function applyCreatureStrike(
 	return true
 end
 
+type Area = {
+	radius: number,
+	maxTargets: number,
+	mult: number,
+	pierce: number,
+	ignite: boolean,
+	skill: string,
+	power: number,
+	skipRock: number?,
+	skipEnc: number?,
+}
+
+-- Area damage around `center`: creatures first (nearest first), then rocks, at most `maxTargets` in all, only on islands
+-- the player has open. Shared by Shatter Wave and the signature bursts. Returns how many targets were struck.
+local function areaDamage(
+	session: Sessions.Session,
+	player: Player,
+	hrpPos: Vector3,
+	center: Vector3,
+	stats: Combat.Stats,
+	move: PoseMath.Move,
+	o: Area
+): number
+	local count = 0
+	local arm = Arms.Defs[stats.armId]
+	for _, enc in EncounterService.near(center, o.radius) do
+		if count >= o.maxTargets then
+			break
+		end
+		if enc.id ~= o.skipEnc and EncounterService.eligible(session, enc) then
+			count += 1
+			local dmg = Combat.mitigate(stats.power * o.mult, enc.def.resistance, o.pierce)
+			local hit: Combat.Hit = { damage = dmg, crit = false, finisher = false, rend = false, splash = false, ignite = o.ignite, extraChunks = 0, resist = 0, raw = dmg }
+			applyCreatureStrike(session, player, enc, stats, hit, move, { skill = o.skill })
+		end
+	end
+	for _, entry in RockService.near(center, o.radius) do
+		if count >= o.maxTargets then
+			break
+		end
+		if entry.id ~= o.skipRock and Islands.open(session.data, entry.island) then
+			count += 1
+			local dmg = Combat.mitigate(stats.power * o.mult, entry.def.resistance, o.pierce)
+			local away = hrpPos - entry.center
+			RockService.damage(entry, player, player.UserId, dmg, {
+				hitDir = if away.Magnitude > 0.01 then away.Unit else Vector3.yAxis,
+				skill = o.skill,
+				power = o.power,
+				armId = stats.armId,
+				minChunks = 2,
+				trailColor = arm.palette.glow,
+			})
+			if o.ignite and entry.state.alive then
+				RockService.ignite(entry, player.UserId, math.max(1, math.floor(dmg * 0.12)), 3)
+			end
+		end
+	end
+	session.data.stats.strikes += count
+	Sync.mark(player)
+	return count
+end
+
 local function onPunch(player: Player, rockIdRaw: any, _seq: any)
 	local rockId = Validate.int(rockIdRaw, 0, 1e9)
 	if rockId == nil then
@@ -280,11 +343,161 @@ local function onPunch(player: Player, rockIdRaw: any, _seq: any)
 	end)
 end
 
+-- Signature moves ---------------------------------------------------------------------------------------------------------
+
+local function onSignature(player: Player, rockIdRaw: any)
+	local rockId = Validate.int(rockIdRaw, 0, 1e9) or 0
+	if not allowed(player, "Skill") then
+		return
+	end
+	local session = Sessions.ready(player)
+	local char, hrp = liveCharacter(player)
+	if not (session and char and hrp) then
+		return
+	end
+	local now = os.clock()
+	local combat = session.combat
+	Combat.updateBuffs(combat, now)
+	local stats = Combat.stats(session.data, combat, now)
+	local armId = stats.armId
+	local def = Signature.def(armId)
+	if not def or Signature.remaining(combat, armId, now) > 0 then
+		return
+	end
+	local move = PoseMath.moves()[def.move]
+
+	-- the target: a creature released from the rock first, otherwise the rock itself; both need to be in reach
+	local creature: EncounterService.Enc? = nil
+	local entry: RockService.Entry? = nil
+	local c = if rockId > 0 then EncounterService.targetFor(rockId) else nil
+	if c and validCreature(session, hrp, c, stats.reach, Game.Combat.reachSlack) then
+		creature = c
+	elseif rockId > 0 and not c then
+		local e = RockService.get(rockId)
+		if e and validTarget(session, hrp, e, stats.reach) then
+			entry = e
+		end
+	end
+	if def.needsTarget and not creature and not entry then
+		return -- nothing is spent when there is nothing to hit
+	end
+
+	combat.nextAttackAt = math.max(combat.nextAttackAt, now + move.duration * 0.9)
+	combat.skillReady[Signature.key(armId)] = now + Signature.cooldown(session.data, armId)
+	local targetPos: Vector3? = nil
+	if creature and creature.sim then
+		targetPos = creature.sim.pos
+	elseif entry then
+		targetPos = entry.center
+	end
+	RockService.fxNear(hrp.Position, "Signature", {
+		u = player.UserId,
+		arm = armId,
+		move = def.move,
+		style = def.style,
+		rock = if entry then entry.id elseif creature then creature.id else 0,
+		tp = targetPos,
+	}, 110)
+	Sync.mark(player)
+
+	local sstats = table.clone(stats)
+	sstats.pierce = math.min(1, stats.pierce + (def.pierce or 0))
+	local token = if creature then creature.sm.token else 0
+	local generation = if entry then entry.state.generation else 0
+	local skill = "Signature"
+
+	-- is the original target still there to be struck, and the arm still worn?
+	local function stillThere(hrp2: BasePart): boolean
+		if session.data.arms.equipped ~= armId then
+			return false
+		end
+		if creature then
+			return creature.sm.token == token and creature.sm.state == "COMBAT" and validCreature(session, hrp2, creature, stats.reach, Game.Combat.reachSlack + 5)
+		elseif entry then
+			return entry.state.alive and entry.state.generation == generation and RockService.inReach(entry, hrp2.Position, stats.reach, Game.Combat.reachSlack + 5)
+		end
+		return true
+	end
+
+	local lastIndex = #def.strikes
+	for _, strike in def.strikes do
+		task.delay(strike.at, function()
+			if not Sessions.ready(player) then
+				return
+			end
+			local _, hrp2 = liveCharacter(player)
+			if not hrp2 or not stillThere(hrp2) then
+				return
+			end
+			local strikeMove = table.clone(move)
+			strikeMove.power = if strike.mult >= 1.5 then 1.6 else 0.7
+			if creature then
+				local hit = Combat.resolveHit(sstats, { family = creature.def.family, resistance = creature.def.resistance }, 1, rng, { skillMult = strike.mult, noTrait = true, guaranteedCrit = strike.crit })
+				hit.ignite = def.ignite == true
+				applyCreatureStrike(session, player, creature, sstats, hit, strikeMove, { skill = skill })
+			elseif entry then
+				local hit = Combat.resolveHit(sstats, entry.def, 1, rng, { skillMult = strike.mult, noTrait = true, guaranteedCrit = strike.crit })
+				hit.ignite = def.ignite == true
+				applyStrike(session, player, entry, sstats, hit, strikeMove, hrp2, { skill = skill, minChunks = if strike.mult >= 1.5 then 2 else 0 })
+			end
+		end)
+	end
+
+	if stats.trait == "Overclock" and lastIndex > 0 then
+		-- Piston Storm leaves the arms fully overclocked for the strikes that follow, even if the target fell mid-move
+		task.delay(def.strikes[lastIndex].at + 0.02, function()
+			if Sessions.ready(player) and session.data.arms.equipped == armId then
+				combat.armId = armId
+				combat.overclock = 5
+				combat.lastStrike = os.clock()
+				combat.combo = math.max(combat.combo, 1)
+			end
+		end)
+	end
+
+	local burst = def.burst
+	if burst then
+		task.delay(burst.at, function()
+			if not Sessions.ready(player) or session.data.arms.equipped ~= armId then
+				return
+			end
+			local _, hrp2 = liveCharacter(player)
+			if not hrp2 then
+				return
+			end
+			local center = hrp2.Position
+			if burst.center == "target" then
+				if creature and creature.sim then
+					center = creature.sim.pos
+				elseif entry then
+					center = entry.center
+				end
+			end
+			RockService.fxNear(center, "Burst", { pos = center, radius = burst.radius, arm = armId, style = def.style, u = player.UserId }, 110)
+			areaDamage(session, player, hrp2.Position, center, sstats, move, {
+				radius = burst.radius,
+				maxTargets = burst.maxTargets,
+				mult = burst.mult,
+				pierce = sstats.pierce,
+				ignite = burst.ignite == true,
+				skill = skill,
+				power = 1.2,
+				skipRock = if entry then entry.id else nil,
+				skipEnc = if creature then creature.id else nil,
+			})
+		end)
+	end
+end
+
 -- Skills ---------------------------------------------------------------------------------------------------------
 
 local function onSkill(player: Player, skillIdRaw: any, rockIdRaw: any)
 	local skillId = Validate.id(skillIdRaw)
 	local rockId = Validate.int(rockIdRaw, 0, 1e9) or 0
+	if skillId == "Signature" then
+		onSignature(player, rockIdRaw)
+		return
+	end
 	if not skillId or not SkillConfig.Defs[skillId] then
 		return
 	end
@@ -330,7 +543,6 @@ local function onSkill(player: Player, skillIdRaw: any, rockIdRaw: any)
 	local contact = move.duration * move.contact
 	combat.nextAttackAt = math.max(combat.nextAttackAt, now + move.duration * 0.85)
 	Combat.startSkill(session.data, combat, skillId, now)
-	local arm = Arms.Defs[stats.armId]
 	if skillId == "Overdrive" then
 		task.delay(effect.duration + 0.05, Sync.mark, player)
 		task.delay(effect.duration + effect.overheatDuration + 0.05, Sync.mark, player)
@@ -344,12 +556,13 @@ local function onSkill(player: Player, skillIdRaw: any, rockIdRaw: any)
 		move = moveName,
 		armId = stats.armId,
 		color = SkillConfig.Defs[skillId].color,
+		dur = effect.duration,
+		tp = if target then target.center elseif creatureTarget and creatureTarget.sim then creatureTarget.sim.pos else nil,
 		rock = if target then target.id elseif creatureTarget then creatureTarget.id else 0,
 	}, 110)
 	Sync.mark(player)
 
 	local chargedExtra: StrikeExtra = { skill = skillId }
-	local waveExtra: StrikeExtra = { skill = skillId }
 	if skillId == "ChargedSmash" and creatureTarget then
 		local enc = creatureTarget
 		local token = enc.sm.token
@@ -395,37 +608,16 @@ local function onSkill(player: Player, skillIdRaw: any, rockIdRaw: any)
 				return
 			end
 			-- bounded: at most maxTargets targets (creatures first) inside the radius, on islands the player has unlocked
-			local count = 0
-			RockService.fxNear(hrp2.Position, "Wave", { pos = hrp2.Position, radius = effect.radius, color = SkillConfig.Defs[skillId].color }, 110)
-			for _, enc in EncounterService.near(hrp2.Position, effect.radius) do
-				if count >= effect.maxTargets then
-					break
-				end
-				if EncounterService.eligible(session, enc) then
-					count += 1
-					local dmg = Combat.mitigate(stats.power * effect.damageMult, enc.def.resistance, stats.pierce)
-					applyCreatureStrike(session, player, enc, stats, { damage = dmg, crit = false, finisher = false, rend = false, splash = false, ignite = false, extraChunks = 0, resist = 0, raw = dmg }, move, waveExtra)
-				end
-			end
-			for _, entry in RockService.near(hrp2.Position, effect.radius) do
-				if count >= effect.maxTargets then
-					break
-				end
-				if Islands.open(session.data, entry.island) then
-					count += 1
-					local dmg = Combat.mitigate(stats.power * effect.damageMult, entry.def.resistance, stats.pierce)
-					RockService.damage(entry, player, player.UserId, dmg, {
-						hitDir = (hrp2.Position - entry.center).Unit,
-						skill = skillId,
-						power = 1.2,
-						armId = stats.armId,
-						minChunks = 2,
-						trailColor = arm.palette.glow,
-					})
-				end
-			end
-			session.data.stats.strikes += count
-			Sync.mark(player)
+			RockService.fxNear(hrp2.Position, "Wave", { pos = hrp2.Position, radius = effect.radius, color = SkillConfig.Defs[skillId].color, armId = stats.armId }, 110)
+			areaDamage(session, player, hrp2.Position, hrp2.Position, stats, move, {
+				radius = effect.radius,
+				maxTargets = effect.maxTargets,
+				mult = effect.damageMult,
+				pierce = stats.pierce,
+				ignite = false,
+				skill = skillId,
+				power = 1.2,
+			})
 		end)
 	end
 end

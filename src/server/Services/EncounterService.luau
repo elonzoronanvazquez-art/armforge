@@ -279,7 +279,19 @@ local function applyEvents(enc: Enc, events: { CreatureSim.Event })
 				boss = enc.def.tier == "boss",
 			}, 160)
 		elseif e.kind == "strike" then
-			RockService.fxNear(sim.pos, "CreatureStrike", { id = enc.id, shape = e.shape, origin = e.origin, dir = e.dir, pos = e.pos, color = enc.def.visual.glow, boss = enc.def.tier == "boss" }, 140)
+			RockService.fxNear(sim.pos, "CreatureStrike", {
+				id = enc.id,
+				shape = e.shape,
+				origin = e.origin,
+				dir = e.dir,
+				pos = e.pos,
+				radius = e.radius,
+				length = e.length,
+				width = e.width,
+				halfAngle = e.halfAngle,
+				color = enc.def.visual.glow,
+				boss = enc.def.tier == "boss",
+			}, 140)
 		elseif e.kind == "hit" then
 			local player = Players:GetPlayerByUserId(e.userId)
 			local char = player and player.Character
@@ -501,6 +513,7 @@ function EncounterService.hit(enc: Enc, player: Player, amount: number, opts: { 
 		interrupted = result.interrupted,
 		frac = result.hpFrac,
 		attacker = player.UserId,
+		armId = opts.armId,
 		color = enc.def.visual.glow,
 		boss = enc.def.tier == "boss",
 	}, 120)

@@ -58,6 +58,7 @@ Numbers accept `1000`, `1e6`, `-500`. Anything out of range is refused with a us
 | `power <n>` | multiply the damage you deal to rocks and creatures (1 = normal) |
 | `speed <n>` | walk speed 8 to 250 (`speed 0` = normal) |
 | `heal` | restore health |
+| `resetcd` | clear every skill and signature cooldown |
 | `momentum` | grant Frostpeak's Summit Momentum without climbing |
 | `reset confirm` | wipe your progress to a brand new player (needs the word `confirm`; the panel asks for two clicks) |
 

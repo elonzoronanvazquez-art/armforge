@@ -11,6 +11,7 @@ local Net = require(Shared.Net)
 local Game = require(Shared.Config.Game)
 local Arms = require(Shared.Config.Arms)
 local SkillConfig = require(Shared.Config.Skills)
+local Signature = require(Shared.Logic.Signature)
 local Animations = require(Shared.Config.Animations)
 local PoseMath = require(Shared.Logic.PoseMath)
 local Signal = require(Shared.Util.Signal)
@@ -18,6 +19,7 @@ local Store = require(script.Parent.Parent.Store)
 local ArmAnimator = require(script.Parent.ArmAnimator)
 local TargetController = require(script.Parent.TargetController)
 local EffectsController = require(script.Parent.EffectsController)
+local ArmFx = require(script.Parent.ArmFx)
 
 local CombatController = {}
 
@@ -87,6 +89,7 @@ local function strike()
 	local speed = PoseMath.playSpeed(move, cd)
 	faceTarget(hrp, target)
 	ArmAnimator.play(char, moveName, speed)
+	ArmFx.swing(char, moveName, armId, speed)
 	EffectsController.sound("Swing", hrp.Position, 0.8, 1 + (speed - 1) * 0.3)
 	seq += 1
 	remotes.Punch:FireServer(rockId, seq)
@@ -147,6 +150,33 @@ function CombatController.useSkill(skillId: string)
 	ArmAnimator.play(char, moveName, 1)
 	nextAttackAt = math.max(nextAttackAt, os.clock() + move.duration * 0.85)
 	remotes.Skill:FireServer(skillId, rockId)
+end
+
+-- The worn arm's signature move (Q). The server resolves it; the client plays the animation straight away.
+function CombatController.useSignature()
+	local char, hrp = character()
+	if not (char and hrp) or not Store.data or CombatController.blocked then
+		return
+	end
+	local armId = Store.armId()
+	local def = Signature.def(armId)
+	if not def then
+		return
+	end
+	if Store.skillCooldown(Signature.key(armId)) > 0.05 then
+		return
+	end
+	local target = TargetController.pick()
+	local rockId = if target then (target:GetAttribute("RockId") :: number) else 0
+	if def.needsTarget and rockId == 0 then
+		EffectsController.floatText(hrp.Position + Vector3.new(0, 3, 0), "Get closer to a target", Color3.fromRGB(255, 200, 120), 1)
+		return
+	end
+	local move = PoseMath.moves()[def.move]
+	faceTarget(hrp, target)
+	ArmAnimator.play(char, def.move, 1)
+	nextAttackAt = math.max(nextAttackAt, os.clock() + move.duration * 0.9)
+	remotes.Skill:FireServer("Signature", rockId)
 end
 
 function CombatController.start()

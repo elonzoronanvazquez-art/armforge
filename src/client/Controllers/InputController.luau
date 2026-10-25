@@ -1,6 +1,6 @@
 --!strict
 -- Keyboard / mouse / gamepad bindings. Touch uses the on-screen PUNCH button and skill slots (see UI/Hud).
---   Mouse1 or Gamepad R2: punch (hold to keep striking)     1-4 / D-pad: skills
+--   Mouse1 or Gamepad R2: punch (hold to keep striking)     1-4 / D-pad: skills     Q / Gamepad Y: the worn arm's signature move
 --   F Arms  K Skills  B Boosters  M Islands  R Rebirth  O Menu
 
 local UserInputService = game:GetService("UserInputService")
@@ -67,6 +67,10 @@ function InputController.start()
 		-- developer mode: backtick, only for players the server authorized (it re-checks every command)
 		if input.KeyCode == Enum.KeyCode.Backquote and Store.live.dev == true then
 			UI.toggle("Dev")
+			return
+		end
+		if input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonY then
+			CombatController.useSignature()
 			return
 		end
 		local slot = SKILL_KEYS[input.KeyCode]

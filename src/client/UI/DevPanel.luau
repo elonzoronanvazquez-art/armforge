@@ -170,6 +170,7 @@ function Panel.build(content: Frame)
 		{ label = "Speed 60", cmd = "speed 60" },
 		{ label = "Speed normal", cmd = "speed 0" },
 		{ label = "Heal", cmd = "heal" },
+		{ label = "Reset cooldowns", cmd = "resetcd" },
 		{ label = "Summit Momentum", cmd = "momentum" },
 	})
 	local dangerous = W.frame({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 5, Parent = scroll })

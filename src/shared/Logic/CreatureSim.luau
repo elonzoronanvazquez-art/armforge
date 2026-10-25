@@ -291,7 +291,18 @@ local function resolveAttack(sim: Sim, now: number, players: { Player }, events:
 		end
 		sim.pos = Vector3.new(goal.X, sim.pos.Y, goal.Z)
 	end
-	push(events, { kind = "strike", attack = attack.id, shape = attack.kind, origin = sim.aimOrigin, dir = sim.aimDir, pos = sim.pos })
+	push(events, {
+		kind = "strike",
+		attack = attack.id,
+		shape = attack.kind,
+		origin = sim.aimOrigin,
+		dir = sim.aimDir,
+		pos = sim.pos,
+		radius = attack.radius,
+		length = attack.length,
+		width = attack.width,
+		halfAngle = attack.halfAngle,
+	})
 	setState(sim, "ATTACKING", now, STRIKE_TIME, events)
 end
 

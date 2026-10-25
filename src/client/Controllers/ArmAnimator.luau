@@ -43,6 +43,10 @@ local JOINT_NAMES: { [string]: string } = {
 	RElbow = "RightElbow",
 	LShoulder = "LeftShoulder",
 	LElbow = "LeftElbow",
+	RHip = "RightHip",
+	LHip = "LeftHip",
+	RKnee = "RightKnee",
+	LKnee = "LeftKnee",
 }
 
 local rigs: { [Model]: Rig } = {}

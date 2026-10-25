@@ -47,7 +47,16 @@ function PoseMath.sample(move: Move, t: number): Pose
 	return out
 end
 
-local SWAP = { RShoulder = "LShoulder", LShoulder = "RShoulder", RElbow = "LElbow", LElbow = "RElbow" }
+local SWAP = {
+	RShoulder = "LShoulder",
+	LShoulder = "RShoulder",
+	RElbow = "LElbow",
+	LElbow = "RElbow",
+	RHip = "LHip",
+	LHip = "RHip",
+	RKnee = "LKnee",
+	LKnee = "RKnee",
+}
 
 -- Left-handed version of a right-handed move: swap arms, negate yaw/roll and lateral offsets.
 function PoseMath.mirrorPose(pose: Pose): Pose

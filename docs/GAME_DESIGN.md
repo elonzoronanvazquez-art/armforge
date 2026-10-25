@@ -31,6 +31,24 @@ Power at upgrade level L = `basePower * growth^L` (growth 1.14-1.15, max level 1
 `upgradeBaseCost * upgradeGrowth^L`. Visual tiers (extra plating / glow) appear at upgrade levels 3, 7 and 12.
 Each arm also has **skill affinities** (e.g. Stonebreaker +25% Charged Smash, Alloy +30% Overdrive duration).
 
+### Signature moves (Q)
+
+Every arm has one special attack of its own, used with **Q** (gamepad Y, or the SIGNATURE slot beside the skill bar). It needs no skill
+points, has its own cooldown (10-14 s, shortened by Endurance training) and the cooldown is kept per arm, so swapping arms never skips it.
+It resolves on the server like a skill: a scripted run of strikes against the target (times line up with the fists in the animation) and
+sometimes a burst of area damage. Each is worth roughly 4-6 times the arm's power in total, in the same range as Charged Smash.
+
+| Arm | Signature | What it does | Cooldown |
+|---|---|---|---|
+| Starter | Knuckle Barrage | four 0.8x jabs then a 2.2x haymaker on one target | 11 s |
+| Stonebreaker | Quake Stomp | no target needed: 1.7x to up to 5 rocks and creatures within 16 studs | 12 s |
+| Alloy | Piston Storm | eight 0.55x jabs in a second on one target, then Overclock jumps to full stacks | 10 s |
+| Crystal | Prism Lance | one guaranteed-crit 1.9x thrust, refracting 0.9x into up to 3 neighbours within 14 studs | 12 s |
+| Magma | Eruption | 2.4x on the target and 1.0x to up to 4 neighbours, everything struck ignites | 13 s |
+| Void | Rift Tear | 3.2x that pierces 60% extra armor, plus 1.2x (also piercing) to up to 3 neighbours | 14 s |
+
+Moves that need a target cost nothing if none is in reach. Swapping arms mid-move cancels the strikes that have not landed yet.
+
 ## Damage
 
 `damage = power * (skill mult) * (trait mult) * (crit mult) * (1 - rockResistance * (1 - pierce))`, minimum 1.
@@ -85,7 +103,8 @@ rebirths, so neither a rebirth nor a victory alone opens it. Full rules, numbers
   milestone rewards (boosters, unlock notes) from `Config/Progression.LevelRewards`.
 * **Skills** (learned with skill points once the level requirement is met, ranks 1-5):
   Charged Smash (Lv 3), Critical Focus (Lv 5), Overdrive (Lv 7, with an Overheat penalty afterwards),
-  Shatter Wave (Lv 12, bounded to 4 rocks). Cooldowns shrink with Endurance training.
+  Shatter Wave (Lv 12, bounded to 4 rocks). Cooldowns shrink with Endurance training. Every arm also has a free signature move (see
+  "Signature moves" above).
 * **Training** (permanent stats, capped by player level): Power Press (Lv 2) trains damage, Speed Bag (Lv 4) attack
   speed, Target Range (Lv 7) crit chance, Endurance Rig (Lv 10) skill cooldowns. Training never exceeds +60% to any
   stat, so rock destruction stays the main source of progress.

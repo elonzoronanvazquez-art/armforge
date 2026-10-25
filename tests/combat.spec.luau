@@ -241,7 +241,7 @@ return function(t, u)
 
 	t.test("combo chain cycles through the style's moves", function()
 		t.eq(PoseMath.moveForCombo("Fists", 1), "JabR")
-		t.eq(PoseMath.moveForCombo("Fists", 2), "JabL")
+		t.eq(PoseMath.moveForCombo("Fists", 2), "HookL")
 		t.eq(PoseMath.moveForCombo("Fists", 3), "CrossR")
 		t.eq(PoseMath.moveForCombo("Fists", 4), "JabR")
 	end)

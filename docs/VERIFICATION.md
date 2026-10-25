@@ -4,7 +4,7 @@ What is actually verified, where, and what is not. "Studio" below means a single
 Roblox Studio driven through the Studio MCP server (execute_luau on Server/Client, real mouse and keyboard input, screenshots,
 console output). Nothing is claimed that was not observed.
 
-## Automated (Lune, `lune run tests/run`): 356 tests, 0 failing
+## Automated (Lune, `lune run tests/run`): 379 tests, 0 failing
 
 The first block is pure logic; the second block runs the REAL server services (`src/server/Services`) against a fake Roblox server
 (`tests/support/ServerWorld.luau`: virtual clock and scheduler, Instance tree, Players/DataStore/CollectionService fakes with latency
@@ -244,3 +244,24 @@ showed no errors. Screenshots looked right (atoll, lighthouse, palms, coral; the
 Not verified: pressing the real ProximityPrompts by hand (the dock, vine, chest, rope and lighthouse prompts were exercised through the same
 service functions), the fish card and the sail banner on a real client, the swing vine's tween on a real model, a second client, fighting the
 Atlantic creatures by a human, and how the atoll looks at dusk or on a phone.
+
+## Arm signature moves, new animations and effects
+
+Automated (`tests/signatures.spec`, 23 tests, 379 total passing, strict typecheck clean under both solvers): every arm has a signature with a real
+animation, a sane cooldown and its own visual style; every strike and burst time sits on a key pose of its animation (within 0.03 of the move);
+worth stays between 1.6x and 6.5x power; Endurance shortens the cooldown; every joint in every pose is one the animator drives; mirrored moves swap
+hips as well as arms; combo chains keep the trait rhythms (Fists 3, Void ending on its Rend). Server flow on the fake server: each arm's signature
+damages the rock it is aimed at and goes on cooldown, a target-less press spends nothing, the cooldown holds per arm (swapping never skips it),
+garbage input is ignored, Quake Stomp batters the surroundings without a target, Prism Lance refracts into neighbours but not twice into its target,
+Eruption ignites, Piston Storm leaves Overclock at 5, swapping arms mid-move cancels the rest, creatures take signature strikes, and the Fx payload
+carries what the client needs. `resetcd` (developer mode) clears the cooldowns.
+
+Studio (real play, scripted): Q on a rock fired the Magma signature through the real input path (cooldown counter ran on the slot, the rock broke
+and released its creatures); key poses of Quake Stomp (knee lift), Uppercut, Eruption (leap, fists overhead), Rift Tear (arms torn wide) were held
+with the pose tool and screenshotted; every new Fx kind (all six signatures and their bursts, the four skills, Shatter Wave, creature strike in
+all three shapes, defeat, reveal and a Magma creature hit) was fired at the client with no warnings in the console; Eruption's fire pillar, Void's
+rift orb and Crystal's refracted rays were seen on screen.
+
+Not verified: the effects at full speed in a real fight (screenshots catch single frames), how they read on a phone or with reduce-effects on,
+the three jab-style signatures (Barrage, Storm) and Quake's cracks by eye, the swing arcs of every move, the new combo moves in motion (only key poses
+were checked), and the gamepad Y binding. The left-hand mirrors of the new moves and the leg joints were checked in data, not by eye.
